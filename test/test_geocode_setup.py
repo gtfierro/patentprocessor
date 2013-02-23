@@ -31,7 +31,9 @@ class TestGeocodeSetup(unittest.TestCase):
         # Inspect loc table in hashTbl, find something
         # to assert.
         rows = self.c.execute('select * from loc').fetchall()
-        #print rows
+        print rows[0][1]
+        element = rows[0][1]
+        assert('FRISCO' == element)
         pass
 
     def test_fix_state_zip(self):
