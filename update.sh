@@ -122,7 +122,7 @@ done
 ###############################################
 
 for file in `ls "$datadir"/*.zip`; do
-  found=`ls $datadir/$file | rev | cut -d'/' -f1 | rev`
+  found=`ls $file | rev | cut -d'/' -f1 | rev`
   xml=`echo $found | rev | cut -d'.' -f2 | rev`
   if [[ ! -f $datadir/$xml.xml ]] ; then
     unzip $datadir/$found -d $datadir
@@ -139,7 +139,7 @@ download_next `sort $csvfile | tail -n1`
 #################################################
 
 echo "Parsing..."
-python parse.py -p. -d $datadir
+python parse.py -p/ -d $datadir
 echo "Cleaning..."
 python clean.py
 echo "Consolidating..."
