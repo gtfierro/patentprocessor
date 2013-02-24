@@ -39,6 +39,9 @@ class TestFWork(unittest.TestCase):
     def test_remove_period(self):
         assert('10' == ascit('1.0', strict=True))
 
+    def test_remove_hyphen(self):
+        assert('KINJOE' == ascit('KIN-JOE', strict=True))
+
 #    def test_quickSQL(self):
 #        import sqlite3
 #	self.conn = sqlite3.connect(":memory:")
