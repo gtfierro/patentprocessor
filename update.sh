@@ -129,6 +129,8 @@ done
 #
 ###############################################
 
+download_next `sort $csvfile | tail -n1`
+
 for file in `ls "$datadir"/*.zip`; do
   found=`ls $file | rev | cut -d'/' -f1 | rev`
   xml=`echo $found | rev | cut -d'.' -f2 | rev`
@@ -136,9 +138,6 @@ for file in `ls "$datadir"/*.zip`; do
     unzip $datadir/$found -d $datadir
   fi
 done
-
-download_next `sort $csvfile | tail -n1`
-
 
 #################################################
 #
