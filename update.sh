@@ -60,10 +60,12 @@ function download_next() {
   next_filename $week_id
   until [[ $week_id > $most_current ]] ; do
     next_filename $week_id
-    wget -q -P "$datadir" "http://commondatastorage.googleapis.com/patents/grant_full_text/${patyear}/ipg${week_id}.zip"
+    url="http://commondatastorage.googleapis.com/patents/grant_full_text/${patyear}/ipg${week_id}.zip"
+    wget -q $url
     status=$?
     if [[ "0" -eq $status ]] ; then
       printf "\e[32m" ;
+      mv "ipg${week_id}.zip" $datadir
       echo "=> Downloaded ipg${week_id}.zip"
       printf "\e[0m"
       echo ipg${week_id}.zip,`date +"%T@%m-%d-%Y"` >> $csvfile
