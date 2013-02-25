@@ -81,7 +81,7 @@ function download_next() {
 ##################################################
 printf "\e[34m" ;
 echo "Data directory location: ${datadir}"
-if [[ ! -d $datadir ]] ; then
+if [[ -d $datadir ]] ; then
   # create the data directory
   printf "\e[32m" ;
   echo "=> Creating ${datadir}"
