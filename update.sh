@@ -50,7 +50,13 @@ function next_filename() {
 
 function download_next() {
   printf "\e[0m"
-  week_id=`echo $1 | cut -d. -f1 | cut -c4-`
+  inp=`echo $1 | cut -d. -f1 | cut -c4-`
+  if [[ "$inp" -eq "" ]] ; then
+    tmp=`date +"%Y" | cut -c3-`
+    week_id="${tmp}0101"
+  else
+    week_id=$inp
+  fi
   next_filename $week_id
   until [[ $week_id > $most_current ]] ; do
     next_filename $week_id
