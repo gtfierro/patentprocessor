@@ -145,6 +145,8 @@ done
 #
 #################################################
 
+echo "Removing old sqlite3 files"
+make spotless
 echo "Parsing..."
 python parse.py -p/ -d $datadir
 echo "Cleaning..."
