@@ -6,7 +6,7 @@
 
 make spotless > /dev/null
 ./parse.py -d test/fixtures/xml/ -p. -x ipg120327.two.xml
-mkdir -p /tmp/integration/ipg120327.two
+mkdir -p tmp/integration/ipg120327.two
 
 
 echo Starting clean...
@@ -18,26 +18,26 @@ python consolidate.py
 echo Starting diffs...
 for table in inventor inventor_1
 do
-  sqlite3 -csv inventor.sqlite3 "select * from ${table}"  > /tmp/integration/ipg120327.two/${table}.csv
-  diff test/integration/consolidate/ipg120327.two/${table}.csv /tmp/integration/ipg120327.two/${table}.csv
+  sqlite3 -csv inventor.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
+  diff test/integration/consolidate/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
 done
 
 for table in assignee assignee_1 grp wrd
 do
-  sqlite3 -csv assignee.sqlite3 "select * from ${table}"  > /tmp/integration/ipg120327.two/${table}.csv
-  diff test/integration/consolidate/ipg120327.two/${table}.csv /tmp/integration/ipg120327.two/${table}.csv
+  sqlite3 -csv assignee.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
+  diff test/integration/consolidate/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
 done
 
 for table in patent
 do
-  sqlite3 -csv patent.sqlite3 "select * from ${table}"  > /tmp/integration/ipg120327.two/${table}.csv
-  diff test/integration/consolidate/ipg120327.two/${table}.csv /tmp/integration/ipg120327.two/${table}.csv
+  sqlite3 -csv patent.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
+  diff test/integration/consolidate/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
 done
 
 for table in invpat
 do
-  sqlite3 -csv invpat.sqlite3 "select * from ${table}"  > /tmp/integration/ipg120327.two/${table}.csv
-  diff test/integration/consolidate/ipg120327.two/${table}.csv /tmp/integration/ipg120327.two/${table}.csv
+  sqlite3 -csv invpat.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
+  diff test/integration/consolidate/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
 done
 
 
@@ -45,7 +45,7 @@ done
 
 make spotless > /dev/null
 ./parse.py -d test/fixtures/xml/ -p. -x ipg120327.18.xml
-mkdir -p /tmp/integration/ipg120327.18
+mkdir -p tmp/integration/ipg120327.18
 
 echo Starting clean...
 python clean.py
@@ -56,24 +56,24 @@ python consolidate.py
 echo Starting diffs...
 for table in inventor inventor_1
 do
-  sqlite3 -csv inventor.sqlite3 "select * from ${table}"  > /tmp/integration/ipg120327.18/${table}.csv
-  diff test/integration/consolidate/ipg120327.18/${table}.csv /tmp/integration/ipg120327.18/${table}.csv
+  sqlite3 -csv inventor.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  diff test/integration/consolidate/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
 done
 
 for table in assignee assignee_1 grp wrd
 do
-  sqlite3 -csv assignee.sqlite3 "select * from ${table}"  > /tmp/integration/ipg120327.18/${table}.csv
-  diff test/integration/consolidate/ipg120327.18/${table}.csv /tmp/integration/ipg120327.18/${table}.csv
+  sqlite3 -csv assignee.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  diff test/integration/consolidate/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
 done
 
 for table in patent
 do
-  sqlite3 -csv patent.sqlite3 "select * from ${table}"  > /tmp/integration/ipg120327.18/${table}.csv
-  diff test/integration/consolidate/ipg120327.18/${table}.csv /tmp/integration/ipg120327.18/${table}.csv
+  sqlite3 -csv patent.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  diff test/integration/consolidate/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
 done
 
 for table in invpat
 do
-  sqlite3 -csv invpat.sqlite3 "select * from ${table}"  > /tmp/integration/ipg120327.18/${table}.csv
-  diff test/integration/consolidate/ipg120327.18/${table}.csv /tmp/integration/ipg120327.18/${table}.csv
+  sqlite3 -csv invpat.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  diff test/integration/consolidate/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
 done
