@@ -13,14 +13,23 @@ from patXML import *
 # Directory of test files
 basedir = os.curdir
 testdir = os.path.join(basedir, 'fixtures/unittest/fixtures/')
+testdir2 = os.path.join(basedir, 'fixtures/xml/')
 xml_files = [x for x in os.listdir(testdir)
-             if re.match(r"20\d\d_\d.xml", x) != None] # Match fixtures
+             if re.match(r"20\d\d_\d+.xml", x) != None] # Match fixtures
 
 parsed_xml_old = []
 parsed_xml_new = []
 for xf in xml_files:
     old = XMLPatentBase(open(testdir+xf).read())
     new = Patent(open(testdir+xf))
+    parsed_xml_old.append(old)
+    parsed_xml_new.append(new)
+
+xml_files = [x for x in os.listdir(testdir2)
+            if re.match(r'ipg120327.one.xml', x) != None]
+for xf in xml_files:
+    old = XMLPatentBase(open(testdir2+xf).read())
+    new = Patent(open(testdir2+xf))
     parsed_xml_old.append(old)
     parsed_xml_new.append(new)
 
