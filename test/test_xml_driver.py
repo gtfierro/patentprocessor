@@ -97,7 +97,7 @@ class Test_Patent_XMLElement(unittest.TestCase):
         self.assertTrue(resstring == goalstring, \
             "{0}\nshould be\n{1}".format(resstring,goalstring))
 
-    def test_escape_html_nosub(self):
+    def test_escape_html_nosub2(self):
         substart = "<sub>"
         subend = "</sub>"
         teststring = "<escape & skip sub tags>"
