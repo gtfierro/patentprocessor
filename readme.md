@@ -28,6 +28,25 @@ There are two ways to get started:
 
 See "Configuring the Preprocessing Environment" below.
 
+## Finding Specific Patents
+
+Currently there's no automated way to find the location of this patent, but
+what has worked well in the past is taking the patent number (for example
+6106074) and appending it to the end of `google.com/patents/`. If it's a
+regular patent, prepend "US" to the number. If it's a design patent, prepend
+"USD" to the number. For example, the above patent can be found at
+`http://www.google.com/patents/US6106074`.  Once on that page, you can see when
+it was issued (22 Aug 2000 in this case) and then look for the corresponding
+week here:
+[http://www.google.com/googlebooks/uspto-patents-grants-text.html#2000](http://www.google.com/googlebooks/uspto-patents-grants-text.html#2000).
+Sometimes you can also find the issue date on the USPTO page, but it's not
+always obvious.
+
+The format of the filename has only been ipgxxxxxx.zip since 2005, so if you
+want anything before then, do the above process. Anything after that, try using
+the `getpatent.py` script in the patentprocessor repository. Usage is `python
+getpatent.py <patent number>`
+
 
 ## Contributing to the Patent Processor Project
 
