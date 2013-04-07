@@ -104,5 +104,9 @@ class TestAscit(unittest.TestCase):
         #print ascit('{foo bar}', strict=True)
         assert('' == ascit('(foo bar)', strict=True))
 
+    def test_remove_period(self):
+        assert('HELLO THERE' == ascit('hello. there'))
+        assert('HELLO THERE' == ascit('hello. there',strict =True))
+
 if __name__ == '__main__':
     unittest.main()
