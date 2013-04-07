@@ -108,5 +108,9 @@ class TestAscit(unittest.TestCase):
         assert('HELLO THERE' == ascit('hello. there'))
         assert('HELLO THERE' == ascit('hello. there',strict =True))
 
+    def test_remove_comma(self):
+        assert('HELLO THERE' == ascit('hello, there'))
+        assert('HELLO THERE' == ascit('hello, there',strict =True))
+
 if __name__ == '__main__':
     unittest.main()
