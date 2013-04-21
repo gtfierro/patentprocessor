@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+General purpose XML parsing driver for use as a content handler through
+Python's xml.sax module.  Works in conjunction with lib/xml_util.py, which
+provides useful helper methods to handle the parsed data.
+"""
+
 import re
 from itertools import chain, izip
 from collections import deque
