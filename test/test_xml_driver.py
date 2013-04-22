@@ -4,9 +4,11 @@ import os
 import re
 import sys
 import unittest
-from xml_driver import XMLElement, XMLHandler, Patent
 from xml.sax import make_parser, handler
 from cgi import escape as html_escape
+
+sys.path.append('../lib/')
+from xml_driver import XMLElement, XMLHandler, Patent
 
 # Directory of test files
 basedir = os.curdir
