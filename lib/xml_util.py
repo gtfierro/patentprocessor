@@ -65,3 +65,10 @@ def remove_escape_sequences(string):
     """
     escape_seqs = r'[\r\n\t\v\b\f\a]'
     return re.sub(escape_seqs,' ', string).strip()
+
+def translate_underscore(string):
+    """
+    Replaces the underscore HTML idiom <sub>&#x2014;</sub> with the literal
+    underscore character _.
+    """
+    return string.lower().replace('<sub>&#x2014;</sub>','_')
