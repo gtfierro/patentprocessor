@@ -67,4 +67,18 @@ class Test_xml_util(unittest.TestCase):
         self.assertTrue(resstring == goalstring, \
             "{0}\nshould be\n{1}".format(resstring,goalstring))
 
+    def test_normalize_utf8_defaultstring(self):
+        # this is a PYTHON DEFAULT string consisting of the characters supported by unicode
+        teststring_normal = """!@#$%^&*()_+-=QWERTYqwerty<>,.:";'?/{}[]|\\"""
+        resstring = xml_util.normalize_utf8(teststring_normal)
+        self.assertTrue(teststring_normal == resstring, \
+            "{0}\nshould be\n{1}".format(resstring, teststring_normal))
+
+    def test_normalize_utf8_unicodestring(self):
+        # this is a UNICODE string consisting of the characters supported by unicode
+        teststring_normal = unicode("""!@#$%^&*()_+-=QWERTYqwerty<>,.:";'?/{}[]|\\""")
+        resstring = xml_util.normalize_utf8(teststring_normal)
+        self.assertTrue(teststring_normal == resstring, \
+            "{0}\nshould be\n{1}".format(resstring, teststring_normal))
+
 unittest.main()
