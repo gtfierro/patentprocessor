@@ -14,7 +14,7 @@ with open(text_fixtures+'accented_characters.txt') as f:
     accent_file = f.read()
 
 class Test_xml_util(unittest.TestCase):
-    
+
     def setUp(self):
         pass
 
