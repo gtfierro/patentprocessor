@@ -53,7 +53,7 @@ def normalize_utf8(string):
     Normalizes [string] to be UTF-8 encoded. Accepts both unicode and normal
     Python strings.
     """
-    if isinstance(string,unicode):
+    if isinstance(string, unicode):
         return normalize('NFC', string)
     else:
-        return normalize('NFC', unicode(string))
+        return normalize('NFC', string.decode('utf-8'))
