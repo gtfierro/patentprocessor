@@ -90,4 +90,22 @@ class Test_xml_util(unittest.TestCase):
         resstring = xml_util.normalize_utf8(teststring)
         self.assertTrue(teststring.decode('utf-8') == resstring, resstring)
 
+    def test_remove_escape_squences(self):
+        teststring = "\r\n\a\tasdf"
+        resstring = xml_util.remove_escape_sequences(teststring)
+        self.assertTrue(resstring == "asdf", \
+            "{0}\nshould be\n{1}".format(resstring,"asdf"))
+
+    def test_remove_escape_squences_raw(self):
+        teststring = r"\r\n\a\tasdf"
+        resstring = xml_util.remove_escape_sequences(teststring)
+        self.assertTrue(resstring == teststring, \
+            "{0}\nshould be\n{1}".format(resstring,teststring))
+
+    def test_remove_escape_squences_space(self):
+        teststring = "\r \n\a\tas \ndf\f"
+        resstring = xml_util.remove_escape_sequences(teststring)
+        self.assertTrue(resstring == "as  df", \
+            "{0}\nshould be\n{1}".format(resstring,"as  df"))
+
 unittest.main()
