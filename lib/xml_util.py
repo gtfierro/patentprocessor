@@ -57,3 +57,11 @@ def normalize_utf8(string):
         return normalize('NFC', string)
     else:
         return normalize('NFC', string.decode('utf-8'))
+
+def remove_escape_sequences(string):
+    """
+    Removes \r\n\t\v\b\f\a by replacing them with spaces, then strips all
+    surrounding whitespace
+    """
+    escape_seqs = r'[\r\n\t\v\b\f\a]'
+    return re.sub(escape_seqs,' ', string).strip()
