@@ -7,6 +7,7 @@ Collection of useful functions and tools for working with XML documents
 import re
 from itertools import chain, izip
 from unicodedata import normalize
+from cgi import escape
 
 def flatten(ls_of_ls):
     """
@@ -72,3 +73,10 @@ def translate_underscore(string):
     underscore character _.
     """
     return string.lower().replace('<sub>&#x2014;</sub>','_')
+
+def escape_html(string):
+    """
+    Call cgi.escape on the string after applying translate_underscore
+    """
+    s = translate_underscore(string)
+    return escape(s)
