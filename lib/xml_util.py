@@ -6,6 +6,7 @@ Collection of useful functions and tools for working with XML documents
 
 import re
 from itertools import chain, izip
+from unicodedata import normalize
 
 def flatten(ls_of_ls):
     """
@@ -46,3 +47,13 @@ def has_content(l):
     Returns true if list [l] contains any non-null objects
     """
     return any(filter(lambda x: x, l))
+
+def normalize_utf8(string):
+    """
+    Normalizes [string] to be UTF-8 encoded. Accepts both unicode and normal
+    Python strings.
+    """
+    if isinstance(string,unicode):
+        return normalize('NFC', string)
+    else:
+        return normalize('NFC', unicode(string))
