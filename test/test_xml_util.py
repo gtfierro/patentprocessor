@@ -108,4 +108,16 @@ class Test_xml_util(unittest.TestCase):
         self.assertTrue(resstring == "as  df", \
             "{0}\nshould be\n{1}".format(resstring,"as  df"))
 
+    def test_translate_underscore_same(self):
+        teststring = "<sub>&&&&&&&&</sub>"
+        resstring = xml_util.translate_underscore(teststring)
+        self.assertTrue(resstring == teststring, \
+            "{0}\nshould be\n{1}".format(resstring,teststring))
+
+    def test_translate_underscore(self):
+        teststring = "<sub>&#x2014;</sub>"
+        resstring = xml_util.translate_underscore(teststring)
+        self.assertTrue(resstring == "_", \
+            "{0}\nshould be\n{1}".format(resstring,"_"))
+
 unittest.main()
