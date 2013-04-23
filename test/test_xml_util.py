@@ -120,4 +120,17 @@ class Test_xml_util(unittest.TestCase):
         self.assertTrue(resstring == "_", \
             "{0}\nshould be\n{1}".format(resstring,"_"))
 
+    def test_escape_html(self):
+        teststring = "<body>texthere</body>"
+        resstring = xml_util.escape_html(teststring)
+        self.assertTrue(resstring == "&lt;body&gt;texthere&lt;/body&gt;", \
+            "{0}\nshould be\n{1}".format(resstring, "&lt;body&gt;texthere&lt;/body&gt;"))
+
+    def test_escape_html_withsub(self):
+        teststring = "<body>texthere <sub>&#x2014;</sub></body>"
+        resstring = xml_util.escape_html(teststring)
+        self.assertTrue(resstring == "&lt;body&gt;texthere _&lt;/body&gt;", \
+            "{0}\nshould be\n{1}".format(resstring, "&lt;body&gt;texthere _&lt;/body&gt;"))
+
+
 unittest.main()
