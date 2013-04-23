@@ -132,5 +132,20 @@ class Test_xml_util(unittest.TestCase):
         self.assertTrue(resstring == "&lt;body&gt;texthere _&lt;/body&gt;", \
             "{0}\nshould be\n{1}".format(resstring, "&lt;body&gt;texthere _&lt;/body&gt;"))
 
+    def test_normalize_document_identifier(self):
+        teststring = "US05260728"
+        resstring = xml_util.normalize_document_identifier(teststring)
+        self.assertTrue(resstring == "US5260728")
+        teststring = "USD05260728"
+        resstring = xml_util.normalize_document_identifier(teststring)
+        self.assertTrue(resstring == "USD5260728")
+
+    def test_normalize_document_identifier(self):
+        teststring = "US5260728"
+        resstring = xml_util.normalize_document_identifier(teststring)
+        self.assertTrue(resstring == "US5260728")
+        teststring = "USD5260728"
+        resstring = xml_util.normalize_document_identifier(teststring)
+        self.assertTrue(resstring == "USD5260728")
 
 unittest.main()
