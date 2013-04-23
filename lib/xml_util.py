@@ -80,3 +80,20 @@ def escape_html(string):
     """
     s = translate_underscore(string)
     return escape(s)
+
+def normalize_document_identifier(identifier):
+    """
+    [identifier] is a string representing the document-id field from an XML document
+    """
+    # create splits on identifier
+    s = ''
+    if identifier.upper().startswith('USD'):
+        s = identifier[:3],identifier[3:]
+    if identifier.upper().startswith('US'):
+        s = identifier[:2],identifier[2:]
+    else:
+        return identifier
+    # strip leading 0 if it exists
+    if s[1].startswith('0'):
+        s[1] = s[1][1:]
+    return s[0]+s[1]
