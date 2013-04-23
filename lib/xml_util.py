@@ -41,7 +41,7 @@ def escape_html_nosub(string):
     string = re.sub(gt,"&gt;",string)
     return string
 
-def has_content(self, l):
+def has_content(l):
     """
     Returns true if list [l] contains any non-null objects
     """
