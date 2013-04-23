@@ -9,6 +9,10 @@ from cgi import escape as html_escape
 sys.path.append('../lib/')
 import xml_util
 
+text_fixtures = os.path.join(os.curdir, 'fixtures/text/')
+with open(text_fixtures+'accented_characters.txt') as f:
+    accent_file = f.read()
+
 class Test_xml_util(unittest.TestCase):
     
     def setUp(self):
@@ -80,5 +84,10 @@ class Test_xml_util(unittest.TestCase):
         resstring = xml_util.normalize_utf8(teststring_normal)
         self.assertTrue(teststring_normal == resstring, \
             "{0}\nshould be\n{1}".format(resstring, teststring_normal))
+
+    def test_normalize_utf8_withaccents(self):
+        teststring = accent_file
+        resstring = xml_util.normalize_utf8(teststring)
+        self.assertTrue(teststring.decode('utf-8') == resstring, resstring)
 
 unittest.main()
