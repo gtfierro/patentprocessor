@@ -12,7 +12,7 @@ from xml_driver import XMLElement, XMLHandler, Patent
 
 # Directory of test files
 basedir = os.curdir
-testdir = os.path.join(basedir, 'fixtures/unittest/fixtures/')
+testdir = os.path.join(basedir, 'fixtures/xml/')
 
 class Test_XMLElement_Basic(unittest.TestCase):
     
