@@ -97,3 +97,16 @@ def normalize_document_identifier(identifier):
     if s[1].startswith('0'):
         s[1] = s[1][1:]
     return s[0]+s[1]
+
+def associate_prefix(firstname, lastname):
+    """
+    Prepends everything after the first space-delineated word in [firstname] to
+    [lastname].
+    """
+    if ' ' in firstname:
+        name, prefix = firstname.split(' ',1) # split on first space
+    else:
+        name, prefix = firstname, ''
+    space = ' '*(prefix is not '')
+    last = prefix+space+lastname
+    return name, last
