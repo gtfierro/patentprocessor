@@ -148,4 +148,20 @@ class Test_xml_util(unittest.TestCase):
         resstring = xml_util.normalize_document_identifier(teststring)
         self.assertTrue(resstring == "USD5260728")
 
+    def test_associate_prefix_1(self):
+        firstname = "Troy Van Der"
+        lastname = "Whol"
+        newfirst, newlast = xml_util.associate_prefix(firstname, lastname)
+        self.assertTrue(newfirst == "Troy" and newlast == "Van Der Whol", \
+            "{0}\nshould be\n{1}\nand\n{2}\nshould be\n{3}".format\
+            (newfirst, "Troy", newlast, "Van Der Whol"))
+
+    def test_associate_prefix_2(self):
+        firstname = "Troy"
+        lastname = "Van Der Whol"
+        newfirst, newlast = xml_util.associate_prefix(firstname, lastname)
+        self.assertTrue(newfirst == "Troy" and newlast == "Van Der Whol", \
+            "{0}\nshould be\n{1}\nand\n{2}\nshould be\n{3}".format\
+            (newfirst, "Troy", newlast, "Van Der Whol"))
+
 unittest.main()
