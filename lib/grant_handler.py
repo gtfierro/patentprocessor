@@ -72,14 +72,14 @@ class PatentGrant(object):
       if cits.patcit:
           for tag in ['country','doc_number','date','kind','name']:
               res.append(cits.patcit.contents_of(tag))
-          res[0].extend(_extend_padding(res[1:]))
+          res[0].extend(extend_padding(res[1:]))
           res.append( [''] * max(map(len, res)))
-      contacts = _flatten(res)
+      contacts = flatten(res)
       last_records = record[len(contacts):]
       if cits.othercit:
           for rec,cit in zip(last_records,cits.contents_of('othercit')):
               tmp = [rec, '', '', '', '' ,'']
-              s = ''.join([_escape_html_nosub(x) for x in cit])
+              s = ''.join([escape_html_nosub(x) for x in cit])
               tmp.append(s)
               contacts.append(tmp)
       return contacts
@@ -138,7 +138,7 @@ class PatentGrant(object):
       res.append(doc.residence.contents_of('country'))
       maxlen = max(map(len, res))
       res = [x*maxlen if len(x) != maxlen else x for x in res]
-      return _flatten(res)
+      return flatten(res)
 
   def _law_list(self):
       doc = self.xml.parties.agents
