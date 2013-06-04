@@ -5,17 +5,21 @@ Uses the extended ContentHandler from xml_driver to extract the needed fields
 from patent grant documents
 """
 
+import cStringIO
 from xml_driver import *
 from xml_util import *
 
 class PatentGrant(object):
 
-  def __init__(self, filename):
+  def __init__(self, filename, is_string=False):
       xh = XMLHandler()
       parser = make_parser()
       parser.setContentHandler(xh)
       parser.setFeature(handler.feature_external_ges, False)
-      parser.parse(filename)
+      if is_string:
+        parser.parse(cStringIO.StringIO(filename))
+      else:
+        parser.parse(filename)
       self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
 
       self.country = self.xml.publication_reference.contents_of('country')[0]
