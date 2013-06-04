@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import logging
-# http://docs.python.org/howto/argparse.html
 import argparse
 import os
 import datetime
