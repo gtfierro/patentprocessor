@@ -4,10 +4,11 @@ import os
 import re
 import sys
 import unittest
-from xml_driver import XMLElement, XMLHandler, Patent
+#from xml_driver import XMLElement, XMLHandler, Patent
 from xml.sax import make_parser, handler
 
 sys.path.append('../lib')
+from grant_handler import PatentGrant
 from patXML import *
 
 # Directory of test files
@@ -20,7 +21,7 @@ parsed_xml_old = []
 parsed_xml_new = []
 for xf in xml_files:
     old = XMLPatentBase(open(testdir+xf).read())
-    new = Patent(open(testdir+xf))
+    new = PatentGrant(open(testdir+xf))
     parsed_xml_old.append(old)
     parsed_xml_new.append(new)
 
@@ -28,7 +29,7 @@ xml_files = [x for x in os.listdir(testdir)
             if re.match(r'ipg120327.one.xml', x) != None]
 for xf in xml_files:
     old = XMLPatentBase(open(testdir+xf).read())
-    new = Patent(open(testdir+xf))
+    new = PatentGrant(open(testdir+xf))
     parsed_xml_old.append(old)
     parsed_xml_new.append(new)
 
