@@ -78,12 +78,6 @@ def load_sql(patent):
 def build_tables(parsed_grants):
     map(load_sql, parsed_grants)
 
-def add_to_couch_db(parsed_grants):
-    for us_patent_grant in parsed_grants:
-        metadata = couch_patent.get_metadata(us_patent_grant)
-        couch_patent.add_doc(metadata)
-        del us_patent_grant.orig_xmlstring
-
 def commit_tables():
     assignee_table.commit();
     citation_table.commit();
