@@ -34,12 +34,18 @@ class PatentGrant(object):
       self.clm_num = self.xml.contents_of('number_of_claims')[0]
       self.classes = self._classes()
       self.abstract = self.xml.contents_of('abstract','')
-      self.invention_title = self.xml.contents_of('invention_title')[0]
+      self.invention_title = self._invention_title()
       self.asg_list = self._asg_list()
       self.cit_list = self._cit_list()
       self.rel_list = self._rel_list()
       self.inv_list = self._inv_list()
       self.law_list = self._law_list()
+
+  def _invention_title(self):
+      original = self.xml.contents_of('invention_title')[0]
+      if isinstance(original, list):
+        original = ''.join(original)
+      return original
 
   def _classes(self):
       main = self.xml.classification_national.contents_of('main_classification')
