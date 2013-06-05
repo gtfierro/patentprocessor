@@ -120,6 +120,12 @@ class Test_xml_util(unittest.TestCase):
         self.assertTrue(resstring == "_", \
             "{0}\nshould be\n{1}".format(resstring,"_"))
 
+    def test_translate_underscore2(self):
+        teststring = "<sub>-</sub>"
+        resstring = xml_util.translate_underscore(teststring)
+        self.assertTrue(resstring == "_", \
+            "{0}\nshould be\n{1}".format(resstring,"_"))
+
     def test_escape_html(self):
         teststring = "<body>texthere</body>"
         resstring = xml_util.escape_html(teststring)
