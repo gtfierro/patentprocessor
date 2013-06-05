@@ -181,3 +181,103 @@ patdesc_table = PatdescSQL()
 lawyer_table = LawyerSQL()
 sciref_table = ScirefSQL()
 usreldoc_table = UsreldocSQL()
+
+class XMLPatentBase(object):
+
+    def __init__(self, patentgrant):
+        self.patent = patentgrant
+
+class AssigneeXML(XMLPatentBase):
+    def build_table(self):
+        ack = []
+        for i,y in enumerate(self.patent.asg_list):
+            if not y[0]:
+                ack.extend([[self.patent.patent, y[2], y[1], y[4], y[5], y[6], y[7], y[8], i]])
+            else:
+                ack.extend([[self.patent.patent, "00", "%s, %s" % (y[2], y[1]), y[4], y[5], y[6], y[7], y[8], i]])
+        return ack
+
+    def insert_table(self):
+        assignee_table.inserts.extend(self.build_table())
+
+class CitationXML(XMLPatentBase):
+    def build_table(self):
+        ack = []
+        for i,y in enumerate([x for x in self.patent.cit_list if x[1] != ""]):
+            ack.extend([[self.patent.patent, y[3], y[5], y[4], y[1], y[2], y[0], i]])
+        return ack
+
+    def insert_table(self):
+        citation_table.inserts.extend(self.build_table())
+
+class ClassXML(XMLPatentBase):
+    def build_table(self):
+        ack = []
+        for i,y in enumerate(self.patent.classes):
+            ack.extend([[self.patent.patent, (i==0)*1, y[0], y[1]]])
+        return ack
+
+    def insert_table(self):
+        class_table.inserts.extend(self.build_table())
+
+class InventorXML(XMLPatentBase):
+    def build_table(self):
+        ack = []
+        for i,y in enumerate(self.patent.inv_list):
+            ack.extend([[self.patent.patent, y[1], y[0], y[2], y[3], y[4], y[5], y[6], y[8], i]])
+        print ack
+        return ack
+
+    def insert_table(self):
+        inventor_table.inserts.extend(self.build_table())
+
+class PatentXML(XMLPatentBase):
+    def build_table(self):
+        return [[self.patent.patent, self.patent.kind, self.patent.clm_num, self.patent.code_app, self.patent.patent_app, self.patent.date_grant, self.patent.date_grant[:4], self.patent.date_app, self.patent.date_app[:4], self.patent.pat_type]]
+
+    def insert_table(self):
+        patent_table.inserts.extend(self.build_table())
+
+
+class PatdescXML(XMLPatentBase):
+    def build_table(self):
+        return [[self.patent.patent, self.patent.abstract, self.patent.invention_title]]
+
+    def insert_table(self):
+        patdesc_table.inserts.extend(self.build_table())
+
+
+class LawyerXML(XMLPatentBase):
+    def build_table(self):
+        ack = []
+        for i,y in enumerate(self.patent.law_list):
+            ack.extend([[self.patent.patent, y[1], y[0], y[2], y[3], i]])
+        return ack
+
+    def insert_table(self):
+        lawyer_table.inserts.extend(self.build_table())
+
+
+class ScirefXML(XMLPatentBase):
+    def build_table(self):
+        ack = []
+        for i,y in enumerate([y for y in self.patent.cit_list if y[1] == ""]):
+            ack.extend([[self.patent.patent, y[-1], i]])
+        return ack
+
+    def insert_table(self):
+        sciref_table.inserts.extend(self.build_table())
+
+
+class UsreldocXML(XMLPatentBase):
+    def build_table(self):
+        ack = []
+        for i,y in enumerate(self.patent.rel_list):
+            if y[1] == 1:
+                ack.extend([[self.patent.patent, y[0], y[1], y[3], y[2], y[4], y[5], y[6]]])
+            else:
+                ack.extend([[self.patent.patent, y[0], y[1], y[3], y[2], y[4], "", ""]])
+        return ack
+
+    def insert_table(self):
+        usreldoc_table.inserts.extend(self.build_table())
