@@ -11,6 +11,7 @@ from itertools import chain, izip
 from collections import deque
 from xml.sax import make_parser, handler, saxutils
 from cgi import escape
+from xml_util import *
 
 class ChainList(list):
     """
@@ -79,8 +80,8 @@ class XMLElement(object):
 
     def get_content(self):
         if len(self.content) == 1:
-            return self.content[0]
-        else: return self.content
+            return clean(self.content[0])
+        else: return map(clean, self.content)
 
     def add_child(self, child):
         self.children.append(child)
