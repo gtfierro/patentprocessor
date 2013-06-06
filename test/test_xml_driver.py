@@ -8,7 +8,7 @@ from xml.sax import make_parser, handler
 from cgi import escape as html_escape
 
 sys.path.append('../lib/')
-from xml_driver import XMLElement, XMLHandler, Patent
+from xml_driver import XMLElement, XMLHandler
 
 # Directory of test files
 basedir = os.curdir
@@ -34,10 +34,10 @@ class Test_XMLElement_Basic(unittest.TestCase):
         self.assertTrue(len(self.root.a.c) == 3)
 
     def test_basic_xml_tag_contents(self):
-        self.assertTrue(self.root.a.b.c[0].get_content()  == 'hello', \
-            "{0} should be {1}".format(self.root.a.b.c[0].get_content(), 'hello'))
-        self.assertTrue(self.root.a.b.c[1].get_content()  == 'world', \
-            "{0} should be {1}".format(self.root.a.b.c[1].get_content(), 'world'))
+        self.assertTrue(self.root.a.b.c[0].get_content()  == 'HELLO', \
+            "{0} should be {1}".format(self.root.a.b.c[0].get_content(), 'HELLO'))
+        self.assertTrue(self.root.a.b.c[1].get_content()  == 'WORLD', \
+            "{0} should be {1}".format(self.root.a.b.c[1].get_content(), 'WORLD'))
         self.assertTrue(self.root.a.b.c[2].get_content()  == '3', \
             "{0} should be {1}".format(self.root.a.b.c[2].get_content(), '3'))
         self.assertTrue(self.root.a.b.d[0].get_content()  == '1', \
@@ -46,7 +46,7 @@ class Test_XMLElement_Basic(unittest.TestCase):
             "{0} should be {1}".format(self.root.a.b.c[1].get_content(), '2'))
     
     def test_basic_xml_contents_of(self):
-        self.assertTrue(self.root.a.b.contents_of('c') == ['hello','world','3'])
-        self.assertTrue(self.root.a.b[0].contents_of('c') == ['hello','world'])
+        self.assertTrue(self.root.a.b.contents_of('c') == ['HELLO','WORLD','3'])
+        self.assertTrue(self.root.a.b[0].contents_of('c') == ['HELLO','WORLD'])
 
 unittest.main()
