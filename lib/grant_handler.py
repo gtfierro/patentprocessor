@@ -89,7 +89,7 @@ class PatentGrant(object):
       if cits.othercit:
           for rec,cit in zip(last_records,cits.contents_of('othercit')):
               tmp = [rec, '', '', '', '' ,'']
-              s = ''.join([escape_html_nosub(x) for x in cit])
+              s = ''.join([escape_html_nosub(x) for x in cit]).upper()
               tmp.append(s)
               contacts.append(tmp)
       return contacts
