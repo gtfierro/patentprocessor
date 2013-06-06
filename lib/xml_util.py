@@ -114,10 +114,10 @@ def associate_prefix(firstname, lastname):
 def clean(string):
     """
     Applies a subset of the above functions in the correct order
-    and returns the string.
+    and returns the string in all uppercase.
     """
     string = normalize_utf8(string)
     string = remove_escape_sequences(string)
     string = translate_underscore(string)
     string = escape_html(string)
-    return string
+    return string.upper()
