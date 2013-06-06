@@ -9,7 +9,7 @@ provides useful helper methods to handle the parsed data.
 import re
 from itertools import chain, izip
 from collections import deque
-from xml.sax import make_parser, handler, saxutils
+from xml.sax import make_parser, handler, saxutils, xmlreader
 from cgi import escape
 from xml_util import *
 
@@ -81,7 +81,14 @@ class XMLElement(object):
     def get_content(self):
         if len(self.content) == 1:
             return clean(self.content[0])
-        else: return map(clean, self.content)
+        else:
+            return map(clean, self.content)
+
+    def put_content(self, content, lastlinenumber, linenumber):
+        if not self.content or lastlinenumber != linenumber:
+            self.content.append(content)
+        else:
+            self.content[0] += content
 
     def add_child(self, child):
         self.children.append(child)
@@ -104,6 +111,8 @@ class XMLHandler(handler.ContentHandler):
         self.root = XMLElement(None, None)
         self.root.is_root = True
         self.elements = ChainList()
+        handler.ContentHandler.__init__(self)
+        self.lastline = -1
 
     def startElement(self, name, attributes):
         name = name.replace('-','_').replace('.','_').replace(':','_')
@@ -119,9 +128,11 @@ class XMLHandler(handler.ContentHandler):
             self.elements.pop()
 
     def characters(self, content):
+        currentlinenumber = self._locator.getLineNumber()
         if content.strip():
           if self.elements[-1]._name == 'sub':
             newtxt = u"<sub>"+content+u"</sub>"
-            self.elements[-2].content.append(newtxt)
+            self.elements[-2].put_content(newtxt, self.lastline, currentlinenumber)
           else:
-            self.elements[-1].content.append(saxutils.unescape(content))
+            self.elements[-1].put_content(saxutils.unescape(content), self.lastline, currentlinenumber)
+        self.lastline = self._locator.getLineNumber()
