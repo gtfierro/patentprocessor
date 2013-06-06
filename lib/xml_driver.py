@@ -87,7 +87,7 @@ class XMLElement(object):
         self.children.append(child)
 
     def get_attribute(self, key):
-        return self._attributes.get(key, None)
+        return clean(self._attributes.get(key, None))
 
     def get_xmlelements(self, name):
         return filter(lambda x: x._name == name, self.children) \
