@@ -8,6 +8,7 @@ from patent grant documents
 import cStringIO
 from xml_driver import *
 from xml_util import *
+from xml.sax import xmlreader
 
 class PatentGrant(object):
 

@@ -9,7 +9,7 @@ provides useful helper methods to handle the parsed data.
 import re
 from itertools import chain, izip
 from collections import deque
-from xml.sax import make_parser, handler, saxutils, xmlreader
+from xml.sax import make_parser, handler, saxutils
 from cgi import escape
 from xml_util import *
 
