@@ -15,6 +15,7 @@ sys.path.append( '.' )
 sys.path.append( './lib/' )
 
 from patXML import *
+from grant_handler import PatentGrant
 from patSQL import *
 from argconfig_parse import ArgHandler
 
@@ -57,18 +58,21 @@ def parallel_parse(filelist):
 
 def apply_xmlclass(us_patent_grant):
     parsed_grants = []
+    patobj = PatentGrant(us_patent_grant, True)
     for xmlclass in xmlclasses:
         try:
-            parsed_grants.append(xmlclass(us_patent_grant))
+            parsed_grants.append(xmlclass(patobj))
         except Exception as inst:
             logging.error(type(inst))
             logging.error("  - Error: %s" % (us_patent_grant[175:200]))
     return parsed_grants
 
 def parse_patent(grant_list):
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
-    parsed_grants = pool.imap(apply_xmlclass, grant_list)
-    parsed_grants = map(list, parsed_grants)
+#    comment these out because the resulting classes aren't serializable
+#    pool = multiprocessing.Pool(multiprocessing.cpu_count())
+#    parsed_grants = pool.imap(apply_xmlclass, grant_list)
+#    parsed_grants = list(parsed_grants)
+    parsed_grants = map(apply_xmlclass, grant_list)
     return itertools.chain.from_iterable(parsed_grants)
 
 def load_sql(patent):
