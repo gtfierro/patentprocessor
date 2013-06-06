@@ -72,7 +72,7 @@ def translate_underscore(string):
     Replaces the underscore HTML idiom <sub>&#x2014;</sub> with the literal
     underscore character _.
     """
-    return string.lower().replace('<sub>&#x2014;</sub>','_').replace('<sub>-</sub>','_')
+    return string.lower().replace('<sub>&#x2014;</sub>','_').replace('<sub>-</sub>','_').replace(u'<sub>\u2014</sub>','_')
 
 def escape_html(string):
     """
