@@ -16,6 +16,8 @@ class PatentGrant(object):
       parser = make_parser()
       parser.setContentHandler(xh)
       parser.setFeature(handler.feature_external_ges, False)
+      l = xmlreader.Locator()
+      xh.setDocumentLocator(l)
       if is_string:
         parser.parse(cStringIO.StringIO(filename))
       else:
