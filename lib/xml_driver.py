@@ -88,7 +88,7 @@ class XMLElement(object):
         if not self.content or lastlinenumber != linenumber:
             self.content.append(content)
         else:
-            self.content[0] += content
+            self.content[-1] += content
 
     def add_child(self, child):
         self.children.append(child)
