@@ -20,9 +20,9 @@ class PatentGrant(object):
       l = xmlreader.Locator()
       xh.setDocumentLocator(l)
       if is_string:
-        parser.parse(cStringIO.StringIO(filename))
+          parser.parse(cStringIO.StringIO(filename))
       else:
-        parser.parse(filename)
+          parser.parse(filename)
       self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
 
       self.country = self.xml.publication_reference.contents_of('country')[0]
