@@ -134,5 +134,5 @@ class XMLHandler(handler.ContentHandler):
             newtxt = u"<sub>"+content+u"</sub>"
             self.elements[-2].put_content(newtxt, self.lastline, currentlinenumber)
           else:
-            self.elements[-1].put_content(saxutils.unescape(content), self.lastline, currentlinenumber)
+            self.elements[-1].put_content(content, self.lastline, currentlinenumber)
         self.lastline = self._locator.getLineNumber()
