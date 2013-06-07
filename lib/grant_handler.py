@@ -76,7 +76,7 @@ class PatentGrant(object):
       data.extend(doc.residence.contents_of('country'))
       return [data]
 
-  #TODO: fix text encodings 
+  #TODO: bug in associatin the correct 'kind' with each
   def _cit_list(self):
       res = []
       cits = self.xml.references_cited.citation
