@@ -61,11 +61,11 @@ def normalize_utf8(string):
 
 def remove_escape_sequences(string):
     """
-    Removes \r\n\t\v\b\f\a by replacing them with spaces, then strips all
-    surrounding whitespace
+    Replaces all contiguous instances of "\r\n\t\v\b\f\a " and replaces
+    it with a single space. Preserves at most one space of surrounding whitespace
     """
-    escape_seqs = r'[\r\n\t\v\b\f\a]'
-    return re.sub(escape_seqs,' ', string).strip()
+    escape_seqs = r'[\r\n\t\v\b\f\a ]+'
+    return re.sub(escape_seqs,' ', string)
 
 def translate_underscore(string):
     """
