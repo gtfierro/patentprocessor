@@ -89,10 +89,13 @@ def normalize_document_identifier(identifier):
     s = ''
     if identifier.upper().startswith('USD'):
         s = identifier[:3],identifier[3:]
-    if identifier.upper().startswith('US'):
+    elif identifier.upper().startswith('US'):
         s = identifier[:2],identifier[2:]
+    elif identifier.upper().startswith('D'):
+        s = identifier[:1],identifier[1:]
     else:
-        return identifier
+        s = '',identifier
+    s = list(s)
     # strip leading 0 if it exists
     if s[1].startswith('0'):
         s[1] = s[1][1:]
