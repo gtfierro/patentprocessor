@@ -130,7 +130,9 @@ class XMLHandler(handler.ContentHandler):
     def characters(self, content):
         currentlinenumber = self._locator.getLineNumber()
         if content.strip():
-          if self.elements[-1]._name == 'sub':
+          if self.elements[-1]._name in ('b','i'):
+            self.elements[-2].put_content(content, self.lastline, currentlinenumber)
+          elif self.elements[-1]._name == 'sub':
             newtxt = u"<sub>"+content+u"</sub>"
             self.elements[-2].put_content(newtxt, self.lastline, currentlinenumber)
           else:
