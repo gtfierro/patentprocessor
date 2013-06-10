@@ -97,34 +97,41 @@ class PatentGrant(object):
             res.append(cit_data)
         return res
 
+    def _rel_helper(self, base, roots, taglist):
+        """
+        Given a list of XMLElements as the [roots], look for each of the tags
+        in [taglist] and create a list of the contents of the tags for each of
+        the roots. Starts each of the content lists with [base]
+        """
+        res = []
+        for root in roots:
+            data = base
+            for tag in taglist:
+                contents = root.contents_of(tag,default=[''])
+                data.extend(contents[:1] if isinstance(contents,list) else [contents])
+            res.append(data)
+        return res
 
     def _rel_list(self):
         res = []
+        taglist = ['doc_number','country','kind']
         for tag in ['continuation_in_part','continuation','division','reissue']:
-            if not self.xml.__getattr__(tag):
+            main = self.xml.__getattr__(tag)
+            if not main:
                 continue
             tag = tag.replace('_','-').upper()
-            if self.xml.relation.child_doc:
-                tmp = [tag, -1]
-                for nested in ['doc_number','country','kind']:
-                    tmp.extend(self.xml.relation.child_doc.contents_of(nested))
-                res.append(tmp)
-            if self.xml.relation.parent_doc:
-                tmp = [tag, 1]
-                for nested in ['doc_number','country','kind','date','parent_status']:
-                    data = self.xml.relation.parent_doc.contents_of(nested)
-                    tmp.append(data[0] if isinstance(data, list) else data)
-                res.append(tmp)
-            if self.xml.relation.parent_doc.parent_grant_document:
-                tmp = [tag, 1]
-                for nested in ['doc_number','country','kind','date','parent_status']:
-                    tmp.extend(self.xml.relation.parent_grant_document.contents_of(nested))
-                res.append(tmp)
-            if self.xml.relation.parent_doc.parent_pct_document:
-                tmp = [tag, 1]
-                for nested in ['doc_number','country','kind','date','parent_status']:
-                    tmp.extend(self.xml.relation.parent_pct_document.contents_of(nested))
-                res.append(tmp)
+            relations = main.relation # get all relations
+            for relation in relations:
+                if relation.child_doc:
+                    res.extend(self._rel_helper([tag, -1], relation.child_doc, taglist))
+                base = [tag, 1]
+                taglist.extend(['date','parent_status'])
+                if relation.parent_doc:
+                    res.extend(self._rel_helper(base, relation.parent_doc, taglist))
+                if relation.parent_doc.parent_grant_document:
+                    res.extend(self._rel_helper(base, relation.parent_doc.parent_grant_document, taglist))
+                if relation.parent_doc.parent_pct_document:
+                    res.extend(self._rel_helper(base, relation.parent_doc.parent_pct_document, taglist))
             if res: break
         for tag in ['related-publication','us-provisional-application']:
             if not self.xml.__getattr__(tag):
