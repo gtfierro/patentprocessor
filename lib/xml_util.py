@@ -36,9 +36,10 @@ def escape_html_nosub(string):
     Escapes html sequences (e.g. <b></b>) that are not the known idiom
     for subscript: <sub>...</sub>
     """
-    lt = re.compile('<(?!/?sub>)')
-    gt = re.compile('(?=.)*(?<!sub)>')
-    string = string.replace('&','&amp;')
+    lt = re.compile('<(?!/?sub>)',flags=re.I)
+    gt = re.compile('(?=.)*(?<!sub)>',flags=re.I)
+    amp = re.compile('&(?!(amp;|lt;|gt;))',flags=re.I)
+    string = re.sub(amp,'&amp;',string)
     string = re.sub(lt,"&lt;",string)
     string = re.sub(gt,"&gt;",string)
     return string
