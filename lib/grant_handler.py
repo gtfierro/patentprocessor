@@ -93,7 +93,10 @@ class PatentGrant(object):
                 contents = citation.contents_of('othercit')
                 for chunk in contents:
                     cit_data.extend(['','','','',''])
-                    cit_data.append(''.join([escape_html_nosub(x) for x in chunk]).upper())
+                    if isinstance(chunk,list):
+                        cit_data.append(''.join([escape_html_nosub(x) for x in chunk]).upper())
+                    else:
+                        cit_data.append(escape_html_nosub(chunk))
             res.append(cit_data)
         return res
 
