@@ -26,7 +26,7 @@ class PatentGrant(object):
       self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
 
       self.country = self.xml.publication_reference.contents_of('country')[0]
-      self.patent = self.xml.publication_reference.contents_of('doc_number')[0]
+      self.patent = normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
       self.kind = self.xml.publication_reference.contents_of('kind')[0]
       self.date_grant = self.xml.publication_reference.contents_of('date')[0]
       self.pat_type = self.xml.application_reference[0].get_attribute('appl-type')
