@@ -76,27 +76,6 @@ class PatentGrant(object):
       data.extend(doc.residence.contents_of('country'))
       return [data]
 
-  ##TODO: bug in associatin the correct 'kind' with each
-  #def _cit_list(self):
-  #    res = []
-  #    cits = self.xml.references_cited.citation
-  #    record = cits.contents_of('category')
-  #    res.append(record)
-  #    if cits.patcit:
-  #        for tag in ['country','doc_number','date','kind','name']:
-  #            res.append(cits.patcit.contents_of(tag))
-  #        res[0].extend(extend_padding(res[1:]))
-  #        res.append( [''] * max(map(len, res)))
-  #    contacts = flatten(res)
-  #    last_records = record[len(contacts):]
-  #    if cits.othercit:
-  #        for rec,cit in zip(last_records,cits.contents_of('othercit')):
-  #            tmp = [rec, '', '', '', '' ,'']
-  #            s = ''.join([escape_html_nosub(x) for x in cit]).upper()
-  #            tmp.append(s)
-  #            contacts.append(tmp)
-  #    return contacts
-
   def _cit_list(self):
       res = []
       citations = self.xml.references_cited.citation
