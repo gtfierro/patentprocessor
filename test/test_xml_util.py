@@ -141,18 +141,26 @@ class Test_xml_util(unittest.TestCase):
     def test_normalize_document_identifier(self):
         teststring = "US05260728"
         resstring = xml_util.normalize_document_identifier(teststring)
-        self.assertTrue(resstring == "US5260728")
+        self.assertTrue(resstring == "US5260728",resstring)
         teststring = "USD05260728"
         resstring = xml_util.normalize_document_identifier(teststring)
         self.assertTrue(resstring == "USD5260728")
 
-    def test_normalize_document_identifier(self):
+    def test_normalize_document_identifier2(self):
         teststring = "US5260728"
         resstring = xml_util.normalize_document_identifier(teststring)
         self.assertTrue(resstring == "US5260728")
         teststring = "USD5260728"
         resstring = xml_util.normalize_document_identifier(teststring)
         self.assertTrue(resstring == "USD5260728")
+
+    def test_normalize_document_identifier3(self):
+        teststring = "D0123456"
+        resstring = xml_util.normalize_document_identifier(teststring)
+        self.assertTrue(resstring == "D123456",resstring)
+        teststring = "D123456"
+        resstring = xml_util.normalize_document_identifier(teststring)
+        self.assertTrue(resstring == "D123456",resstring)
 
     def test_associate_prefix_1(self):
         firstname = "Troy Van Der"
