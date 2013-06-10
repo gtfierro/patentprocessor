@@ -9,6 +9,7 @@ import mmap
 import contextlib
 import multiprocessing
 import itertools
+from xml.sax import SAXException
 
 import sys
 sys.path.append( '.' )
@@ -58,7 +59,11 @@ def parallel_parse(filelist):
 
 def apply_xmlclass(us_patent_grant):
     parsed_grants = []
-    patobj = PatentGrant(us_patent_grant, True)
+    try:
+        patobj = PatentGrant(us_patent_grant, True)
+    except SAXException as e:
+        print e
+        return
     for xmlclass in xmlclasses:
         try:
             parsed_grants.append(xmlclass(patobj))
