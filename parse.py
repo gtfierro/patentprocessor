@@ -29,6 +29,9 @@ regex = re.compile(r"""
 [<][/]us[-]patent[-]grant[>])    #and here is the end tag
 """, re.I+re.S+re.X)
 
+regex = re.compile(r"""([<][?]xml version.*?[>]\s+<!DOCTYPE ([A-Za-z-]+) SYSTEM.*?/\2>)""",\
+    re.S+re.I)
+
 def list_files(directories, patentroot, xmlregex):
     """
     Returns listing of all files within all directories relative to patentroot
@@ -48,7 +51,8 @@ def parse_file(filename):
     size = os.stat(filename).st_size
     with open(filename,'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), size, access=mmap.ACCESS_READ)) as m:
-            parsed_xmls.extend(regex.findall(m))
+            res = [x[0] for x in regex.findall(m)]
+            parsed_xmls.extend(res)
     return parsed_xmls
 
 def parallel_parse(filelist):
