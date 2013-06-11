@@ -15,7 +15,6 @@ import sys
 sys.path.append( '.' )
 sys.path.append( './lib/' )
 
-from patXML import *
 from grant_handler import PatentGrant
 from patSQL import *
 from argconfig_parse import ArgHandler
@@ -23,14 +22,7 @@ from argconfig_parse import ArgHandler
 xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \
               PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
 
-regex = re.compile(r"""
- ([<][?]xml[ ]version.*?[>]       #all XML starts with ?xml
-.*?
-[<][/]us[-]patent[-]grant[>])    #and here is the end tag
-""", re.I+re.S+re.X)
-
-regex = re.compile(r"""([<][?]xml version.*?[>]\s+<!DOCTYPE ([A-Za-z-]+) SYSTEM.*?/\2>)""",\
-    re.S+re.I)
+regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 
 def list_files(directories, patentroot, xmlregex):
     """
