@@ -4,21 +4,20 @@ import os
 import sys
 import unittest
 import logging
+import re
 
 sys.path.append('..')
 sys.path.append('../lib')
 import parse
-from patXML import *
+from grant_handler import PatentGrant
+from patSQL import *
 
 basedir = os.path.dirname(__file__)
 testdir = os.path.join(basedir, './fixtures/xml/')
 testfileone = 'ipg120327.one.xml'
 testfiletwo = 'ipg120327.two.xml'
-regex = re.compile(r"""
- ([<][?]xml[ ]version.*?[>]       #all XML starts with ?xml
-.*?
-[<][/]us[-]patent[-]grant[>])    #and here is the end tag
-""", re.I+re.S+re.X)
+regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
+
 xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \
               PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
 
@@ -64,7 +63,8 @@ class TestParseFile(unittest.TestCase):
     def test_use_parallel_parse_one(self):
         filelist = [testdir+testfileone]
         parsed_output = parse.parallel_parse(filelist)
-        parsed_xml = [xmlclass(parsed_output[0]) for xmlclass in xmlclasses]
+        patobj = PatentGrant(parsed_output[0], True)
+        parsed_xml = [xmlclass(patobj) for xmlclass in xmlclasses]
         self.assertTrue(len(parsed_xml) == len(xmlclasses))
         self.assertTrue(all(parsed_xml))
 
@@ -74,8 +74,9 @@ class TestParseFile(unittest.TestCase):
         parsed_xml = []
         for us_patent_grant in parsed_output:
             self.assertTrue(isinstance(us_patent_grant, str))
+            patobj = PatentGrant(us_patent_grant, True)
             for xmlclass in xmlclasses:
-                parsed_xml.append(xmlclass(us_patent_grant))
+                parsed_xml.append(xmlclass(patobj))
         self.assertTrue(len(parsed_xml) == 2 * len(xmlclasses))
         self.assertTrue(all(parsed_xml))
     
