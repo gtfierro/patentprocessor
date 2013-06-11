@@ -65,7 +65,7 @@ def apply_xmlclass(us_patent_grant):
     parsed_grants = []
     try:
         patobj = PatentGrant(us_patent_grant, True)
-    except SAXException as e:
+    except Exception as e:
         print e
         return
     for xmlclass in xmlclasses:
