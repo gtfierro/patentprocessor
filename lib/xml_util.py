@@ -87,20 +87,7 @@ def normalize_document_identifier(identifier):
     [identifier] is a string representing the document-id field from an XML document
     """
     # create splits on identifier
-    s = ''
-    if identifier.upper().startswith('USD'):
-        s = identifier[:3],identifier[3:]
-    elif identifier.upper().startswith('US'):
-        s = identifier[:2],identifier[2:]
-    elif identifier.upper().startswith('D'):
-        s = identifier[:1],identifier[1:]
-    else:
-        s = '',identifier
-    s = list(s)
-    # strip leading 0 if it exists
-    if s[1].startswith('0'):
-        s[1] = s[1][1:]
-    return s[0]+s[1]
+    return re.sub(r'([A-Z]*)0?',r'\g<1>',identifier,1)
 
 def associate_prefix(firstname, lastname):
     """
