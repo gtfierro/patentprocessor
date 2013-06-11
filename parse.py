@@ -82,6 +82,7 @@ def parse_patent(grant_list):
 #    parsed_grants = pool.imap(apply_xmlclass, grant_list)
 #    parsed_grants = list(parsed_grants)
     parsed_grants = map(apply_xmlclass, grant_list)
+    parsed_grants = filter(lambda x: x, parsed_grants)
     return itertools.chain.from_iterable(parsed_grants)
 
 def load_sql(patent):
