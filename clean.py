@@ -36,6 +36,7 @@ print "   -", datetime.datetime.now()-t1
 ### Create copy of assignee table, add column for assigneeAsc
 s = SQLite.SQLite(db = 'assignee.sqlite3', tbl = 'assignee_1')
 s.conn.create_function("ascit", 1, ascit)
+s.conn.create_function("clean_assignee", 1, clean_assignee)
 s.conn.create_function("cc", 3, locFunc.cityctry)
 
 
@@ -49,7 +50,7 @@ def handle_assignee():
     #s.addSQL(data='assignee', insert="IGNORE")
     s.c.execute("INSERT INTO assignee_1 SELECT * FROM assignee %s" % (debug and "LIMIT 2500" or ""))
     s.add('assigneeAsc', 'VARCHAR(30)')
-    s.c.execute("UPDATE assignee_1 SET assigneeAsc = ascit(assignee);")
+    s.c.execute("UPDATE assignee_1 SET assigneeAsc = clean_assignee(assignee);")
     s.commit()
     #print "DONE: assignee_1 table created in assignee.sqlite3 with new column assigneeAsc", "\n   -", datetime.datetime.now()-t1
 
