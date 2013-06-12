@@ -237,6 +237,13 @@ def tabFile(fname, delim="\t"):
 def remspace(x):
     return re.sub(r" ", "", x)
 
+def clean_assignee(x):
+    #Solves that {UMLAUT OVER (A)}
+    x = re.sub(r"[{].*?[(].*?[)].*?[}]", lambda(x):re.findall("[(](.*?)[)]", x.group())[0], x)
+    x = re.sub(r"[(].*?[)]|[{].*?[}]", "", x)
+    x = re.sub(r"[-!@#$%^&*.,(){}\"']", "", x)
+    return x.strip()
+
 
 def ascit(x, strict=True, remove_plus=False):
     x = x.upper()
