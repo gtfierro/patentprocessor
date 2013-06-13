@@ -51,7 +51,7 @@ def parallel_parse(filelist):
     if not filelist: return
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
     parsed = pool.imap(parse_file, filelist)
-    return list(itertools.chain.from_iterable(parsed))
+    return itertools.chain.from_iterable(parsed)
 
 def apply_xmlclass(us_patent_grant):
     parsed_grants = []
@@ -69,10 +69,6 @@ def apply_xmlclass(us_patent_grant):
     return parsed_grants
 
 def parse_patent(grant_list):
-#    comment these out because the resulting classes aren't serializable
-#    pool = multiprocessing.Pool(multiprocessing.cpu_count())
-#    parsed_grants = pool.imap(apply_xmlclass, grant_list)
-#    parsed_grants = list(parsed_grants)
     parsed_grants = map(apply_xmlclass, grant_list)
     parsed_grants = filter(lambda x: x, parsed_grants)
     return itertools.chain.from_iterable(parsed_grants)
