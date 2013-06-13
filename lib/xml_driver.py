@@ -35,6 +35,9 @@ class ChainList(list):
             else: scope.extend(current.children)
         return ChainList(res)
 
+    def __reduce__(self): return (ChainList, (), None, iter(self), None)
+    def __getstate__(self): return None
+
 class XMLElement(object):
     """
     Represents XML elements from a document. These will assist
@@ -48,6 +51,9 @@ class XMLElement(object):
         self.content = []
         self.children = ChainList()
         self.is_root = False
+
+    def __getstate__(self):
+        return self.__dict__
 
     def __iter__(self):
         yield self
