@@ -34,36 +34,36 @@ class TestAscit(unittest.TestCase):
         self.foo = 'bar'
 
     def test_toupper(self):
-        assert('FOO' == ascit('foo'))
+        assert('FOO' == ascit('FOO'))
 
-    def test_remove_acute_verite(self):
+    def test_retain_acute_verite(self):
         #print ascit('verité').rstrip('\r\n')
-        assert('VERIT' == ascit('verité'))
+        assert('verité' == ascit('verité'))
 
-    def test_remove_acute(self):
+    def test_retain_acute(self):
         #print 'ascit é' + ascit('é')
-        assert('' == ascit('é'))
+        assert('é' == ascit('é'))
 
-    def test_remove_grave(self):
-        assert('' == ascit('è'))
+    def test_retain_grave(self):
+        assert('è' == ascit('è'))
 
-    def test_remove_circumflex(self):
-        assert('' == ascit('ô'))
+    def test_retain_circumflex(self):
+        assert('ô' == ascit('ô'))
 
-    def test_remove_umlaut(self):
-        assert('' == ascit('ü'))
+    def test_retain_umlaut(self):
+        assert('ü' == ascit('ü'))
 
-    def test_remove_tilde(self):
-        assert('' == ascit('ñ'))
+    def test_retain_tilde(self):
+        assert('ñ' == ascit('ñ'))
 
-    def test_remove_oeligature(self):
-        assert('' == ascit('œ'))
+    def test_retain_oeligature(self):
+        assert('œ' == ascit('œ'))
 
-    def test_remove_cedilla(self):
-        assert('' == ascit('ç'))
+    def test_retain_cedilla(self):
+        assert('ç' == ascit('ç'))
 
-    def test_remove_usdq(self):
-        assert('' == ascit('¿'))
+    def test_retain_usdq(self):
+        assert('¿' == ascit('¿'))
 
     def test_int(self):
         assert('1' == ascit('1'))
@@ -77,21 +77,21 @@ class TestAscit(unittest.TestCase):
         assert('10' == ascit('1.0', strict=True))
 
     def test_remove_ampersand(self):
-        assert('FOOBAR' == ascit('foo@bar', strict=True))
+        assert('foobar' == ascit('foo&bar', strict=True))
 
     def test_remove_punctuation(self):
-        assert('FOOBAR' == ascit('f+-=_oo@b!#$%^&*(){}ar', strict=True))
+        assert('foobar' == ascit('f+=_oo@b!#$%^&*(){}ar', strict=True))
 
     def test_remove_space_plus(self):
         assert('' == ascit(' +', strict=True))
 
     def test_remove_spaces(self):
         #print ascit('foo bar')
-        assert('FOOBAR' == ascit('foobar'))
+        assert('foobar' == ascit('foobar'))
 
     def test_remove_duplicates(self):
-        #print ascit('foo,- |||,,,- - --,, |,-,, bar')
-        assert('FOO BAR' == ascit('foo,- |||,,,- - --,, |,-,, bar'))
+        #print ascit('foo, |||,,,  ,, |,,, bar')
+        assert('foo     bar' == ascit('foo, |||,,,  ,, |,,, bar'))
 
     def test_remove_braces(self):
         #print ascit('{foo bar}', strict=True)
@@ -105,12 +105,12 @@ class TestAscit(unittest.TestCase):
         assert('' == ascit('(foo bar)', strict=True))
 
     def test_remove_period(self):
-        assert('HELLO THERE' == ascit('hello. there'))
-        assert('HELLO THERE' == ascit('hello. there',strict =True))
+        assert('hello there' == ascit('hello. there'))
+        assert('hello there' == ascit('hello. there',strict =True))
 
     def test_remove_comma(self):
-        assert('HELLO THERE' == ascit('hello, there'))
-        assert('HELLO THERE' == ascit('hello, there',strict =True))
+        assert('hello there' == ascit('hello, there'))
+        assert('hello there' == ascit('hello, there',strict =True))
 
 if __name__ == '__main__':
     unittest.main()
