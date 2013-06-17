@@ -254,7 +254,7 @@ def ascit(x, strict=True, remove_plus=False):
         #remove stuff in between (), {}
         x = re.sub(r"[(].*?[)]|[{].*?[}]", "", x)
         #remove periods, ampersand, etc
-        x = re.sub(r"[!@#$%^&*.,(){}\"']", "", x)
+        x = re.sub(r"[|!@#$%^&*.,(){}\"'+=_]", "", x)
         #x = re.sub(r"[^A-Za-z0-9 ]", "", x)
         # This version was in sendAdd.py
         #x = re.sub(r"[^A-Za-z0-9 ]", " ", x)
