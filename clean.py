@@ -11,6 +11,7 @@ import SQLite
 # by unit test.
 from senAdd import *
 from fwork import *
+from xml_util import normalize_document_identifier
 import locFunc
 import orgClean
 
@@ -39,6 +40,15 @@ s.conn.create_function("ascit", 1, ascit)
 s.conn.create_function("clean_assignee", 1, clean_assignee)
 s.conn.create_function("cc", 3, locFunc.cityctry)
 
+def normalize_doc_numbers():
+    citation_table = SQLite.SQLite('citation.sqlite3')
+    citation_table.conn.create_function('normalize_document_identifier', 1, normalize_document_identifier)
+    citation_table.attach('citation')
+    citation_table.c.execute('update citation set Citation=normalize_document_identifier(Citation);')
+    citation_table.commit()
+    citation_table.close()
+
+normalize_doc_numbers()
 
 def handle_assignee():
 
