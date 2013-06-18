@@ -58,6 +58,11 @@ class PatentGrant(object):
             it.extend(further)
         return [ [x[:3].replace(' ',''), x[3:].replace(' ','')] for x in it]
 
+    def _name_helper(self, tag_root):
+        firstname = tag_root.contents_of('first_name', as_string=True)
+        lastname = tag_root.contents_of('last_name', as_string=True)
+        return associate_prefix(firstname, lastname)
+
     def _asg_list(self):
         doc = self.xml.assignees.assignee
         data = []
