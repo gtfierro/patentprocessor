@@ -5,6 +5,7 @@ import sys
 import unittest
 import logging
 import re
+from collections import Iterable
 
 sys.path.append('..')
 sys.path.append('../lib')
@@ -62,7 +63,7 @@ class TestParseFile(unittest.TestCase):
     
     def test_use_parallel_parse_one(self):
         filelist = [testdir+testfileone]
-        parsed_output = parse.parallel_parse(filelist)
+        parsed_output = list(parse.parallel_parse(filelist))
         patobj = PatentGrant(parsed_output[0], True)
         parsed_xml = [xmlclass(patobj) for xmlclass in xmlclasses]
         self.assertTrue(len(parsed_xml) == len(xmlclasses))
@@ -81,23 +82,21 @@ class TestParseFile(unittest.TestCase):
         self.assertTrue(all(parsed_xml))
     
     def test_list_files(self):
-        patentroot = '.'
-        testdir = [os.path.join(basedir, './fixtures/xml')]
+        testdir = os.path.join(basedir, './fixtures/xml')
         xmlregex = r'ipg120327.one.xml'
-        files = parse.list_files(testdir, patentroot, xmlregex)
+        files = parse.list_files(testdir, xmlregex)
         self.assertTrue(isinstance(files, list))
         self.assertTrue(len(files) == 1)
         self.assertTrue(all(filter(lambda x: isinstance(x, str), files)))
         self.assertTrue(all(map(lambda x: os.path.exists(x), files)))
 
     def test_parse_patent(self):
-        patentroot = '.'
-        testdir = [os.path.join(basedir, './fixtures/xml')]
+        testdir = os.path.join(basedir, './fixtures/xml')
         xmlregex = r'ipg120327.one.xml'
-        filelist = parse.list_files(testdir, patentroot, xmlregex)
-        grant_list = parse.parallel_parse(filelist)
-        parsed_grants = parse.parse_patent(grant_list)
-        self.assertTrue(len(list(parsed_grants)) == len(grant_list)*len(xmlclasses))
+        filelist = parse.list_files(testdir, xmlregex)
+        grant_list = list(parse.parallel_parse(filelist))
+        parsed_grants = list(parse.parse_patent(grant_list))
+        self.assertTrue(len(parsed_grants) == len(grant_list)*len(xmlclasses))
 
 
 if __name__ == '__main__':
