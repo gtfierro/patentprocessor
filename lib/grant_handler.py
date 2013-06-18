@@ -169,13 +169,15 @@ class PatentGrant(object):
         return res
 
     def _law_list(self):
-        doc = self.xml.parties.agents
-        if not doc: return []
+        lawyers = self.xml.parties.agents.agent
+        if not lawyers: return []
         res = []
-        for agent in doc.agent:
-          tmp = []
-          for tag in ['last_name','first_name','country','orgname']:
-              data = agent.contents_of(tag)
-              tmp.extend([''.join(x) for x in data] if data else [''])
-          res.append(tmp)
+        for lawyer in lawyers:
+            data = []
+            firstname, lastname = self._name_helper(lawyer)
+            data.append(lastname)
+            data.append(firstname)
+            data.append(lawyer.contents_of('country',as_string=True))
+            data.append(lawyer.contents_of('orgname',as_string=True))
+            res.append(data)
         return res
