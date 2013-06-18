@@ -91,6 +91,13 @@ def commit_tables():
     sciref_table.commit();
     usreldoc_table.commit();
 
+def main(directories, patentroot, xmlregex, verbosity):
+    logging.basicConfig(filename=logfile, level=verbosity)
+    files = list_files(directories, patentroot, xmlregex)
+    parsed_xmls = parallel_parse(files)
+    parsed_grants = parse_patent(parsed_xmls)
+    build_tables(parsed_grants)
+    commit_tables()
 
 if __name__ == '__main__':
 
@@ -105,21 +112,4 @@ if __name__ == '__main__':
     VERBOSITY = args.get_verbosity()
 
     logfile = "./" + 'xml-parsing.log'
-    logging.basicConfig(filename=logfile, level=VERBOSITY)
-
-    t1 = datetime.datetime.now()
-
-    files = list_files(DIRECTORIES, PATENTROOT, XMLREGEX)
-    parsed_xmls = parallel_parse(files)
-    parsed_grants = parse_patent(parsed_xmls)
-    build_tables(parsed_grants)
-    commit_tables()
-
-    #total_patents = len(parsed_xmls)
-    #total_errors = len(parsed_xmls) * len(xmlclasses) - len(parsed_grants)
-
-    #logging.info("Parsing started at %s", str(datetime.datetime.today()))
-    #logging.info("Time Elapsed: %s", datetime.datetime.now()-t1)
-    #logging.info("Total Patent Files: %d" % (len(files)))
-    #logging.info("Total Errors: %d", total_errors)
-    #logging.info("Total Patents: %d", total_patents)
+    main(DIRECTORIES, PATENTROOT, XMLREGEX, VERBOSITY)
