@@ -24,16 +24,15 @@ xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 
-def list_files(directories, patentroot, xmlregex):
+def list_files(patentroot, xmlregex):
     """
-    Returns listing of all files within all directories relative to patentroot
+    Returns listing of all files within patentroot
     whose filenames match xmlregex
     """
-    files = [patentroot+'/'+directory+'/'+fi for directory in directories for fi in \
-            os.listdir(patentroot+'/'+directory) \
+    files = [patentroot+'/'+fi for fi in os.listdir(patentroot) \
             if re.search(xmlregex, fi, re.I) != None]
     if not files:
-        logging.error("No files matching {0} found in {1}/{2}".format(XMLREGEX,PATENTROOT,DIRECTORIES))
+        logging.error("No files matching {0} found in {1}".format(XMLREGEX,PATENTROOT))
         sys.exit(1)
     return files
 
@@ -91,9 +90,9 @@ def commit_tables():
     sciref_table.commit();
     usreldoc_table.commit();
 
-def main(directories, patentroot, xmlregex, verbosity):
+def main(patentroot, xmlregex, verbosity):
     logging.basicConfig(filename=logfile, level=verbosity)
-    files = list_files(directories, patentroot, xmlregex)
+    files = list_files(patentroot, xmlregex)
     parsed_xmls = parallel_parse(files)
     parsed_grants = parse_patent(parsed_xmls)
     build_tables(parsed_grants)
@@ -106,10 +105,9 @@ if __name__ == '__main__':
     if args.invalid_config():
         args.get_help()
 
-    DIRECTORIES = args.get_directory_list()
     XMLREGEX = args.get_xmlregex()
     PATENTROOT = args.get_patentroot()
     VERBOSITY = args.get_verbosity()
 
     logfile = "./" + 'xml-parsing.log'
-    main(DIRECTORIES, PATENTROOT, XMLREGEX, VERBOSITY)
+    main(PATENTROOT, XMLREGEX, VERBOSITY)
