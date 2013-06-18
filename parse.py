@@ -48,8 +48,8 @@ def parse_file(filename):
 
 def parallel_parse(filelist):
     if not filelist: return
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
-    parsed = pool.imap(parse_file, filelist)
+    #pool = multiprocessing.Pool(multiprocessing.cpu_count())
+    parsed = itertools.imap(parse_file, filelist)
     return itertools.chain.from_iterable(parsed)
 
 def apply_xmlclass(us_patent_grant):
@@ -68,8 +68,8 @@ def apply_xmlclass(us_patent_grant):
     return parsed_grants
 
 def parse_patent(grant_list):
-    parsed_grants = map(apply_xmlclass, grant_list)
-    parsed_grants = filter(lambda x: x, parsed_grants)
+    parsed_grants = itertools.imap(apply_xmlclass, grant_list)
+    parsed_grants = itertools.ifilter(lambda x: x, parsed_grants)
     return itertools.chain.from_iterable(parsed_grants)
 
 def load_sql(patent):
