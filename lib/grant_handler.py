@@ -148,21 +148,22 @@ class PatentGrant(object):
         return res
 
     def _inv_list(self):
-        doc = self.xml.parties.applicant
-        if not doc: return []
+        inventors = self.xml.parties.applicant
+        if not inventors: return []
         res = []
-        res.append(doc.addressbook.contents_of('last_name'))
-        res.append(doc.addressbook.contents_of('first_name'))
-        for tag in ['street','city','state','country','postcode']:
-            data = doc.addressbook.address.contents_of(tag)
-            if any(map(lambda x: isinstance(x, list), data)):
-                data = [''.join(x) for x in data]
+        for inventor in inventors:
+            data = []
+            lastname = inventor.addressbook.contents_of('last_name',as_string=True)
+            firstname = inventor.addressbook.contents_of('first_name',as_string=True)
+            firstname, lastname = associate_prefix(firstname, lastname)
+            data.append(lastname)
+            data.append(firstname)
+            for tag in ['street','city','state','country','postcode']:
+                data.append(inventor.addressbook.address.contents_of(tag,as_string=True))
+            data.append(inventor.nationality.contents_of('country',as_string=True))
+            data.append(inventor.residence.contents_of('country',as_string=True))
             res.append(data)
-        res.append(doc.nationality.contents_of('country'))
-        res.append(doc.residence.contents_of('country'))
-        maxlen = max(map(len, res))
-        res = [x*maxlen if len(x) != maxlen else x for x in res]
-        return flatten(res)
+        return res
 
     def _law_list(self):
         doc = self.xml.parties.agents
