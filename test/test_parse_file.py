@@ -37,14 +37,16 @@ class TestParseFile(unittest.TestCase):
     def test_parallel_parse_one(self):
         filelist = [testdir+testfileone]
         parsed_output = parse.parallel_parse(filelist)
-        self.assertTrue(isinstance(parsed_output,list))
+        self.assertTrue(isinstance(parsed_output,Iterable))
+        parsed_output = list(parsed_output)
         self.assertTrue(len(parsed_output) == 1)
         self.assertTrue(isinstance(parsed_output[0], str))
         self.assertTrue(regex.match(parsed_output[0]))
 
     def test_parse_file_two(self):
         parsed_output = parse.parse_file(testdir+testfiletwo)
-        self.assertTrue(isinstance(parsed_output, list))
+        self.assertTrue(isinstance(parsed_output, Iterable))
+        parsed_output = list(parsed_output)
         self.assertTrue(len(parsed_output) == 2)
         self.assertTrue(isinstance(parsed_output[0], str))
         self.assertTrue(isinstance(parsed_output[1], str))
@@ -54,7 +56,8 @@ class TestParseFile(unittest.TestCase):
     def test_parallel_parse_two(self):
         filelist = [testdir+testfiletwo]
         parsed_output = parse.parallel_parse(filelist)
-        self.assertTrue(isinstance(parsed_output,list))
+        self.assertTrue(isinstance(parsed_output,Iterable))
+        parsed_output = list(parsed_output)
         self.assertTrue(len(parsed_output) == 2)
         self.assertTrue(isinstance(parsed_output[0], str))
         self.assertTrue(isinstance(parsed_output[1], str))
