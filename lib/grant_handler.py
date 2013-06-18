@@ -158,9 +158,7 @@ class PatentGrant(object):
         res = []
         for inventor in inventors:
             data = []
-            lastname = inventor.addressbook.contents_of('last_name',as_string=True)
-            firstname = inventor.addressbook.contents_of('first_name',as_string=True)
-            firstname, lastname = associate_prefix(firstname, lastname)
+            firstname, lastname = self._name_helper(inventor.addressbook)
             data.append(lastname)
             data.append(firstname)
             for tag in ['street','city','state','country','postcode']:
