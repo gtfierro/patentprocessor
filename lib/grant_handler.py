@@ -69,8 +69,9 @@ class PatentGrant(object):
         if not doc: return []
         if doc.first_name:
             data = [1]
-            data.extend(doc.contents_of('last_name'))
-            data.extend(doc.contents_of('first_name'))
+            firstname, lastname = self._name_helper(doc)
+            data.extend(lastname)
+            data.extend(firstname)
         else:
             data = [0]
             data.extend(doc.contents_of('orgname'))
