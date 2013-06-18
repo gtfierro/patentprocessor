@@ -6,7 +6,7 @@
 
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.one
-./parse.py -d test/fixtures/xml/ -p. -x ipg120327.one.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.one.xml
 
 for table in assignee citation class inventor lawyer patdesc patent sciref usreldoc
 do
@@ -17,7 +17,7 @@ done
 # TODO: Refactor
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.two
-./parse.py -d test/fixtures/xml/ -p. -x ipg120327.two.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml
 
 for table in assignee citation class inventor lawyer patdesc patent sciref usreldoc
 do
@@ -27,7 +27,7 @@ done
 
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.18
-./parse.py -d test/fixtures/xml/ -p. -x ipg120327.18.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml
 
 for table in assignee citation class inventor lawyer patdesc patent sciref usreldoc
 do

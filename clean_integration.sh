@@ -5,7 +5,7 @@
 ##### Two rows
 
 make spotless > /dev/null
-./parse.py -d test/fixtures/xml/ -p. -x ipg120327.two.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml
 mkdir -p tmp/integration/ipg120327.two
 
 
@@ -35,7 +35,7 @@ done
 #### 18 rows
 
 make spotless > /dev/null
-./parse.py -d test/fixtures/xml/ -p. -x ipg120327.18.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml
 mkdir -p tmp/integration/ipg120327.18
 
 echo Starting clean...
