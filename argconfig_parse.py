@@ -13,16 +13,13 @@ class ArgHandler(object):
         # setup argparse
         self.parser = argparse.ArgumentParser(description=\
                 'Specify source directory/directories for xml files to be parsed')
-        self.parser.add_argument('--directory','-d', type=str, nargs='+', default='.',
-                help='comma separated list of directories relative to $PATENTROOT that \
-                parse.py will search for .xml files')
         self.parser.add_argument('--patentroot','-p', type=str, nargs='?',
                 default=os.environ['PATENTROOT'] \
-                if os.environ.has_key('PATENTROOT') else '/',
-                help='root directory of all patent files/directories')
+                if os.environ.has_key('PATENTROOT') else '.',
+                help='root directory of all patent files')
         self.parser.add_argument('--xmlregex','-x', type=str, 
                 nargs='?', default=r"ipg\d{6}.xml",
-                help='regex used to match xml files in each directory')
+                help='regex used to match xml files in the PATENTROOT directory')
         self.parser.add_argument('--verbosity', '-v', type = int,
                 nargs='?', default=0,
                 help='Set the level of verbosity for the computation. The higher the \
@@ -31,7 +28,6 @@ class ArgHandler(object):
 
         # parse arguments and assign values
         args = self.parser.parse_args(self.arglist)
-        self.directories = args.directory
         self.xmlregex = args.xmlregex
         self.patentroot = args.patentroot
 
@@ -50,9 +46,6 @@ class ArgHandler(object):
         nonverbose = [opt for opt in specified if '-v' not in opt]
         return len(nonverbose) == 0
         
-    def get_directory_list(self):
-        return self.directories
-
     def get_xmlregex(self):
         return self.xmlregex
 
