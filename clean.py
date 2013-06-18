@@ -161,6 +161,7 @@ print "DONE: Classes!", "\n   -", datetime.datetime.now()-t1
 ###                       ###
  ###########################
 
+# normalizes the application date and grant date
 def handle_patent():
     p = SQLite.SQLite(db = 'patent.sqlite3', tbl = 'patent')
     p.conn.create_function('dVert', 1, dateVert)
