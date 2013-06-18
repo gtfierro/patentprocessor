@@ -20,10 +20,12 @@ class ChainList(list):
     a list in order to traverse the tree.
     """
 
-    def contents_of(self, tag, default=['']):
+    def contents_of(self, tag, default=[''], as_string=False):
         res = []
         for item in self:
             res.extend( item.contents_of(tag) )
+        if as_string:
+            return ' '.join(res) if res else ''
         return ChainList(res) if res else default
 
     def __getattr__(self, key):
@@ -77,12 +79,15 @@ class XMLElement(object):
         else:
             return ChainList('')
 
-    def contents_of(self, key, default=ChainList('')):
+    def contents_of(self, key, default=ChainList(''), as_string=False):
         candidates = self.__getattr__(key)
         if candidates:
-            return [x.get_content() for x in candidates]
+            res = [x.get_content() for x in candidates]
         else:
-            return default
+            res = default
+        if as_string:
+            return ' '.join(res)
+        return res
 
     def get_content(self):
         if len(self.content) == 1:
