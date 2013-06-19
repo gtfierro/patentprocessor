@@ -57,8 +57,8 @@ def apply_xmlclass(us_patent_grant):
     try:
         patobj = PatentGrant(us_patent_grant, True)
     except Exception as e:
-        print e
-        return
+        logging.error(type(e))
+        logging.error("  - Error: %s" % (us_patent_grant[175:200]))
     for xmlclass in xmlclasses:
         try:
             parsed_grants.append(xmlclass(patobj))
