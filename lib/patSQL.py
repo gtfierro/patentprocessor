@@ -11,7 +11,10 @@ connection.
 """
 
 class SQLTableBuilder(object):
-    pass
+    def __init__(self):
+        raise NotImplementedError("Create database file")
+    def commit(self):
+        raise NotImplementedError("Create commit method")
 
 class AssigneeSQL(SQLTableBuilder):
     def __init__(self):
