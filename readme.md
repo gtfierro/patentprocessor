@@ -96,6 +96,18 @@ So, optimize for readability.  Specifically:
 * Use vowels, not secret shorthand 1337 cmptr cd fr nmng vrbls.
 * Line length to 80 characters, no more.
 
+### Running Tests
+
+Before committing changes or submitting a pull request, please make sure that the code passes
+all of our tests. There are two sets of tests:
+
+* Integration tests: these test the end-to-end status of the preprocessor. From
+  within the `integration/` directory, run the script
+  `run_integration_tests.sh`. If you do not see any diff output, then the test
+  has passed.
+* Unit tests: these test individual components of the preprocessor. From within
+  the `test/` directory, run the script `patenttest.sh`. The output will let
+  you know if any tests have failed.
 
 ## Configuring the Preprocessing Environment
 
