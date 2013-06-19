@@ -70,12 +70,9 @@ def parse_patent(grant_list):
     parsed_grants = itertools.ifilter(lambda x: x, parsed_grants)
     return itertools.chain.from_iterable(parsed_grants)
 
-def load_sql(patent):
-    patent.insert_table()
-
-# TODO: unittest
 def build_tables(parsed_grants):
-    map(load_sql, parsed_grants)
+    for parsed_grant in parsed_grants:
+        parsed_grant.insert_table()
 
 def commit_tables():
     assignee_table.commit();
