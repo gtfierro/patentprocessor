@@ -44,7 +44,7 @@ always obvious.
 
 The format of the filename has only been ipgxxxxxx.zip since 2005, so if you
 want anything before then, do the above process. Anything after that, try using
-the `getpatent.py` script in the patentprocessor repository. Usage is `python
+the `util/getpatent.py` script in the patentprocessor repository. Usage is `python
 getpatent.py <patent number>`
 
 
