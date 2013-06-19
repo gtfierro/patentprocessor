@@ -7,7 +7,6 @@ import datetime
 import re
 import mmap
 import contextlib
-import multiprocessing
 import itertools
 from xml.sax import SAXException
 
@@ -49,7 +48,6 @@ def parse_file(filename):
 
 def parallel_parse(filelist):
     if not filelist: return
-    #pool = multiprocessing.Pool(multiprocessing.cpu_count())
     parsed = itertools.imap(parse_file, filelist)
     return itertools.chain.from_iterable(parsed)
 
