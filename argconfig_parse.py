@@ -45,14 +45,6 @@ class ArgHandler(object):
                           3: logging.DEBUG}
         self.verbosity = logging_levels[args.verbosity]
 
-    def invalid_config(self):
-        # double check that variables are actually set
-        # we ignore the verbosity argument when determining
-        # if any variables have been set by the user
-        specified = [arg for arg in self.arglist if arg.startswith('-')]
-        nonverbose = [opt for opt in specified if '-v' not in opt]
-        return len(nonverbose) == 0
-        
     def get_xmlregex(self):
         return self.xmlregex
 
