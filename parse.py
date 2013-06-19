@@ -8,6 +8,7 @@ import re
 import mmap
 import contextlib
 import itertools
+import shutil
 from xml.sax import SAXException
 
 import sys
@@ -83,7 +84,19 @@ def commit_tables():
     sciref_table.commit();
     usreldoc_table.commit();
 
-def main(patentroot, xmlregex, verbosity):
+def move_tables(output_directory):
+    """
+    Moves the output sqlite3 files to the output directory
+    """
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    for database in ['assignee.sqlite3','citation.sqlite3','class.sqlite3',\
+                     'inventor.sqlite3','patent.sqlite3','patdesc.sqlite3',\
+                     'lawyer.sqlite3','sciref.sqlite3','usreldoc.sqlite3']:
+        shutil.move(database,output_directory+'/'+database)
+
+
+def main(patentroot, xmlregex, verbosity, output_directory='.'):
     logging.basicConfig(filename=logfile, level=verbosity)
     logging.info("Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),patentroot))
     files = list_files(patentroot, xmlregex)
@@ -96,18 +109,18 @@ def main(patentroot, xmlregex, verbosity):
     logging.info("SQL inserts queued up")
     commit_tables()
     logging.info("SQL tables committed")
+    move_tables(output_directory)
+    logging.info("SQL tables moved to {0}".format(output_directory))
     logging.info("Parse completed at {0}".format(str(datetime.datetime.today())))
 
 if __name__ == '__main__':
 
     args = ArgHandler(sys.argv[1:])
 
-    if args.invalid_config():
-        args.get_help()
-
     XMLREGEX = args.get_xmlregex()
     PATENTROOT = args.get_patentroot()
     VERBOSITY = args.get_verbosity()
+    PATENTOUTPUTDIR = args.get_output_directory()
 
     logfile = "./" + 'xml-parsing.log'
-    main(PATENTROOT, XMLREGEX, VERBOSITY)
+    main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR)
