@@ -4,9 +4,11 @@
 # ensuring the preprocessing works correctly as we move
 # forward fixing bugs, etc.
 
+cd ..
+
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.one
-./parse.py -p test/fixtures/xml/ -x ipg120327.one.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.one.xml -o .
 
 for table in assignee citation class inventor lawyer patdesc patent sciref usreldoc
 do
@@ -17,7 +19,7 @@ done
 # TODO: Refactor
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.two
-./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml -o .
 
 for table in assignee citation class inventor lawyer patdesc patent sciref usreldoc
 do
@@ -27,7 +29,7 @@ done
 
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.18
-./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml -o .
 
 for table in assignee citation class inventor lawyer patdesc patent sciref usreldoc
 do

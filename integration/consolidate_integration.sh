@@ -2,10 +2,12 @@
 
 # Integration testing for the consolidate.py script
 
+cd ..
+
 ##### Two rows
 
 make spotless > /dev/null
-./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml -o .
 mkdir -p tmp/integration/ipg120327.two
 
 
@@ -44,7 +46,7 @@ done
 ### 18 rows
 
 make spotless > /dev/null
-./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml
+./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml -o .
 mkdir -p tmp/integration/ipg120327.18
 
 echo Starting clean...
