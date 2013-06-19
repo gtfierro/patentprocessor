@@ -40,6 +40,7 @@ def parse_file(filename):
     if not filename: return
     parsed_xmls = []
     size = os.stat(filename).st_size
+    logging.debug("Parsing file: {0}".format(filename))
     with open(filename,'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), size, access=mmap.ACCESS_READ)) as m:
             res = [x[0] for x in regex.findall(m)]
@@ -56,15 +57,11 @@ def apply_xmlclass(us_patent_grant):
     parsed_grants = []
     try:
         patobj = PatentGrant(us_patent_grant, True)
-    except Exception as e:
-        logging.error(type(e))
-        logging.error("  - Error: %s" % (us_patent_grant[175:200]))
-    for xmlclass in xmlclasses:
-        try:
+        for xmlclass in xmlclasses:
             parsed_grants.append(xmlclass(patobj))
-        except Exception as inst:
-            logging.error(type(inst))
-            logging.error("  - Error: %s" % (us_patent_grant[175:200]))
+    except Exception as inst:
+        logging.error(type(inst))
+        logging.error("  - Error parsing patent: %s" % (us_patent_grant[:400]))
     return parsed_grants
 
 def parse_patent(grant_list):
@@ -92,11 +89,18 @@ def commit_tables():
 
 def main(patentroot, xmlregex, verbosity):
     logging.basicConfig(filename=logfile, level=verbosity)
+    logging.info("Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),patentroot))
     files = list_files(patentroot, xmlregex)
+    logging.info("Found all files matching {0} in directory {1}".format(xmlregex, patentroot))
     parsed_xmls = parallel_parse(files)
+    logging.info("Extracted all individual XML files")
     parsed_grants = parse_patent(parsed_xmls)
+    logging.info("Parsed all individual XML files")
     build_tables(parsed_grants)
+    logging.info("SQL inserts queued up")
     commit_tables()
+    logging.info("SQL tables committed")
+    logging.info("Parse completed at {0}".format(str(datetime.datetime.today())))
 
 if __name__ == '__main__':
 
