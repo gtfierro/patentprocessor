@@ -62,4 +62,6 @@ do
   diff test/integration/clean/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
 done
 
+## clean up after we're done
 
+make spotless > /dev/null
