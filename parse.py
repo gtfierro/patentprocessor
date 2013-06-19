@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import logging
-import argparse
 import os
 import datetime
 import re
