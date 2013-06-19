@@ -17,19 +17,26 @@ class ArgHandler(object):
                 default=os.environ['PATENTROOT'] \
                 if os.environ.has_key('PATENTROOT') else '.',
                 help='root directory of all patent files')
-        self.parser.add_argument('--xmlregex','-x', type=str, 
+        self.parser.add_argument('--xmlregex','-x', type=str,
                 nargs='?', default=r"ipg\d{6}.xml",
-                help='regex used to match xml files in the PATENTROOT directory')
+                help='regex used to match xml files in the PATENTROOT directory.\
+                     Defaults to ipg\d{6}.xml')
         self.parser.add_argument('--verbosity', '-v', type = int,
                 nargs='?', default=0,
                 help='Set the level of verbosity for the computation. The higher the \
                 verbosity level, the less restrictive the print policy. 0 (default) \
                 = error, 1 = warning, 2 = info, 3 = debug')
+        self.parser.add_argument('--output-directory', '-o', type=str, nargs='?',
+                default=os.environ['PATENTOUTPUTDIR'] \
+                if os.environ.has_key('PATENTOUTPUTDIR') else '.',
+                help='Set the output directory for the resulting sqlite3 files. Defaults\
+                     to the current directory "."')
 
         # parse arguments and assign values
         args = self.parser.parse_args(self.arglist)
         self.xmlregex = args.xmlregex
         self.patentroot = args.patentroot
+        self.output_directory = args.output_directory
 
         # adjust verbosity levels based on specified input
         logging_levels = {0: logging.ERROR,
@@ -54,6 +61,9 @@ class ArgHandler(object):
 
     def get_verbosity(self):
         return self.verbosity
+
+    def get_output_directory(self):
+        return self.output_directory
 
     def get_help(self):
         self.parser.print_help()
