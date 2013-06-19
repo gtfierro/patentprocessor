@@ -66,6 +66,7 @@ def apply_xmlclass(us_patent_grant):
 
 def parse_patent(grant_list):
     parsed_grants = itertools.imap(apply_xmlclass, grant_list)
+    # errored patents return None; we want to get rid of these
     parsed_grants = itertools.ifilter(lambda x: x, parsed_grants)
     return itertools.chain.from_iterable(parsed_grants)
 
