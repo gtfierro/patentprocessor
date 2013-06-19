@@ -6,7 +6,7 @@ import argparse
 import logging
 
 class ArgHandler(object):
-    
+
     def __init__(self, arglist):
         self.arglist = arglist
 
