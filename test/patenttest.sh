@@ -22,3 +22,4 @@ fi
 printf "\e[0m"
 
 rm -rf *.sqlite3 *.pyc
+rm -rf ../*.sqlite3 *.pyc
