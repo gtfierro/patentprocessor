@@ -50,6 +50,7 @@ def normalize_doc_numbers():
 
 normalize_doc_numbers()
 
+#TODO: read up on nber matchdoc.pdf
 def handle_assignee():
 
     #s.attach(database='NBER_asg',name='NBER')
@@ -80,7 +81,7 @@ handle_assignee()
 
 # TODO: Refactor to function
 ### Run orgClean.py and generate grp
-
+# TODO: get rid of in refactor
 def run_org_clean():
     org = orgClean.orgClean(db = 'assignee.sqlite3', fld = 'assigneeAsc', table = 'assignee_1', other = "")
     org.disambig()
@@ -108,6 +109,8 @@ s.close()
 ##     I N V E N T O R     ##
 ###                       ###
  ###########################
+
+# adds geocoding to inventors
 
 def handle_inventor():
 
@@ -159,6 +162,7 @@ handle_inventor()
 # Clean up classes
 # see CleanDataSet.py --> classes()
 # FIXME: Module importing not allowed in function.
+# TODO: get rid of in refactor
 from CleanDataset import *
 classes()
 print "DONE: Classes!", "\n   -", datetime.datetime.now()-t1
