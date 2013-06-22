@@ -1,5 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-python parse.py
-python clean.py
-python consolidate.py
+configfile=$1
+numberofcores=$2
+
+ipcluster start --n=$numberofcores &
+
+python start.py $configfile
+
+ipcluster stop
