@@ -13,8 +13,8 @@ def extract_process_options(handler):
     """
     result = {}
     result['parse'] = handler.get('process','parse')
-    result['clean'] = handler.get('process','clean')
-    result['consolidate'] = handler.get('process','consolidate')
+    result['clean'] = handler.get('process','clean') == 'True'
+    result['consolidate'] = handler.get('process','consolidate') == 'True'
     result['outputdir'] = handler.get('process','outputdir')
     return result
 
