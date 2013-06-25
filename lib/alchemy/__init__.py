@@ -1,12 +1,12 @@
 import os
-import schema
 import ConfigParser
 
+from schema import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, validates
 
 
-def set_engine():
+def fetch_engine():
     """
     Read from config.ini file and load appropriate database
     """
@@ -23,9 +23,9 @@ def set_engine():
     return engine
 
 
+engine = fetch_engine()
 Session = sessionmaker(bind=engine)
 session = Session()
-Base = schema.feth_base()
 Base.metadata.create_all(engine)
 
 
