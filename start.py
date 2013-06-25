@@ -47,7 +47,7 @@ def run_parse():
     parsed_xmls = parse.parallel_parse(files)
     parsed_grants = parse.parse_patent(parsed_xmls)
     parse.build_tables(parsed_grants)
-    return [(x,x.inserts) for x in parse.get_tables()]
+    return parse.get_inserts()
 
 def run_clean(process_config):
     if process_config['clean']:
