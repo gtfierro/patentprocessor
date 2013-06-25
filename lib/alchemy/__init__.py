@@ -1,10 +1,27 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import backref, relation, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('sqlite:///sqlalchemy.s3')
-#engine = create_engine('mysql+mysqldb://root:toor@localhost/USPTO?charset=utf8')
+
+import ConfigParser
+"""
+Read from config.ini file and load appropriate database
+"""
+config = ConfigParser.ConfigParser()
+config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
+if config.get('global', 'database') == "sqlite":
+    engine = create_engine('sqlite:///{0}'.format(config.get('sqlite', 'database')))
+else:
+    engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
+        config.get('mysql', 'user'),
+        config.get('mysql', 'password'),
+        config.get('mysql', 'host'),
+        config.get('mysql', 'database')))
+
+
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 session = Session()

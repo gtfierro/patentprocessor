@@ -28,3 +28,4 @@ patentroot/
 .settings/
 XML/*
 *.s3
+*.db
