@@ -39,16 +39,7 @@ def connect_client():
             continue
     return dview
 
-# accepts path to configuration file as command line option
-process_config, parse_config = get_config_options(sys.argv[1])
-files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
-dview = connect_client()
-dview.block=True
-dview.scatter('files',files)
-dview['process_config'] = process_config
-dview['parse_config'] = parse_config
-
-def run_process():
+def run_parse():
     import parse
     import time
     import sys
@@ -56,10 +47,36 @@ def run_process():
     parsed_xmls = parse.parallel_parse(files)
     parsed_grants = parse.parse_patent(parsed_xmls)
     parse.build_tables(parsed_grants)
-    parse.commit_tables()
+    return [(x,x.inserts) for x in parse.get_tables()]
 
+def commit_tables(collection):
+    for inserts in collection:
+        for insert in inserts:
+            insert[0].commit(insert[1])
+
+def run_clean(process_config):
+    if process_config['clean']:
+        print 'Running clean...'
+        execfile('clean.py')
+
+def run_consolidate(process_config):
+    if process_config['consolidate']:
+        print 'Running consolidate...'
+        execfile('consolidate.py')
+
+# accepts path to configuration file as command line option
+process_config, parse_config = get_config_options(sys.argv[1])
+print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
+files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
+print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
+dview = connect_client()
+dview.block=True
+dview.scatter('files',files)
+dview['process_config'] = process_config
+dview['parse_config'] = parse_config
+print 'Running parse...'
+inserts = itertools.chain(dview.apply(run_parse))
+commit_tables(inserts)
+run_clean(process_config)
+run_consolidate(process_config)
 parse.move_tables(process_config['outputdir'])
-
-#parsed_grants = itertools.chain.from_iterable(dview.apply(run_process))
-parsed_grants = dview.apply(run_process)
-print list(parsed_grants)
