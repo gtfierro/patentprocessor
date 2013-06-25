@@ -1,16 +1,6 @@
 #!/usr/bin/env python
-
 import sqlite3
-
-# ----- SQLAlchemy -----------------------------
-
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-engine = create_engine('sqlite:///sqlalchemy.s3')
-Base = declarative_base()
-
-# -----------------------------------------------
+import alchemy
 
 """
 The plan is to build up a queue of commands to be executed
