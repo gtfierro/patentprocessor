@@ -3,6 +3,7 @@ import sys
 import parse
 import time
 import itertools
+import datetime
 from IPython.parallel import Client
 
 sys.path.append('lib')
@@ -28,7 +29,7 @@ def connect_client():
     """
     start=time.time()
     print 'Client connecting...'
-    while time.time()-start < 60:
+    while time.time()-start < 300:
         try:
             c = Client()
             dview = c[:]
