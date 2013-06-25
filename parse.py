@@ -72,16 +72,27 @@ def build_tables(parsed_grants):
     for parsed_grant in parsed_grants:
         parsed_grant.insert_table()
 
-def commit_tables():
-    assignee_table.commit();
-    citation_table.commit();
-    class_table.commit();
-    inventor_table.commit();
-    patent_table.commit();
-    patdesc_table.commit();
-    lawyer_table.commit();
-    sciref_table.commit();
-    usreldoc_table.commit();
+def get_tables():
+    return (assignee_table, citation_table, class_table, inventor_table,\
+           patent_table, patdesc_table, lawyer_table, sciref_table,\
+           usreldoc_table)
+
+def get_inserts():
+    res = {}
+    for table in get_tables():
+      res[table] = table.get_inserts()
+    return res
+
+def commit_tables(insertdict):
+    assignee_table.commit_inserts();
+    citation_table.commit_inserts();
+    class_table.commit_inserts();
+    inventor_table.commit_inserts();
+    patent_table.commit_inserts();
+    patdesc_table.commit_inserts();
+    lawyer_table.commit_inserts();
+    sciref_table.commit_inserts();
+    usreldoc_table.commit_inserts();
 
 def move_tables(output_directory):
     """
