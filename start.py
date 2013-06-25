@@ -49,11 +49,6 @@ def run_parse():
     parse.build_tables(parsed_grants)
     return [(x,x.inserts) for x in parse.get_tables()]
 
-def commit_tables(collection):
-    for inserts in collection:
-        for insert in inserts:
-            insert[0].commit(insert[1])
-
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
@@ -76,7 +71,7 @@ dview['process_config'] = process_config
 dview['parse_config'] = parse_config
 print 'Running parse...'
 inserts = itertools.chain(dview.apply(run_parse))
-commit_tables(inserts)
+parse.commit_tables(inserts)
 run_clean(process_config)
 run_consolidate(process_config)
 parse.move_tables(process_config['outputdir'])
