@@ -59,6 +59,7 @@ def run_consolidate(process_config):
         print 'Running consolidate...'
         execfile('consolidate.py')
 
+s = datetime.datetime.now()
 # accepts path to configuration file as command line option
 process_config, parse_config = get_config_options(sys.argv[1])
 print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
@@ -72,6 +73,8 @@ dview['parse_config'] = parse_config
 print 'Running parse...'
 inserts = list(itertools.chain(dview.apply(run_parse)))[0]
 parse.commit_tables(inserts)
+f = datetime.datetime.now()
+print 'Finished parsing in {0}'.format(str(f-s))
 run_clean(process_config)
 run_consolidate(process_config)
 parse.move_tables(process_config['outputdir'])
