@@ -153,6 +153,21 @@ class PatentGrant(object):
             if res: break
         return res
 
+    def augmented_rel_list(self):
+        """includes the sequence number at the end of the list"""
+        res = []
+        seq = []
+        root = self.xml.us_related_documents
+        if not root: return
+        root = root[0]
+        for usreldoc in root.children:
+            for relation in usreldoc.relation:
+                relnumber = -1 if relation.child_doc else 1
+                docinfo = [usreldoc._name, relnumber, relation.contents_of('doc_number')[0],\
+                          relation.contents_of('country')[0], relation.contents_of('kind')]
+                print docinfo
+
+
     def _inv_list(self):
         inventors = self.xml.parties.applicant
         if not inventors: return []
