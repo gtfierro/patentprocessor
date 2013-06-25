@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 
 import sqlite3
-import sqlalchemy
-from sqlalchemy import create_engine
-engine = create_engine('sqlite:///sqlalchemy.s3', echo=True)
-
 
 """
 The plan is to build up a queue of commands to be executed
