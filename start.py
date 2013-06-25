@@ -71,7 +71,7 @@ dview.scatter('files',files)
 dview['process_config'] = process_config
 dview['parse_config'] = parse_config
 print 'Running parse...'
-inserts = list(itertools.chain(dview.apply(run_parse)))[0]
+inserts = list(itertools.chain.from_iterable(dview.apply(run_parse)))
 parse.commit_tables(inserts)
 f = datetime.datetime.now()
 print 'Finished parsing in {0}'.format(str(f-s))
