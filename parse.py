@@ -78,21 +78,12 @@ def get_tables():
            usreldoc_table)
 
 def get_inserts():
-    res = {}
-    for table in get_tables():
-      res[table] = table.get_inserts()
-    return res
+    return [(x, x.inserts) for x in get_tables()]
 
-def commit_tables(insertdict):
-    assignee_table.commit_inserts();
-    citation_table.commit_inserts();
-    class_table.commit_inserts();
-    inventor_table.commit_inserts();
-    patent_table.commit_inserts();
-    patdesc_table.commit_inserts();
-    lawyer_table.commit_inserts();
-    sciref_table.commit_inserts();
-    usreldoc_table.commit_inserts();
+def commit_tables(collection):
+    #for inserts in collection:
+    for insert in collection:
+        insert[0].commit(insert[1])
 
 def move_tables(output_directory):
     """
@@ -116,8 +107,9 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
     parsed_grants = parse_patent(parsed_xmls)
     logging.info("Parsed all individual XML files")
     build_tables(parsed_grants)
+    inserts = get_inserts()
     logging.info("SQL inserts queued up")
-    commit_tables()
+    commit_tables(inserts)
     logging.info("SQL tables committed")
     move_tables(output_directory)
     logging.info("SQL tables moved to {0}".format(output_directory))
