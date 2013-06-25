@@ -14,8 +14,8 @@ import sys
 sys.path.append( '.' )
 sys.path.append( './lib/' )
 
-from grant_handler import PatentGrant
-from patSQL import *
+from grant_handler_sq import PatentGrant
+from patSQL_sq import *
 from argconfig_parse import ArgHandler
 
 xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \

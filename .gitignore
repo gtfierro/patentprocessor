@@ -27,3 +27,4 @@ test_loc.sql
 patentroot/
 .settings/
 XML/*
+*.s3
