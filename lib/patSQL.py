@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import sqlite3
-import alchemy
 
 """
 The plan is to build up a queue of commands to be executed
