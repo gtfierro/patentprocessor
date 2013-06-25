@@ -29,9 +29,11 @@ class AssigneeSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("assignee.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO assignee VALUES \
-            (?, ?, ?, ?, ?, ?, ?, ?, ?)""", self.inserts)
+            (?, ?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
 
 class CitationSQL(SQLTableBuilder):
@@ -47,9 +49,11 @@ class CitationSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("citation.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO citation VALUES \
-            (?, ?, ?, ?, ?, ?, ?, ?)""", self.inserts)
+            (?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
 
 class ClassSQL(SQLTableBuilder):
@@ -64,9 +68,11 @@ class ClassSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("class.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO class VALUES \
-            (?, ?, ?, ?)""", self.inserts)
+            (?, ?, ?, ?)""", inserts)
         self.conn.commit()
 
 class InventorSQL(SQLTableBuilder):
@@ -83,9 +89,11 @@ class InventorSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("inventor.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO inventor VALUES \
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", self.inserts)
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
 
 class PatentSQL(SQLTableBuilder):
@@ -102,9 +110,11 @@ class PatentSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("patent.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO patent VALUES \
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", self.inserts)
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
 
 class PatdescSQL(SQLTableBuilder):
@@ -119,9 +129,11 @@ class PatdescSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("patdesc.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO patdesc VALUES \
-            (?, ?, ?)""", self.inserts)
+            (?, ?, ?)""", inserts)
         self.conn.commit()
 
 class LawyerSQL(SQLTableBuilder):
@@ -136,9 +148,11 @@ class LawyerSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("lawyer.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO lawyer VALUES \
-            (?, ?, ?, ?, ?, ?)""", self.inserts)
+            (?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
 
 class ScirefSQL(SQLTableBuilder):
@@ -152,9 +166,11 @@ class ScirefSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("sciref.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO sciref VALUES \
-            (?, ?, ?)""", self.inserts)
+            (?, ?, ?)""", inserts)
         self.conn.commit()
 
 class UsreldocSQL(SQLTableBuilder):
@@ -170,9 +186,11 @@ class UsreldocSQL(SQLTableBuilder):
             """)
         self.inserts = []
 
-    def commit(self):
+    def commit(self, inserts):
+        self.conn = sqlite3.connect("usreldoc.sqlite3")
+        self.cursor = self.conn.cursor()
         self.cursor.executemany("""INSERT OR IGNORE INTO usreldoc VALUES \
-            (?, ?, ?, ?, ?, ?, ?, ?)""", self.inserts)
+            (?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
 
 assignee_table = AssigneeSQL()
