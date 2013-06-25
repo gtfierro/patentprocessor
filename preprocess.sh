@@ -3,7 +3,7 @@
 configfile=$1
 numberofcores=$2
 
-ipcluster start --n=$numberofcores &
+ipcluster start --n=$numberofcores --daemon
 
 python start.py $configfile
 
