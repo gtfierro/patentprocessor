@@ -9,12 +9,12 @@ import contextlib
 import itertools
 import shutil
 
-# RL added >>>>>>
-import alchemy
-# <<<<<<
 import sys
 sys.path.append('.')
 sys.path.append('./lib/')
+# RL added >>>>>>
+import alchemy
+# <<<<<<
 
 from grant_handler import PatentGrant
 from patSQL import *
@@ -107,12 +107,15 @@ def move_tables(output_directory):
     """
     Moves the output sqlite3 files to the output directory
     """
+    if output_directory == ".":
+        return
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     for database in ['assignee', 'citation', 'class',
                      'inventor', 'patent', 'patdesc',
                      'lawyer', 'sciref', 'usreldoc']:
-        shutil.move(database, output_directory+'/'+database+".sqlite3")
+        shutil.move("{0}.sqlite3".format(database),
+                    "{0}/{1}.sqlite3".format(output_directory, database))
 
 
 def main(patentroot, xmlregex, verbosity, output_directory='.'):
