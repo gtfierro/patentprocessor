@@ -70,7 +70,7 @@ dview.scatter('files',files)
 dview['process_config'] = process_config
 dview['parse_config'] = parse_config
 print 'Running parse...'
-inserts = itertools.chain(dview.apply(run_parse))
+inserts = list(itertools.chain(dview.apply(run_parse)))[0]
 parse.commit_tables(inserts)
 run_clean(process_config)
 run_consolidate(process_config)
