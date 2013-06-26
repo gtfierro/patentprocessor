@@ -108,7 +108,7 @@ class PatentGrant(object):
         res = []
         for assignee in assignees:
             data = []
-            data.extend(self._name_helper(assignee))
+            data.extend(self._name_helper(assignee)) # add firstname, lastname
             for tag in ['orgname','role','city','state','country']:
                 data.append(assignee.contents_of(tag,as_string=True))
             data.extend(['','']) # placeholders for longitude, latitude
