@@ -64,7 +64,7 @@ def apply_xmlclass(us_patent_grant):
     try:
         patobj = PatentGrant(us_patent_grant, True)
         # RL added >>>>>>
-        print patobj
+        alchemy.add(patobj)
         # <<<<<<
 
         for xmlclass in xmlclasses:
