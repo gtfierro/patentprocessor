@@ -9,27 +9,29 @@ import SQLite
 
 class TestSQLite(unittest.TestCase):
 
-    def removeFile(self, file):
-        #delete a file if it exists
-        if os.path.isfile(file):
-            os.system("rm {file}".format(file=file))
+    def removeFile(self, fname):
+        #delete a fname if it exists
+        try:
+            os.remove(fname)
+        except OSError:
+            pass
 
     def createFile(self, file, type=None, data="1,2,3"):
         #create a file db, csv
         if file.split(".")[-1] == "db" or type == "db":
-            conn = sqlite3.connect(file)
-            c = conn.cursor()
-            c.executescript(""" 
-                CREATE TABLE test (a, B, c);
+            connection = sqlite3.connect(file)
+            cursor = connection.cursor()
+            cursor.executescript(""" 
+                CREATE TABLE test (a, B, cursor);
                 CREATE TABLE main (d, E, f);
                 INSERT INTO test VALUES ({data});
                 INSERT INTO main VALUES ({data});
                 CREATE INDEX idx ON test (a);
                 CREATE INDEX idy ON test (a, b);
                 """.format(data=data)) #"""
-            conn.commit()
-            c.close()
-            conn = sqlite3.connect(file)
+            connection.commit()
+            cursor.close()
+            connection = sqlite3.connect(file)
         elif file.split(".")[-1] == "csv" or type == "csv":
             os.system("echo '{data}' >> {file}".\
                 format(data=data, file=file))
@@ -47,6 +49,7 @@ class TestSQLite(unittest.TestCase):
         self.s.attach(s)
 
     def tearDown(self):
+        self.s.close()
         self.removeFile("test.db")
         self.removeFile("test.csv")
         self.removeFile("test2.db")
@@ -61,7 +64,7 @@ class TestSQLite(unittest.TestCase):
         self.assertEquals([1,1], self.s.indexes(seq="idx"))
         self.s.c.executescript(""" 
             CREATE INDEX idx1 ON test (b);
-            CREATE INDEX idx2 ON test (c);
+            CREATE INDEX idx2 ON test (cursor);
             CREATE INDEX idx5x3 ON test (a);
             CREATE INDEX idx10x ON test (a);
             """)
@@ -80,12 +83,12 @@ class TestSQLite(unittest.TestCase):
 
 
     def test_index(self):
-        self.s.index([['a','c']])
-        self.assertIn('test (a,c)', self.s._baseIndex())
+        self.s.index([['a','cursor']])
+        self.assertIn('test (a,cursor)', self.s._baseIndex())
 
         self.s.index('a', unique=True)
         self.assertIn('test (a)', self.s._baseIndex())
-        self.assertFalse(self.s.index(['a','c']))
+        self.assertFalse(self.s.index(['a','cursor']))
 
         self.s.index('f', tbl="main")
         self.assertIn('main (f)', self.s._baseIndex())
@@ -95,8 +98,8 @@ class TestSQLite(unittest.TestCase):
         #self.assertIn('main (e)', self.s._baseIndex(tbl="main"))
         #self.assertIn('main (e,f)', self.s._baseIndex(tbl="main"))
 
-        #self.s.index(['a','c'], db="db")
-        #self.assertIn('test (a,c)', self.s._baseIndex(db="db"))
+        #self.s.index(['a','cursor'], db="db")
+        #self.assertIn('test (a,cursor)', self.s._baseIndex(db="db"))
 
 
 if __name__ == '__main__':
