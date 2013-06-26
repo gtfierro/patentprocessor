@@ -1,16 +1,17 @@
 import os
 import ConfigParser
 
-from schema import *
+from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, validates
+from schema import *
 
 
 def fetch_engine():
     """
     Read from config.ini file and load appropriate database
     """
-    echo = False
+    echo = True
     config = ConfigParser.ConfigParser()
     config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
     if config.get('global', 'database') == "sqlite":
@@ -26,23 +27,35 @@ def fetch_engine():
 
 def add(obj):
     """
-    PatentGrant Object converting to MySQL tables via SQLAlchemy
+    PatentGrant Object converting to tables via SQLAlchemy
+    Necessary to convert dates to datetime because of SQLite (OK on MySQL)
     """
-    pat = Patent(obj.pat_type, obj.patent)
+    date_grant = datetime.strptime(obj.date_grant, '%Y%m%d')
+    date_app = datetime.strptime(obj.date_app, '%Y%m%d')
+    pat = Patent(obj.pat_type, obj.patent, obj.country, date_grant,
+                 obj.code_app, obj.patent_app, obj.country_app, date_app,
+                 obj.abstract, obj.invention_title, obj.kind, obj.clm_num)
+
     for i, cls in enumerate(obj.classes):
         uspc = USPC(i)
-        mc = session.query(MainClass).filter_by(id=cls[0]).one()
-        print mc
-        #uspc.mainclass = MainClass(cls[0])
-        #ucpc.subclass = SubClass("/".join(cls))
+        mc = MainClass(cls[0])
+        sc = SubClass("/".join(cls))
+        session.merge(mc)
+        session.merge(sc)
+        uspc.mainclass = mc
+        uspc.subclass = sc
         pat.classes.append(uspc)
-
-    session.add(pat)
+    session.merge(pat)
     try:
         session.commit()
     except Exception, e:
         session.rollback()
-        print str(e)    
+        print str(e)
+
+
+def commit():
+    print "hi"
+    session.commit()
 
 
 engine = fetch_engine()

@@ -21,12 +21,14 @@ Base.__init__ = init
 class Patent(Base):
     __tablename__ = "patent"
     uuid = Column(Integer, primary_key=True)
-    grant__type = Column(String(20))
-    grant__num = Column(String(20))
-    date__grant = Column(Date)
-    app__type = Column(String(20))
-    app__num = Column(String(20))
-    date__app = Column(Date)
+    grant_type = Column(String(20))
+    grant_num = Column(String(20))
+    grant_country = Column(String(20))
+    date_grant = Column(Date)
+    app_type = Column(String(20))
+    app_num = Column(String(20))
+    app_country = Column(String(20))
+    date_app = Column(Date)
     abstract = deferred(Column(Text))
     title = deferred(Column(Text))
     kind = Column(String(10))
@@ -34,13 +36,13 @@ class Patent(Base):
     classes = relationship("USPC", backref="patent")
 
     __table_args__ = (
-        Index("pat_idx1", "grant__type", "grant__num", unique=True),
-        Index("pat_idx2", "app__type", "app__num", unique=True),
-        Index("pat_idx3", "date__grant"),
-        Index("pat_idx4", "date__app"),
+        Index("pat_idx1", "grant_type", "grant_num", unique=True),
+        Index("pat_idx2", "app_type", "app_num", unique=True),
+        Index("pat_idx3", "date_grant"),
+        Index("pat_idx4", "date_app"),
     )
-    kw = ["grant__type", "grant__num", "date__grant",
-          "app__type", "app__num", "date__app",
+    kw = ["grant_type", "grant_num", "grant_country", "date_grant",
+          "app_type", "app_num", "app_country", "date_app",
           "abstract", "title", "kind", "claims"]
 #Index('pat_idx3', Patent.date__grant)
 
@@ -50,14 +52,14 @@ class USPC(Base):
     uuid = Column(Integer, primary_key=True)
     patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
     mainclass_id = Column(String(10), ForeignKey("mainclass.id"))
-    #subclass_id = Column(Integer, ForeignKey("subclass.id"))
+    subclass_id = Column(Integer, ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
     kw = ["sequence"]
 
 
 class MainClass(Base):
     __tablename__ = "mainclass"
-    id = Column(String(20), primary_key=True, unique=True)
+    id = Column(String(20), primary_key=True)
     title = Column(String(256))
     description = Column(String(256))
     uspc = relationship("USPC", backref="mainclass")
@@ -66,8 +68,8 @@ class MainClass(Base):
 
 class SubClass(Base):
     __tablename__ = "subclass"
-    id = Column(String(20), primary_key=True, unique=True)
+    id = Column(String(20), primary_key=True)
     title = Column(String(256))
     description = Column(String(256))
-    #uspc = relationship("USPC", backref="subclass")
+    uspc = relationship("USPC", backref="subclass")
     kw = ["id", "title", "description"]
