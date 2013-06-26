@@ -78,9 +78,6 @@ def parse_patent(grant_list):
     parsed_grants = itertools.imap(apply_xmlclass, grant_list)
     # errored patents return None; we want to get rid of these
     parsed_grants = itertools.ifilter(lambda x: x, parsed_grants)
-    # RL added >>>>>>
-    alchemy.commit()
-    # <<<<<<
     return itertools.chain.from_iterable(parsed_grants)
 
 

@@ -109,11 +109,14 @@ def clean(string, upper=False):
     """
     Applies a subset of the above functions in the correct order
     and returns the string in all uppercase.
+
+    Change &amp;
     """
     string = normalize_utf8(string)
     string = remove_escape_sequences(string)
     string = translate_underscore(string)
     string = escape_html(string)
+    string = string.replace("&nbsp;", " ").replace("&amp;", "&")
     if upper:
         return string.upper()
     else:

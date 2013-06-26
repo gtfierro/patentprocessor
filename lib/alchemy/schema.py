@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Date, Integer, Float, String
 from sqlalchemy import Unicode, UnicodeText, ForeignKey, Index, Text
-from sqlalchemy.orm import backref, deferred, relationship
+from sqlalchemy.orm import deferred, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -34,6 +34,8 @@ class Patent(Base):
     kind = Column(String(10))
     claims = Column(Integer)
     classes = relationship("USPC", backref="patent")
+    inventors = relationship("Inventor", backref="patent")
+    assignees = relationship("Assignee", backref="patent")
 
     __table_args__ = (
         Index("pat_idx1", "grant_type", "grant_num", unique=True),
@@ -45,6 +47,86 @@ class Patent(Base):
           "app_type", "app_num", "app_country", "date_app",
           "abstract", "title", "kind", "claims"]
 #Index('pat_idx3', Patent.date__grant)
+
+
+class Inventor(Base):
+    __tablename__ = "inventor"
+    uuid = Column(Integer, primary_key=True)
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    name_last = Column(String(64))
+    name_first = Column(String(64))
+    addr_city = Column(String(128))
+    addr_state = Column(String(10), index=True)
+    addr_country = Column(String(10), index=True)
+    addr_latitude = Column(Float)
+    addr_longitude = Column(Float)
+    sequence = Column(Integer, index=True)
+
+    __table_args__ = (
+        Index("inv_idx1", "addr_city", "addr_state", "addr_country"),
+        Index("inv_idx2", "addr_latitude", "addr_longitude"),
+    )
+    kw = ["sequence", "name_last", "name_first",
+          "addr_city", "addr_state", "addr_country", "nationality",
+          "addr_latitude", "addr_longitude"]
+
+    @hybrid_property
+    def name_full(self):
+        return "{first} {last}".format(
+            first=self.name_first,
+            last=self.name_last)
+
+    @hybrid_property
+    def address(self):
+        addy = []
+        if self.addr_city:
+            addy.append(self.addr_city)
+        if self.addr_state:
+            addy.append(self.addr_state)
+        if self.addr_country:
+            addy.append(self.addr_country)
+        return ", ".join(addy)
+
+
+class Assignee(Base):
+    __tablename__ = "assignee"
+    uuid = Column(Integer, primary_key=True)
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    asg_type = Column(String(10))
+    asg_name = Column(String(256))
+    name_first = Column(String(64))
+    name_last = Column(String(64))
+    addr_city = Column(String(128))
+    addr_state = Column(String(10), index=True)
+    addr_country = Column(String(10), index=True)
+    addr_latitude = Column(Float)
+    addr_longitude = Column(Float)
+    sequence = Column(Integer, index=True)
+
+    __table_args__ = (
+        Index("asg_idx1", "addr_city", "addr_state", "addr_country"),
+        Index("asg_idx2", "addr_latitude", "addr_longitude"),
+    )
+    kw = ["sequence", "addr_city", "addr_state", "addr_country"]
+
+    def asg(self, *args):
+        self.asg_name = args[0]
+        self.asg_type = args[1]
+
+    def person(self, *args):
+        self.name_last = args[0]
+        self.name_first = args[1]
+
+    @hybrid_property
+    def address(self):
+        addy = []
+        if self.addr_city:
+            addy.append(self.addr_city)
+        if self.addr_state:
+            addy.append(self.addr_state)
+        if self.addr_country:
+            addy.append(self.addr_country)
+        return ", ".join(addy)
 
 
 class USPC(Base):
