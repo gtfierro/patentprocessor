@@ -27,6 +27,7 @@ class AssigneeSQL(SQLTableBuilder):
                 Nationality VARCHAR(2), Residence VARCHAR(2),   AsgSeq INTEGER);
             CREATE UNIQUE INDEX IF NOT EXISTS uqAsg ON assignee (Patent, AsgSeq);
             """)
+        self.conn.close()
         self.inserts = []
 
     def commit(self, inserts):
@@ -36,6 +37,7 @@ class AssigneeSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO assignee VALUES \
             (?, ?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 class CitationSQL(SQLTableBuilder):
     def __init__(self):
@@ -48,6 +50,7 @@ class CitationSQL(SQLTableBuilder):
                 Category VARCHAR(15),   CitSeq INTEGER);
             CREATE UNIQUE INDEX IF NOT EXISTS uqCit ON citation (Patent, CitSeq);
             """)
+        self.conn.close()
         self.inserts = []
 
     def commit(self, inserts):
@@ -57,6 +60,7 @@ class CitationSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO citation VALUES \
             (?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 class ClassSQL(SQLTableBuilder):
     def __init__(self):
@@ -68,6 +72,7 @@ class ClassSQL(SQLTableBuilder):
                 Class VARCHAR(3),       SubClass VARCHAR(3));
             CREATE UNIQUE INDEX IF NOT EXISTS uqClass ON class (Patent, Class, SubClass);
             """)
+        self.conn.close()
         self.inserts = []
 
     def commit(self, inserts):
@@ -77,6 +82,7 @@ class ClassSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO class VALUES \
             (?, ?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 class InventorSQL(SQLTableBuilder):
     def __init__(self):
@@ -90,6 +96,7 @@ class InventorSQL(SQLTableBuilder):
                 Zipcode VARCHAR(5),     Nationality VARCHAR(2), InvSeq INTEGER);
             CREATE UNIQUE INDEX IF NOT EXISTS uqInv ON inventor (Patent, InvSeq);
             """)
+        self.conn.close()
         self.inserts = []
 
     def commit(self, inserts):
@@ -99,6 +106,7 @@ class InventorSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO inventor VALUES \
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 class PatentSQL(SQLTableBuilder):
     def __init__(self):
@@ -112,6 +120,7 @@ class PatentSQL(SQLTableBuilder):
                 AppDate INTEGER,        AppYear INTEGER, PatType VARCHAR(15) );
             CREATE UNIQUE INDEX IF NOT EXISTS uqPat on patent (Patent);
             """)
+        self.conn.close()
         self.inserts = []
 
     def commit(self, inserts):
@@ -121,6 +130,7 @@ class PatentSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO patent VALUES \
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 class PatdescSQL(SQLTableBuilder):
     def __init__(self):
@@ -141,6 +151,7 @@ class PatdescSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO patdesc VALUES \
             (?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 class LawyerSQL(SQLTableBuilder):
     def __init__(self):
@@ -152,6 +163,7 @@ class LawyerSQL(SQLTableBuilder):
                 LawCountry VARCHAR(2),  OrgName VARCHAR(20),    LawSeq INTEGER);
             CREATE UNIQUE INDEX IF NOT EXISTS uqLawyer ON lawyer (Patent, LawSeq);
             """)
+        self.conn.close()
         self.inserts = []
 
     def commit(self, inserts):
@@ -161,6 +173,7 @@ class LawyerSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO lawyer VALUES \
             (?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 class ScirefSQL(SQLTableBuilder):
     def __init__(self):
@@ -171,6 +184,7 @@ class ScirefSQL(SQLTableBuilder):
                 Patent VARCHAR(8),      Descrip VARCHAR(20),    CitSeq INTEGER);
             CREATE UNIQUE INDEX IF NOT EXISTS uqSciref ON sciref (Patent, CitSeq);
             """)
+        self.conn.close()
         self.inserts = []
 
     def commit(self, inserts):
@@ -180,6 +194,7 @@ class ScirefSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO sciref VALUES \
             (?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 class UsreldocSQL(SQLTableBuilder):
     def __init__(self):
@@ -192,6 +207,7 @@ class UsreldocSQL(SQLTableBuilder):
                 RelDate INTEGER,        Status VARCHAR(10));
             CREATE UNIQUE INDEX IF NOT EXISTS uqUSRelDoc ON usreldoc (Patent, OrderSeq);
             """)
+        self.conn.close()
         self.inserts = []
 
     def commit(self, inserts):
@@ -201,6 +217,7 @@ class UsreldocSQL(SQLTableBuilder):
         self.cursor.executemany("""INSERT OR IGNORE INTO usreldoc VALUES \
             (?, ?, ?, ?, ?, ?, ?, ?)""", inserts)
         self.conn.commit()
+        self.conn.close()
 
 assignee_table = AssigneeSQL()
 citation_table = CitationSQL()
