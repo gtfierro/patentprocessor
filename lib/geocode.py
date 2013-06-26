@@ -5,34 +5,26 @@
 # CREATE INDEX IF NOT EXISTS idx_ctc0 ON gnsloc (SORT_NAME, CC1);
 
 import datetime
-import csv
-import os
-import re
-import sqlite3
-
-
 # TODO: cover geocode setup functions with unit tests.
-from geocode_setup import *
+import geocode_setup
+# geocode_replace_loc consists of a series of functions,
+# each with a SQL statement that is passed as a parameter
+# to replace_loc. Uses temporary tables for handling
+# intermediate relations.
+import geocode_replace_loc
 
-conn = get_connection("hashTbl.sqlite3")
-c = get_cursor(conn)
-create_sql_helper_functions(conn)
+conn = geocode_setup.get_connection("hashTbl.sqlite3")
+c = geocode_setup.get_cursor(conn)
+geocode_setup.create_sql_helper_functions(conn)
 
 print "Start setup for geocoding: ", datetime.datetime.now()
-create_hashtbl(c, conn)
+geocode_setup.create_hashtbl(c, conn)
 print "Finish setup for geocoding: ", datetime.datetime.now()
 
 # End of setup.
 # Exiting here gets the initial hashTbl.sqlite3 file when
 # executed as `python lib/geocode.py`
 #exit()
-
-
-# geocode_replace_loc consists of a series of functions,
-# each with a SQL statement that is passed as a parameter
-# to replace_loc. Uses temporary tables for handling
-# intermediate relations.
-from geocode_replace_loc import *
 
 
 # TODO: Unit test extensively.
@@ -46,9 +38,9 @@ def replace_loc(script):
     #print_table_info(c)
 
     # TODO: Which tables will pass this conditional?
-    if table_temp1_has_rows(c):
-        create_loc_and_locmerge_tables(c)
-        print_loc_and_merge(c)
+    if geocode_replace_loc.table_temp1_has_rows(c):
+        geocode_replace_loc.create_loc_and_locmerge_tables(c)
+        geocode_replace_loc.print_loc_and_merge(c)
 
     conn.commit()
 
@@ -63,29 +55,29 @@ for scnt in range(-1, c.execute("select max(sep_cnt(city)) from loctbl.loc").fet
 
     sep = scnt
     print "------", scnt, "------"
-    replace_loc(domestic_sql()                     % (sep, scnt))
-    replace_loc(domestic_block_remove_sql()        % (sep, scnt))
-    replace_loc(domestic_first3_jaro_winkler_sql() % (sep, sep, "10.92", scnt))
-    replace_loc(domestic_last4_jaro_winkler_sql()  % (sep, sep, "10.90", scnt))
-    replace_loc(foreign_full_name_1_sql()          % (sep, scnt))
-    replace_loc(foreign_full_name_2_sql()          % (sep, scnt))
-    replace_loc(foreign_short_form_sql()           % (sep, scnt))
-    replace_loc(foreign_block_split_sql()          % (sep, scnt))
-    replace_loc(foreign_first3_jaro_winkler_sql()  % (sep, sep, "20.92", scnt))
-    replace_loc(foreign_last4_jaro_winkler_sql()   % (sep, sep, "20.90", scnt))
+    replace_loc(geocode_replace_loc.domestic_sql()                     % (sep, scnt))
+    replace_loc(geocode_replace_loc.domestic_block_remove_sql()        % (sep, scnt))
+    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, "10.92", scnt))
+    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, "10.90", scnt))
+    replace_loc(geocode_replace_loc.foreign_full_name_1_sql()          % (sep, scnt))
+    replace_loc(geocode_replace_loc.foreign_full_name_2_sql()          % (sep, scnt))
+    replace_loc(geocode_replace_loc.foreign_short_form_sql()           % (sep, scnt))
+    replace_loc(geocode_replace_loc.foreign_block_split_sql()          % (sep, scnt))
+    replace_loc(geocode_replace_loc.foreign_first3_jaro_winkler_sql()  % (sep, sep, "20.92", scnt))
+    replace_loc(geocode_replace_loc.foreign_last4_jaro_winkler_sql()   % (sep, sep, "20.90", scnt))
 
 ### End of for loop
 
 print "------ F ------"
 
 # TODO: Put these calls into a function.
-replace_loc(domestic_2nd_layer_sql())
-replace_loc(domestic_first3_2nd_jaro_winkler_sql() % ("14.95"))
-replace_loc(foreign_full_name_2nd_layer_sql())
-replace_loc(foreign_full_nd_2nd_layer_sql())
-replace_loc(foreign_no_space_2nd_layer_sql())
-replace_loc(foreign_first3_2nd_jaro_winkler_sql()  % ("24.95"))
-replace_loc(domestic_zipcode_sql())
+replace_loc(geocode_replace_loc.domestic_2nd_layer_sql())
+replace_loc(geocode_replace_loc.domestic_first3_2nd_jaro_winkler_sql() % ("14.95"))
+replace_loc(geocode_replace_loc.foreign_full_name_2nd_layer_sql())
+replace_loc(geocode_replace_loc.foreign_full_nd_2nd_layer_sql())
+replace_loc(geocode_replace_loc.foreign_no_space_2nd_layer_sql())
+replace_loc(geocode_replace_loc.foreign_first3_2nd_jaro_winkler_sql()  % ("24.95"))
+replace_loc(geocode_replace_loc.domestic_zipcode_sql())
 
 conn.commit()
 c.close()

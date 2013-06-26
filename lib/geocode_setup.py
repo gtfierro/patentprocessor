@@ -1,17 +1,8 @@
 # sets up the geocoding databases
 
-import datetime, csv, os, re, sqlite3
-
-# TODO: switch to import the tested version of sep_wrd.
-from sep_wrd_geocode import sep_wrd
-
-# We need to import these one at a time because many of these functions are
-# duplicated in multiple places. That is, there are 3 or 4 identical or
-# slightly different versions located in different files.
-#from fwork import *
-from fwork import jarow
-from fwork import cityctry
-from fwork import tblExist
+import re, sqlite3
+import sep_wrd_geocode
+import fwork
 
 
 def get_connection(db):
@@ -27,9 +18,9 @@ def get_cursor(conn):
 def create_sql_helper_functions(conn):
     conn.create_function("blk_split", 1, lambda x: re.sub(" ", "", x))
     conn.create_function("sep_cnt",   1, lambda x: len(re.findall("[,|]", x)))
-    conn.create_function("jarow",     2, jarow)
-    conn.create_function("cityctry",  3, cityctry)
-    conn.create_function("sep_wrd",   2, sep_wrd)
+    conn.create_function("jarow",     2, fwork.jarow)
+    conn.create_function("cityctry",  3, fwork.cityctry)
+    conn.create_function("sep_wrd",   2, sep_wrd_geocode.sep_wrd)
     conn.create_function("rev_wrd",   2, lambda x,y:x.upper()[::-1][:y])
 
 
@@ -71,7 +62,7 @@ def loc_create_table(cursor):
 def create_hashtbl(cursor, connection):
     geocode_db_initialize(cursor)
     loc_create_table(cursor)
-    if not(tblExist(cursor, "locMerge")):
+    if not(fwork.tblExist(cursor, "locMerge")):
         fix_city_country(cursor)
         fix_state_zip(cursor)
         create_loc_indexes(connection)

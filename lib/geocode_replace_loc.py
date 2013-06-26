@@ -99,9 +99,9 @@ def create_loc_and_locmerge_tables(cursor):
 
 def domestic_sql():
 
-     print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-     stmt = """SELECT  11,
+    stmt = """SELECT  11,
                a.cnt as cnt,
                a.city as CityA,
                a.state as StateA,
@@ -120,14 +120,14 @@ def domestic_sql():
           AND  CountryA = 'US'
         WHERE  sep_cnt(CityA) >= %d
           AND  CityA != '' """
-     return stmt;
+    return stmt;
 
 
 def domestic_block_remove_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  11,
+    stmt = """SELECT  11,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
@@ -146,14 +146,14 @@ def domestic_block_remove_sql():
            AND  a.country = 'US'
          WHERE  sep_cnt(a.City) >= %d
            AND  a.City != '' """
-      return stmt;
+    return stmt;
 
 
 def domestic_first3_jaro_winkler_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  (10+jarow(blk_split(SEP_WRD(a.City, %d)),
+    stmt = """SELECT  (10+jarow(blk_split(SEP_WRD(a.City, %d)),
                 b.BlkCity)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -175,14 +175,14 @@ def domestic_first3_jaro_winkler_sql():
            AND  sep_cnt(a.City) >= %d
            AND  a.City != ''
       ORDER BY  a.City, a.State, jaro"""
-      return stmt;
+    return stmt;
 
 
 def domestic_last4_jaro_winkler_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  (10+jarow(blk_split(SEP_WRD(a.City, %d)),
+    stmt = """SELECT  (10+jarow(blk_split(SEP_WRD(a.City, %d)),
                 b.BlkCity)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -204,15 +204,15 @@ def domestic_last4_jaro_winkler_sql():
            AND  sep_cnt(a.City) >= %d
            AND  a.City != ""
       ORDER BY  a.City, a.State, jaro"""
-      return stmt;
+    return stmt;
 
 
 # JR Code started taking longer to run at this statement
 def foreign_full_name_1_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  21,
+    stmt = """SELECT  21,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
@@ -230,14 +230,14 @@ def foreign_full_name_1_sql():
            AND  a.country = b.cc1
          WHERE  sep_cnt(a.City) >= %d
            AND  a.City!="" """
-      return stmt;
+    return stmt;
 
 
 def foreign_full_name_2_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  21,
+    stmt = """SELECT  21,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
@@ -255,14 +255,14 @@ def foreign_full_name_2_sql():
            AND  a.country = b.cc1
          WHERE  sep_cnt(a.City) >= %d
            AND  a.City != "" """
-      return stmt;
+    return stmt;
 
 
 def foreign_short_form_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  21,
+    stmt = """SELECT  21,
                 a.cnt     AS cnt,
                 a.city    AS CityA,
                 a.state   AS StateA,
@@ -280,14 +280,14 @@ def foreign_short_form_sql():
            AND  a.country = b.cc1
          WHERE  sep_cnt(a.City) >= %d
            AND  a.City != "" """
-      return stmt;
+    return stmt;
 
 
 def foreign_block_split_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  21,
+    stmt = """SELECT  21,
                 a.cnt     AS cnt,
                 a.city    AS CityA,
                 a.state   AS StateA,
@@ -305,14 +305,14 @@ def foreign_block_split_sql():
            AND  a.country = b.cc1
          WHERE  sep_cnt(a.City) >= %d
            AND  a.City != "" """
-      return stmt;
+    return stmt;
 
 
 def foreign_first3_jaro_winkler_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  (20+jarow(blk_split(SEP_WRD(a.City, %d)),
+    stmt = """SELECT  (20+jarow(blk_split(SEP_WRD(a.City, %d)),
                 b.sort_name_ro)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -333,15 +333,15 @@ def foreign_first3_jaro_winkler_sql():
            AND  sep_cnt(a.City) >= %d
            AND  a.City != ""
       ORDER BY  a.City, a.Country, jaro"""
-      return stmt;
+    return stmt;
 
 
 
 def foreign_last4_jaro_winkler_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  (20+jarow(blk_split(SEP_WRD(a.City, %d)),
+    stmt = """SELECT  (20+jarow(blk_split(SEP_WRD(a.City, %d)),
                 b.sort_name_ro)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -362,15 +362,15 @@ def foreign_last4_jaro_winkler_sql():
            AND  sep_cnt(a.City) >= %d
            AND  a.City != ""
       ORDER BY  a.City, a.Country, jaro"""
-      #""" % (sep, sep, "20.90", scnt))
-      return stmt;
+    #""" % (sep, sep, "20.90", scnt))
+    return stmt;
 
 
 def domestic_2nd_layer_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  15,
+    stmt = """SELECT  15,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
@@ -387,14 +387,14 @@ def domestic_2nd_layer_sql():
             ON  a.NCity = b.city
            AND  a.NState = b.state
            AND  a.NCountry = 'US'"""
-      return stmt;
+    return stmt;
 
 
 def domestic_first3_2nd_jaro_winkler_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  14+jarow(blk_split(a.NCity),
+    stmt = """SELECT  14+jarow(blk_split(a.NCity),
                 b.BlkCity) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -414,14 +414,14 @@ def domestic_first3_2nd_jaro_winkler_sql():
            AND  a.Ncountry ='US'
          WHERE  jaro > %s
       ORDER BY  a.NCity, a.NState, jaro"""
-      return stmt;
+    return stmt;
 
 
 def foreign_full_name_2nd_layer_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  25,
+    stmt = """SELECT  25,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
@@ -437,14 +437,14 @@ def foreign_full_name_2nd_layer_sql():
     INNER JOIN  loctbl.gnsloc AS b
             ON  a.NCity = b.full_name_ro
            AND  a.NCountry = b.cc1"""
-      return stmt;
+    return stmt;
 
 
 def foreign_full_nd_2nd_layer_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  25,
+    stmt = """SELECT  25,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
@@ -460,14 +460,14 @@ def foreign_full_nd_2nd_layer_sql():
     INNER JOIN  loctbl.gnsloc AS b
             ON  a.NCity = b.full_name_nd_ro
            AND  a.NCountry = b.cc1"""
-      return stmt;
+    return stmt;
 
 
 def foreign_no_space_2nd_layer_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  25,
+    stmt = """SELECT  25,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
@@ -483,14 +483,14 @@ def foreign_no_space_2nd_layer_sql():
     INNER JOIN  loctbl.gnsloc AS b
             ON  blk_split(a.NCity) = b.sort_name_ro
            AND  a.NCountry = b.cc1"""
-      return stmt;
+    return stmt;
 
 
 def foreign_first3_2nd_jaro_winkler_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  24+jarow(blk_split(a.NCity),
+    stmt = """SELECT  24+jarow(blk_split(a.NCity),
                 b.sort_name_ro) AS Jaro,
                 a.cnt     AS cnt,
                 a.city    AS CityA,
@@ -509,14 +509,14 @@ def foreign_first3_2nd_jaro_winkler_sql():
            AND  a.Ncountry = b.cc1
          WHERE  jaro > %s
       ORDER BY  a.NCity, a.NCountry, jaro"""
-      return stmt;
+    return stmt;
 
 
 def domestic_zipcode_sql():
 
-      print sys._getframe().f_code.co_name
+    print sys._getframe().f_code.co_name
 
-      stmt = """SELECT  31,
+    stmt = """SELECT  31,
                 a.cnt     AS cnt,
                 a.city    AS CityA,
                 a.state   AS StateA,
@@ -535,7 +535,7 @@ def domestic_zipcode_sql():
                     AND  Country = 'US') AS a
     INNER JOIN  usloc AS b
             ON  a.Zip2 = b.Zipcode"""
-      return stmt;
+    return stmt;
 
 
 # TODO: Add this block to its own function, add a commented out call to
