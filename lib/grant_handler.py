@@ -196,6 +196,29 @@ class PatentGrant(object):
             res.append(data)
         return res
 
+    def inventor_list(self):
+        """
+        method for new inventor schema. Returns lists of
+        [name__first, name__last, addr__city, addr__state, addr__country,
+         addr__longitude, addr__latitude, nationality, sequence]
+        NOTE: addr__longitude and addr__latitude will be empty until
+        the geocoding step]
+        """
+        inventors = self.xml.parties.applicant
+        if not inventors: return []
+        res = []
+        for inventor in inventors:
+            data = []
+            firstname, lastname = self._name_helper(inventor.addressbook)
+            data.append(firstname)
+            data.append(lastname)
+            for tag in ['city','state','country']:
+                data.append(inventor.addressbook.contents_of(tag,as_string=True))
+            data.append(inventor.nationality.contents_of('country',as_string=True))
+            data.extend(['','']) # placeholders for longitude, latitude
+            res.append(data)
+        return self._add_sequence(res)
+
     def _law_list(self):
         lawyers = self.xml.parties.agents.agent
         if not lawyers: return []
