@@ -134,7 +134,7 @@ class USPC(Base):
     uuid = Column(Integer, primary_key=True)
     patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
     mainclass_id = Column(String(10), ForeignKey("mainclass.id"))
-    subclass_id = Column(Integer, ForeignKey("subclass.id"))
+    subclass_id = Column(String(10), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
     kw = ["sequence"]
 
