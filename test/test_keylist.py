@@ -9,15 +9,15 @@ import SQLite
 
 class TestSQLite(unittest.TestCase):
 
-    def removeFile(self, file):
-        #delete a file if it exists
-        if os.path.isfile(file):
-            os.system("rm {file}".format(file=file))
+    def removeFile(self, fname):
+        #delete a fname if it exists
+        if os.path.isfile(fname):
+            os.remove(fname)
 
-    def createFile(self, file, type=None, data="1,2,3"):
-        #create a file db, csv
-        if file.split(".")[-1] == "db" or type == "db":
-            conn = sqlite3.connect(file)
+    def createFile(self, fname, ftype=None, data="1,2,3"):
+        #create a fname db, csv
+        if fname.split(".")[-1] == "db" or ftype == "db":
+            conn = sqlite3.connect(fname)
             c = conn.cursor()
             c.executescript(""" 
                 CREATE TABLE test (a, B, c);
@@ -29,10 +29,10 @@ class TestSQLite(unittest.TestCase):
                 """.format(data=data)) #"""
             conn.commit()
             c.close()
-            conn = sqlite3.connect(file)
-        elif file.split(".")[-1] == "csv" or type == "csv":
-            os.system("echo '{data}' >> {file}".\
-                format(data=data, file=file))
+            conn = sqlite3.connect(fname)
+        elif fname.split(".")[-1] == "csv" or ftype == "csv":
+            os.system("echo '{data}' >> {fname}".\
+                format(data=data, fname=fname))
 
     def setUp(self):
         self.removeFile("test.db")
@@ -40,13 +40,14 @@ class TestSQLite(unittest.TestCase):
         self.removeFile("test2.db")
         self.removeFile("test2.csv")
         # create a really basic dataset
-        self.createFile(file="test.db")
+        self.createFile(fname="test.db")
         self.s = SQLite.SQLite(db="test.db", tbl="test")
         self.createFile("test2.db")
         s = SQLite.SQLite("test2.db", tbl="test")
         self.s.attach(s)
 
     def tearDown(self):
+        self.s.close()
         self.removeFile("test.db")
         self.removeFile("test.csv")
         self.removeFile("test2.db")
