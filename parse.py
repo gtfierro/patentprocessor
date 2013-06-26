@@ -94,7 +94,7 @@ def move_tables(output_directory):
     for database in ['assignee.sqlite3','citation.sqlite3','class.sqlite3',\
                      'inventor.sqlite3','patent.sqlite3','patdesc.sqlite3',\
                      'lawyer.sqlite3','sciref.sqlite3','usreldoc.sqlite3']:
-        shutil.move(database,output_directory+'/'+database)
+        os.rename(database,output_directory+'/'+database)
 
 
 def main(patentroot, xmlregex, verbosity, output_directory='.'):
