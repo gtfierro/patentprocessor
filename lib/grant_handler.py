@@ -43,6 +43,7 @@ class PatentGrant(object):
         self.rel_list = self._rel_list()
         self.inv_list = self._inv_list()
         self.law_list = self._law_list()
+        print self.inventor_list()
 
     def _invention_title(self):
         original = self.xml.contents_of('invention_title')[0]
@@ -93,6 +94,28 @@ class PatentGrant(object):
         data.extend(doc.nationality.contents_of('country'))
         data.extend(doc.residence.contents_of('country'))
         return [data]
+
+    def assignee_list(self):
+        """
+        Returns list of assignees, each of form
+        [asg__firstname, asg__lastname, asg__orgname, asg__role, addr__city,
+         addr__state, addr__country, addr__longitude, addr_latitude, nationality,
+         residence, sequence]
+        NOTE: longitude and latitude will be empty until the geocoding step
+        """
+        assignees = self.xml.assignees.assignee
+        if not assignees: return []
+        res = []
+        for assignee in assignees:
+            data = []
+            data.extend(self._name_helper(assignee))
+            for tag in ['orgname','role','city','state','country']:
+                data.append(assignee.contents_of(tag,as_string=True))
+            data.extend(['','']) # placeholders for longitude, latitude
+            data.extend(assignee.nationality.contents_of('country'))
+            data.extend(assignee.residence.contents_of('country'))
+            res.append(data)
+        return self._add_sequence(res)
 
     def _cit_list(self):
         res = []
