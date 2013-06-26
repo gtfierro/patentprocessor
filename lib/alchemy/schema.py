@@ -5,6 +5,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 
 
+# Extend the Base >>>>>>
 Base = declarative_base()
 
 
@@ -14,11 +15,12 @@ def init(self, *args, **kwargs):
     for k, v in kwargs.iteritems():
         self.__dict__[k] = v
 Base.__init__ = init
+# <<<<<<
 
 
 class Patent(Base):
     __tablename__ = "patent"
-    id = Column(Integer, primary_key=True)
+    uuid = Column(Integer, primary_key=True)
     grant__type = Column(String(20))
     grant__num = Column(String(20))
     date__grant = Column(Date)
@@ -29,6 +31,7 @@ class Patent(Base):
     title = deferred(Column(Text))
     kind = Column(String(10))
     claims = Column(Integer)
+    classes = relationship("USPC", backref="patent")
 
     __table_args__ = (
         Index("pat_idx1", "grant__type", "grant__num", unique=True),
@@ -36,7 +39,6 @@ class Patent(Base):
         Index("pat_idx3", "date__grant"),
         Index("pat_idx4", "date__app"),
     )
-
     kw = ["grant__type", "grant__num", "date__grant",
           "app__type", "app__num", "date__app",
           "abstract", "title", "kind", "claims"]
@@ -45,15 +47,27 @@ class Patent(Base):
 
 class USPC(Base):
     __tablename__ = "uspc"
-    id = Column(String(20), primary_key=True, unique=True)
-    class_id = Column(String(10), ForeignKey("class.id"))
-    sequence = Column(Integer)
-    title = Column(String(256))
-    description = Column(String(256))
+    uuid = Column(Integer, primary_key=True)
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    mainclass_id = Column(String(10), ForeignKey("mainclass.id"))
+    #subclass_id = Column(Integer, ForeignKey("subclass.id"))
+    sequence = Column(Integer, index=True)
+    kw = ["sequence"]
 
 
-class Class(Base):
-    __tablename__ = "class"
+class MainClass(Base):
+    __tablename__ = "mainclass"
     id = Column(String(20), primary_key=True, unique=True)
     title = Column(String(256))
     description = Column(String(256))
+    uspc = relationship("USPC", backref="mainclass")
+    kw = ["id", "title", "description"]
+
+
+class SubClass(Base):
+    __tablename__ = "subclass"
+    id = Column(String(20), primary_key=True, unique=True)
+    title = Column(String(256))
+    description = Column(String(256))
+    #uspc = relationship("USPC", backref="subclass")
+    kw = ["id", "title", "description"]
