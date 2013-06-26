@@ -43,7 +43,6 @@ class PatentGrant(object):
         self.rel_list = self._rel_list()
         self.inv_list = self._inv_list()
         self.law_list = self._law_list()
-        print self.inventor_list()
 
     def _invention_title(self):
         original = self.xml.contents_of('invention_title')[0]
