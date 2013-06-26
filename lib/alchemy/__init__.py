@@ -30,6 +30,8 @@ def add(obj):
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
     """
+    #add patent
+    # abstracts seem to be missing. why?
     date_grant = datetime.strptime(obj.date_grant, '%Y%m%d')
     date_app = datetime.strptime(obj.date_app, '%Y%m%d')
     pat = Patent(obj.pat_type, obj.patent, obj.country, date_grant,
@@ -55,25 +57,47 @@ def add(obj):
     # 1 [u'Minamide', u'Hiroshi', '', u'Wakayama', '', u'JP', '', u'omitted', u'JP']
     # 2 [u'Nishitani', u'Hirokazu', '', u'Wakayama', '', u'JP', '', u'omitted', u'JP']
     for i, inv in enumerate(obj.inv_list):
-        pat.inventors.append(Inventor(
-            i, inv[0], inv[1], inv[3], inv[4], inv[5], inv[8]))
+        iv = Inventor(i, inv[0], inv[1], inv[8])
+        lc = Location(inv[3], inv[4], inv[5])
+        session.merge(lc)
+        iv.location = lc
+        pat.inventors.append(iv)
 
     #add assignee
     # is there some sort of assignee number?
     # some of the patents don't have assignees. why?
     # for example: 8089324
     #
+    # separating out firstname/lastname with organization
+    #
     # -- SAMPLE --
     # [0, u'Huizhou Light Engine Ltd.', u'03', '', u'Huizhou, Guangdong', '', u'CN', '', '', '']
     # [0, u'Koninklijke Philips Electronics N.V.', u'03', '', u'Eindhoven', '', u'NL', '', '', '']
     # [0, u'Kueberit Profile Systems GmbH &amp; Co. KG', u'03', '', u'Luedenscheid', '', u'DE', '', '', '']
     for i, asg in enumerate(obj.asg_list):
-        pa = Assignee(i, asg[4], asg[5], asg[6])
+        pa = Assignee(i)
+        lc = Location(inv[3], inv[4], inv[5])
+        session.merge(lc)
         if asg[0] == 0:
             pa.asg(asg[1], asg[2])
         else:
             pa.asg(asg[1], asg[2])
+        pa.location = lc
         pat.assignees.append(pa)
+
+    #add citation
+    # other citation
+    # is there a way we can tell the doc number as a US patent?
+    # I see lots of different patent types and numbers
+    #
+    # 0 [u'cited by examiner', u'US', u'4672559', u'19870600', u'A', u'Jansson et al.', '']
+    # 1 [u'cited by examiner', u'US', u'5999189', u'19991200', u'A', u'Kajiya et al.', '']
+    # 2 [u'cited by examiner', u'US', u'6052492', u'20000400', u'A', u'Bruckhaus', '']
+    # 3 [u'cited by examiner', u'US', u'6282327', u'20010800', u'B1', u'Betrisey et al.', '']
+    #15 [u'cited by other', '', '', '', '', '', u'Pagoulatos et al.: \u201cInteractive 3-D Registration of Ultrasound and Magnetic Resonance Images Based on a Magnetic Positio
+    #for i, cit in enumerate(obj.cit_list):
+    #    print i, cit
+
 
 
     session.merge(pat)

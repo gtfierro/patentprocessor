@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Date, Integer, Float, String
-from sqlalchemy import Unicode, UnicodeText, ForeignKey, Index, Text
+from sqlalchemy import ForeignKeyConstraint, ForeignKey, Index, Text
 from sqlalchemy.orm import deferred, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
@@ -49,26 +49,53 @@ class Patent(Base):
 #Index('pat_idx3', Patent.date__grant)
 
 
+class Location(Base):
+    #TODO: Anyway we can consolidate to 1 PrimaryKey
+    __tablename__ = "location"
+    city = Column(String(128), primary_key=True)
+    state = Column(String(10), index=True, primary_key=True)
+    country = Column(String(10), index=True, primary_key=True)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    inventors = relationship("Inventor", backref="location")
+    assignees = relationship("Assignee", backref="location")
+
+    __table_args__ = (
+        Index("loc_idx1", "latitude", "longitude"),
+    )
+    kw = ["city", "state", "country", "longitude", "latitude"]
+
+    @hybrid_property
+    def address(self):
+        addy = []
+        if self.city:
+            addy.append(self.city)
+        if self.state:
+            addy.append(self.state)
+        if self.country:
+            addy.append(self.country)
+        return ", ".join(addy)
+
+
 class Inventor(Base):
     __tablename__ = "inventor"
     uuid = Column(Integer, primary_key=True)
+    #location_uuid = Column(Integer, ForeignKey("location.uuid"))
     patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
     name_last = Column(String(64))
     name_first = Column(String(64))
-    addr_city = Column(String(128))
-    addr_state = Column(String(10), index=True)
-    addr_country = Column(String(10), index=True)
-    addr_latitude = Column(Float)
-    addr_longitude = Column(Float)
+    loc_city = Column(String(128))
+    loc_state = Column(String(10), index=True)
+    loc_country = Column(String(10), index=True)
     sequence = Column(Integer, index=True)
 
     __table_args__ = (
-        Index("inv_idx1", "addr_city", "addr_state", "addr_country"),
-        Index("inv_idx2", "addr_latitude", "addr_longitude"),
+        ForeignKeyConstraint(
+            [loc_city, loc_state, loc_country],
+            [Location.city, Location.state, Location.country]
+        ),
     )
-    kw = ["sequence", "name_last", "name_first",
-          "addr_city", "addr_state", "addr_country", "nationality",
-          "addr_latitude", "addr_longitude"]
+    kw = ["sequence", "name_last", "name_first", "nationality"]
 
     @hybrid_property
     def name_full(self):
@@ -76,38 +103,28 @@ class Inventor(Base):
             first=self.name_first,
             last=self.name_last)
 
-    @hybrid_property
-    def address(self):
-        addy = []
-        if self.addr_city:
-            addy.append(self.addr_city)
-        if self.addr_state:
-            addy.append(self.addr_state)
-        if self.addr_country:
-            addy.append(self.addr_country)
-        return ", ".join(addy)
-
 
 class Assignee(Base):
     __tablename__ = "assignee"
     uuid = Column(Integer, primary_key=True)
+    #location_uuid = Column(Integer, ForeignKey("location.uuid"))
     patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
     asg_type = Column(String(10))
     asg_name = Column(String(256))
     name_first = Column(String(64))
     name_last = Column(String(64))
-    addr_city = Column(String(128))
-    addr_state = Column(String(10), index=True)
-    addr_country = Column(String(10), index=True)
-    addr_latitude = Column(Float)
-    addr_longitude = Column(Float)
+    loc_city = Column(String(128))
+    loc_state = Column(String(10), index=True)
+    loc_country = Column(String(10), index=True)
     sequence = Column(Integer, index=True)
 
     __table_args__ = (
-        Index("asg_idx1", "addr_city", "addr_state", "addr_country"),
-        Index("asg_idx2", "addr_latitude", "addr_longitude"),
+        ForeignKeyConstraint(
+            [loc_city, loc_state, loc_country],
+            [Location.city, Location.state, Location.country]
+        ),
     )
-    kw = ["sequence", "addr_city", "addr_state", "addr_country"]
+    kw = ["sequence"]
 
     def asg(self, *args):
         self.asg_name = args[0]
@@ -116,17 +133,6 @@ class Assignee(Base):
     def person(self, *args):
         self.name_last = args[0]
         self.name_first = args[1]
-
-    @hybrid_property
-    def address(self):
-        addy = []
-        if self.addr_city:
-            addy.append(self.addr_city)
-        if self.addr_state:
-            addy.append(self.addr_state)
-        if self.addr_country:
-            addy.append(self.addr_country)
-        return ", ".join(addy)
 
 
 class USPC(Base):
