@@ -141,6 +141,26 @@ class PatentGrant(object):
             res.append(cit_data)
         return res
 
+    def citation_list(self):
+        """
+        Returns list of citations, each of form
+        [patent_id, citation_id, date__cit, cit__name, cit__kind, cit__country
+         category, cit__num, sequence]
+        """
+        citations = self.xml.references_cited.citation
+        if not citations: return []
+        res = []
+        for citation in citations:
+            data = [self.patent, ''] # blank space for generated citation_id
+            for tag in ['date','name','kind']:
+                data.append(citation.contents_of(tag, as_string=True))
+            data.append(citation.contents_of('country')[0])
+            data.append(citation.contents_of('category',as_string=True))
+            doc_number = citation.contents_of('doc_number',as_string=True)
+            data.append(normalize_document_identifier(doc_number))
+            res.append(data)
+        return self._add_sequence(res)
+
     def _rel_helper(self, base, roots, taglist):
         """
         Given a list of XMLElements as the [roots], look for each of the tags
