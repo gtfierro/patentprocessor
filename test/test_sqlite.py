@@ -11,8 +11,10 @@ class TestSQLite(unittest.TestCase):
 
     def removeFile(self, file):
         #delete a file if it exists
-        if os.path.isfile(file):
-            os.system("rm {file}".format(file=file))
+        try:
+            os.remove(file)
+        except OSError:
+            pass
 
     def createFile(self, file, type=None, data="1,2,3"):
         #create a file db, csv
@@ -30,9 +32,12 @@ class TestSQLite(unittest.TestCase):
             conn.commit()
             c.close()
             conn = sqlite3.connect(file)
-        elif file.split(".")[-1] == "csv" or type == "csv":
-            os.system("echo '{data}' >> {file}".\
-                format(data=data, file=file))
+        elif file.split(".")[-1] == "csv" or ftype == "csv":
+            #print data
+            f = open(file, 'a+')
+            f.write(data)
+            f.write('\n')   #Mimics the original behavior of echo, which was the original design of the program
+            f.close()
 
     def setUp(self):
         self.removeFile("test.db")
@@ -47,6 +52,7 @@ class TestSQLite(unittest.TestCase):
         self.s.attach(s)
 
     def tearDown(self):
+        self.s.close()
         self.removeFile("test.db")
         self.removeFile("test.csv")
         self.removeFile("test2.db")
