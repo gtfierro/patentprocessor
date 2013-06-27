@@ -73,7 +73,7 @@ class PatentGrant(object):
         for idx, item in enumerate(list_of_fields):
             item.append(idx)
             res.append(item)
-        return item
+        return res
 
     def _asg_list(self):
         doc = self.xml.assignees.assignee
