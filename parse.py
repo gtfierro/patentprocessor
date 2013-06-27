@@ -110,11 +110,13 @@ def move_tables(output_directory):
         return
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
+    # RL modified >>>>>>
     for database in ['assignee', 'citation', 'class',
                      'inventor', 'patent', 'patdesc',
                      'lawyer', 'sciref', 'usreldoc']:
         shutil.move("{0}.sqlite3".format(database),
                     "{0}/{1}.sqlite3".format(output_directory, database))
+    # <<<<<<
 
 
 def main(patentroot, xmlregex, verbosity, output_directory='.'):

@@ -87,6 +87,7 @@ def add(obj):
         pat.assignees.append(pa)
 
     #add lawyer
+    # does this have city, state, country?
     #
     # -- SAMPLE --
     # 0 ['', '', u'unknown', u'Wenderoth, Lind & Ponack, L.L.P.']
@@ -117,9 +118,13 @@ def add(obj):
             pc = Citation(i, date, cit[2], cit[5], cit[4], cit[1], cit[0])
             pat.citations.append(pc)
         else:
-            pc = OtherCitation(h, cit[6])
-            pat.othercitations.append(pc)
+            pc = OtherReference(h, cit[6])
+            pat.otherreferences.append(pc)
             h += 1
+
+    #add usreldocs
+    for i, usr in enumerate(obj.rel_list):
+        print i, usr
 
     session.merge(pat)
     try:
