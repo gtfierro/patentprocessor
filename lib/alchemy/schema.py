@@ -36,6 +36,15 @@ class Patent(Base):
     classes = relationship("USPC", backref="patent")
     inventors = relationship("Inventor", backref="patent")
     assignees = relationship("Assignee", backref="patent")
+    othercitations = relationship("OtherCitation", backref="patent")
+    citations = relationship(
+        "Citation",
+        primaryjoin="Patent.uuid == Citation.patent_uuid",
+        backref="patent")
+    citedby = relationship(
+        "Citation",
+        primaryjoin="Patent.uuid == Citation.citation_uuid",
+        backref="citation")
 
     __table_args__ = (
         Index("pat_idx1", "grant_type", "grant_num", unique=True),
@@ -133,6 +142,34 @@ class Assignee(Base):
     def person(self, *args):
         self.name_last = args[0]
         self.name_first = args[1]
+
+
+class Citation(Base):
+    """
+    Two types of citations?
+    """
+    __tablename__ = "citation"
+    uuid = Column(Integer, primary_key=True)
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    citation_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    date = Column(Date, index=True)
+    number = Column(String(20), index=True)
+    name = Column(String(64))
+    kind = Column(String(10))
+    country = Column(String(10), index=True)
+    category = Column(String(20), index=True)
+    sequence = Column(Integer, index=True)
+    kw = ["sequence", "date", "number", "name",
+          "kind", "country", "category"]
+
+
+class OtherCitation(Base):
+    __tablename__ = "othercitation"
+    uuid = Column(Integer, primary_key=True)
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    text = Column(Text)
+    sequence = Column(Integer, index=True)
+    kw = ["sequence", "text"]
 
 
 class USPC(Base):
