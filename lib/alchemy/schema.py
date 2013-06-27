@@ -58,6 +58,9 @@ class Patent(Base):
 #Index('pat_idx3', Patent.date__grant)
 
 
+# SUPPORT --------------------------
+
+
 class Location(Base):
     #TODO: Anyway we can consolidate to 1 PrimaryKey
     __tablename__ = "location"
@@ -84,6 +87,9 @@ class Location(Base):
         if self.country:
             addy.append(self.country)
         return ", ".join(addy)
+
+
+# OBJECTS --------------------------
 
 
 class Inventor(Base):
@@ -118,8 +124,8 @@ class Assignee(Base):
     uuid = Column(Integer, primary_key=True)
     #location_uuid = Column(Integer, ForeignKey("location.uuid"))
     patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
-    asg_type = Column(String(10))
-    asg_name = Column(String(256))
+    type = Column(String(10))
+    organization = Column(String(256))
     name_first = Column(String(64))
     name_last = Column(String(64))
     loc_city = Column(String(128))
@@ -136,12 +142,15 @@ class Assignee(Base):
     kw = ["sequence"]
 
     def asg(self, *args):
-        self.asg_name = args[0]
-        self.asg_type = args[1]
+        self.organization = args[0]
+        self.type = args[1]
 
     def person(self, *args):
         self.name_last = args[0]
         self.name_first = args[1]
+
+
+# REFERENCES -----------------------
 
 
 class Citation(Base):
@@ -172,6 +181,9 @@ class OtherCitation(Base):
     kw = ["sequence", "text"]
 
 
+# CLASSIFICATIONS ------------------
+
+
 class USPC(Base):
     __tablename__ = "uspc"
     uuid = Column(Integer, primary_key=True)
@@ -186,15 +198,15 @@ class MainClass(Base):
     __tablename__ = "mainclass"
     id = Column(String(20), primary_key=True)
     title = Column(String(256))
-    description = Column(String(256))
+    text = Column(String(256))
     uspc = relationship("USPC", backref="mainclass")
-    kw = ["id", "title", "description"]
+    kw = ["id", "title", "text"]
 
 
 class SubClass(Base):
     __tablename__ = "subclass"
     id = Column(String(20), primary_key=True)
     title = Column(String(256))
-    description = Column(String(256))
+    text = Column(String(256))
     uspc = relationship("USPC", backref="subclass")
-    kw = ["id", "title", "description"]
+    kw = ["id", "title", "text"]
