@@ -68,7 +68,7 @@ def add(obj):
 
     # ----------------------------------------
 
-    #+classes
+    #+classes (TODO for later)
     for i, cls in enumerate(obj.classes):
         uspc = USPC(i)
         mc = MainClass(cls[0])
@@ -78,7 +78,6 @@ def add(obj):
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
-
 
     #add usreldocs
     # us reldocs looks a bit problematic. ruh roh
@@ -96,9 +95,6 @@ def add(obj):
     # 0 ['CONTINUATION', -1, u'12964855', u'US', '']
     #for i, usr in enumerate(obj.rel_list):
     #    print i, usr
-
-    #print obj.inventor_list()
-    #print ""
 
     session.merge(pat)
     try:
