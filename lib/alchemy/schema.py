@@ -18,25 +18,23 @@ Base.__init__ = init
 # <<<<<<
 
 
+# PATENT ---------------------------
+
+
 class Patent(Base):
     __tablename__ = "patent"
     uuid = Column(Integer, primary_key=True)
-    grant_type = Column(String(20))
-    grant_num = Column(String(20))
-    grant_country = Column(String(20))
-    date_grant = Column(Date)
-    app_type = Column(String(20))
-    app_num = Column(String(20))
-    app_country = Column(String(20))
-    date_app = Column(Date)
+    type = Column(String(20))
+    number = Column(String(20))
+    country = Column(String(20))
+    date = Column(Date)
     abstract = deferred(Column(Text))
     title = deferred(Column(Text))
     kind = Column(String(10))
     claims = Column(Integer)
-    classes = relationship("USPC", backref="patent")
-    inventors = relationship("Inventor", backref="patent")
+
+    application = relationship("Application", uselist=False, backref="patent")
     assignees = relationship("Assignee", backref="patent")
-    othercitations = relationship("OtherCitation", backref="patent")
     citations = relationship(
         "Citation",
         primaryjoin="Patent.uuid == Citation.patent_uuid",
@@ -45,16 +43,31 @@ class Patent(Base):
         "Citation",
         primaryjoin="Patent.uuid == Citation.citation_uuid",
         backref="citation")
+    classes = relationship("USPC", backref="patent")
+    inventors = relationship("Inventor", backref="patent")
+    othercitations = relationship("OtherCitation", backref="patent")
 
-    __table_args__ = (
-        Index("pat_idx1", "grant_type", "grant_num", unique=True),
-        Index("pat_idx2", "app_type", "app_num", unique=True),
-        Index("pat_idx3", "date_grant"),
-        Index("pat_idx4", "date_app"),
-    )
-    kw = ["grant_type", "grant_num", "grant_country", "date_grant",
-          "app_type", "app_num", "app_country", "date_app",
+    kw = ["type", "number", "country", "date",
           "abstract", "title", "kind", "claims"]
+    __table_args__ = (
+        Index("pat_idx1", "type", "number", unique=True),
+        Index("pat_idx2", "date"),
+    )
+
+
+class Application(Base):
+    __tablename__ = "application"
+    uuid = Column(Integer, primary_key=True)
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    type = Column(String(20))
+    number = Column(String(20))
+    country = Column(String(20))
+    date = Column(Date)
+    kw = ["type", "number", "country", "date"]
+    __table_args__ = (
+        Index("app_idx1", "type", "number", unique=True),
+        Index("app_idx2", "date"),
+    )
 #Index('pat_idx3', Patent.date__grant)
 
 
@@ -71,11 +84,10 @@ class Location(Base):
     longitude = Column(Float)
     inventors = relationship("Inventor", backref="location")
     assignees = relationship("Assignee", backref="location")
-
+    kw = ["city", "state", "country", "longitude", "latitude"]
     __table_args__ = (
         Index("loc_idx1", "latitude", "longitude"),
     )
-    kw = ["city", "state", "country", "longitude", "latitude"]
 
     @hybrid_property
     def address(self):
@@ -103,14 +115,13 @@ class Inventor(Base):
     loc_state = Column(String(10), index=True)
     loc_country = Column(String(10), index=True)
     sequence = Column(Integer, index=True)
-
+    kw = ["sequence", "name_last", "name_first", "nationality"]
     __table_args__ = (
         ForeignKeyConstraint(
             [loc_city, loc_state, loc_country],
             [Location.city, Location.state, Location.country]
         ),
     )
-    kw = ["sequence", "name_last", "name_first", "nationality"]
 
     @hybrid_property
     def name_full(self):
@@ -132,14 +143,13 @@ class Assignee(Base):
     loc_state = Column(String(10), index=True)
     loc_country = Column(String(10), index=True)
     sequence = Column(Integer, index=True)
-
+    kw = ["sequence"]
     __table_args__ = (
         ForeignKeyConstraint(
             [loc_city, loc_state, loc_country],
             [Location.city, Location.state, Location.country]
         ),
     )
-    kw = ["sequence"]
 
     def asg(self, *args):
         self.organization = args[0]
