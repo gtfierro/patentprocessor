@@ -35,8 +35,9 @@ def add(obj):
     date_grant = datetime.strptime(obj.date_grant, '%Y%m%d')
     date_app = datetime.strptime(obj.date_app, '%Y%m%d')
     pat = Patent(obj.pat_type, obj.patent, obj.country, date_grant,
-                 obj.code_app, obj.patent_app, obj.country_app, date_app,
                  obj.abstract, obj.invention_title, obj.kind, obj.clm_num)
+    pat.application = Application(obj.code_app, obj.patent_app,
+                                  obj.country_app, date_app)
 
     #add classes
     for i, cls in enumerate(obj.classes):
