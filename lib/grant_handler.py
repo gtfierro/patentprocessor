@@ -355,29 +355,43 @@ class PatentGrant(object):
             # there are also other citations
             if "number" in data and category == "citation":
                 res.append(data)
-                i = i + 1
+                i += 1
             elif "number" not in data and category == "other":
                 res.append(data)
-                i = i + 1
+                i += 1
         return res
 
     def inventor_list(self):
         """
-        method for new inventor schema. Returns lists of
-        [name__first, name__last, addr__city, addr__state, addr__country,
-         addr__longitude, addr__latitude, nationality, sequence]
-        NOTE: addr__longitude and addr__latitude will be empty until
-        the geocoding step]
+        *VERY similar to assignee_list
+        Returns a list of list of inventor dictionary and location dictionary
+        inventor:
+            name_last
+            name_first
+            nationality
+            sequence
+        location:
+            city
+            state
+            country
         """
         inventors = self.xml.parties.applicant
         if not inventors:
             return []
         res = []
-        for inventor in inventors:
-            data = []
-            data.extend(self._name_helper(inventor.addressbook))
-            for tag in ['city', 'state', 'country']:
-                data.append(inventor.addressbook.contents_of(tag, as_string=True))
-            data.append(inventor.nationality.contents_of('country', as_string=True))
-            res.append(data)
-        return self._add_sequence(res)
+        for i, inventor in enumerate(inventors):
+            # Asignee
+            inv = {}
+            inv.update(self._name_helper(inventor.addressbook, return_dict=True))
+            inv["nationality"] = self.fetch_item(inventor.nationality.contents_of('country'))
+            inv["sequence"] = i
+            inv = self.lint_dict(inv)
+
+            # Location
+            loc = {}
+            lockey = {"city": "city", "state": "state", "country": "country"}
+            for tag, key in lockey.iteritems():
+                loc.update({tag: inventor.addressbook.contents_of(tag, as_string=True)})
+
+            res.append([inv, loc])
+        return res

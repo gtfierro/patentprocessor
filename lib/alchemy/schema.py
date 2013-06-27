@@ -118,11 +118,11 @@ class Assignee(Base):
     organization = Column(Unicode(256))
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
+    residence = Column(Unicode(10))
+    nationality = Column(Unicode(10))
     location_city = Column(Unicode(128))
     location_state = Column(Unicode(10), index=True)
     location_country = Column(Unicode(10), index=True)
-    residence = Column(Unicode(10))
-    nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
     kw = ["sequence"]
     __table_args__ = (
@@ -148,6 +148,7 @@ class Inventor(Base):
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
+    nationality = Column(Unicode(10))
     location_city = Column(Unicode(128))
     location_state = Column(Unicode(10), index=True)
     location_country = Column(Unicode(10), index=True)

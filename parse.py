@@ -61,7 +61,7 @@ def parallel_parse(filelist):
 
 def apply_xmlclass(us_patent_grant):
     parsed_grants = []
-    if 1==1:
+    if 1 == 1:
     #try:
         patobj = PatentGrant(us_patent_grant, True)
         # RL added >>>>>>
