@@ -31,14 +31,11 @@ def add(obj):
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
     """
     #add patent
-    # abstracts seem to be missing. why?
-    date_grant = datetime.strptime(obj.date_grant, '%Y%m%d')
-    date_app = datetime.strptime(obj.date_app, '%Y%m%d')
-    pat = Patent(obj.patent, obj.pat_type, obj.patent, obj.country, date_grant,
-                 obj.abstract, obj.invention_title, obj.kind, obj.clm_num)
-    pat.application = Application(obj.code_app, obj.patent_app,
-                                  obj.country_app, date_app)
+    # lots of abstracts seem to be missing. why?
+    pat = Patent(**obj.pat)
+    pat.application = Application(**obj.app)
 
+    #+asg
     for asg, loc in obj.assignee_list():
         asg = Assignee(**asg)
         loc = Location(**loc)
@@ -46,14 +43,15 @@ def add(obj):
         asg.location = loc
         pat.assignees.append(asg)
 
+    #+cit
     for cit in obj.citation_list():
         cit = Citation(**cit)
         pat.citations.append(cit)
 
+    #+othercit
     for ref in obj.citation_list(category="other"):
         ref = OtherReference(**ref)
         pat.otherreferences.append(ref)
-
 
     #add classes
     for i, cls in enumerate(obj.classes):
@@ -81,20 +79,6 @@ def add(obj):
         pat.inventors.append(iv)
 
 
-
-    """
-    for i, asg in enumerate(obj.asg_list):
-        pa = Assignee(i)
-        lc = Location(inv[3], inv[4], inv[5])
-        session.merge(lc)
-        if asg[0] == 0:
-            pa.asg(asg[1], asg[2])
-        else:
-            pa.asg(asg[1], asg[2])
-        pa.location = lc
-        pat.assignees.append(pa)
-    """
-
     #add lawyer
     # does this have city, state, country?
     #
@@ -106,32 +90,6 @@ def add(obj):
     for i, law in enumerate(obj.law_list):
         lc = Lawyer(i, law[0], law[1], law[3], law[2])
         pat.lawyers.append(lc)
-
-    #add citation
-    # other citation
-    # is there a way we can tell the doc number as a US patent?
-    # I see lots of different patent types and numbers
-    # - citation date is just YYYY-MM-00
-    # Seperate both citation and othercitation
-    #
-    # -- SAMPLE --
-    # 0 [u'cited by examiner', u'US', u'4672559', u'19870600', u'A', u'Jansson et al.', '']
-    # 1 [u'cited by examiner', u'US', u'5999189', u'19991200', u'A', u'Kajiya et al.', '']
-    # 2 [u'cited by examiner', u'US', u'6052492', u'20000400', u'A', u'Bruckhaus', '']
-    # 3 [u'cited by examiner', u'US', u'6282327', u'20010800', u'B1', u'Betrisey et al.', '']
-    #15 [u'cited by other', '', '', '', '', '', u'Pagoulatos et al.: \u201cInteractive 3-D Registration of Ultrasound and Magnetic Resonance Images Based on a Magnetic Positio
-
-    #h = 0
-    #for i, cit in enumerate(obj.cit_list):
-    #    if cit[3]:
-    #        cit[3] = cit[3][:7] + "1"
-    #        date = datetime.strptime(cit[3], '%Y%m%d')
-    #        pc = Citation(i, date, cit[2], cit[5], cit[4], cit[1], cit[0])
-    #        pat.citations.append(pc)
-    #    else:
-    #        pc = OtherReference(h, cit[6])
-    #        pat.otherreferences.append(pc)
-    #        h += 1
 
     #add usreldocs
     # us reldocs looks a bit problematic. ruh roh
@@ -150,7 +108,7 @@ def add(obj):
     #for i, usr in enumerate(obj.rel_list):
     #    print i, usr
 
-    #print obj.inventor_list()
+    print obj.inventor_list()
     print ""
 
     session.merge(pat)
