@@ -43,6 +43,14 @@ def add(obj):
         asg.location = loc
         pat.assignees.append(asg)
 
+    #+inv
+    for inv, loc in obj.inventor_list():
+        inv = Inventor(**inv)
+        loc = Location(**loc)
+        session.merge(loc)
+        inv.location = loc
+        pat.inventors.append(inv)
+
     #+cit
     for cit in obj.citation_list():
         cit = Citation(**cit)
@@ -53,7 +61,9 @@ def add(obj):
         ref = OtherReference(**ref)
         pat.otherreferences.append(ref)
 
-    #add classes
+    # ----------------------------------------
+
+    #+classes
     for i, cls in enumerate(obj.classes):
         uspc = USPC(i)
         mc = MainClass(cls[0])
@@ -63,21 +73,6 @@ def add(obj):
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
-
-    #add inventors
-    # what's up with middle name and suffix? what is this omitted?
-    #
-    # -- SAMPLE --
-    # 0 [u'Minami', u'Masaki', '', u'Wakayama', '', u'JP', '', u'omitted', u'JP']
-    # 1 [u'Minamide', u'Hiroshi', '', u'Wakayama', '', u'JP', '', u'omitted', u'JP']
-    # 2 [u'Nishitani', u'Hirokazu', '', u'Wakayama', '', u'JP', '', u'omitted', u'JP']
-    for i, inv in enumerate(obj.inv_list):
-        iv = Inventor(i, inv[0], inv[1], inv[8])
-        lc = Location(inv[3], inv[4], inv[5])
-        session.merge(lc)
-        iv.location = lc
-        pat.inventors.append(iv)
-
 
     #add lawyer
     # does this have city, state, country?
@@ -108,8 +103,8 @@ def add(obj):
     #for i, usr in enumerate(obj.rel_list):
     #    print i, usr
 
-    print obj.inventor_list()
-    print ""
+    #print obj.inventor_list()
+    #print ""
 
     session.merge(pat)
     try:
