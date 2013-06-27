@@ -137,8 +137,13 @@ def add(obj):
     # 13 ['CONTINUATION-IN-PART', 1, u'11500125', u'US', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'7525392', u'US', '', '', '', '', '', '', '', '', '', '', '', '', '']
     # 14 ['CONTINUATION-IN-PART', 1, u'11500125', u'US', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'7525392', u'US', '', '', '', '', '', '', '', '', '', '', '', '', '']
     # 0 ['CONTINUATION', -1, u'12964855', u'US', '']
-    for i, usr in enumerate(obj.rel_list):
-        print i, usr
+    #for i, usr in enumerate(obj.rel_list):
+    #    print i, usr
+
+
+    #print obj.assignee_list()
+    #print obj.citation_list()
+    #print obj.inventor_list()
 
     session.merge(pat)
     try:
