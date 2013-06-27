@@ -17,7 +17,7 @@ def fetch_engine():
     if config.get('global', 'database') == "sqlite":
         engine = create_engine('sqlite:///{0}'.format(config.get('sqlite', 'database')), echo=echo)
     else:
-        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
+        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=latin1'.format(
             config.get('mysql', 'user'),
             config.get('mysql', 'password'),
             config.get('mysql', 'host'),
@@ -34,7 +34,7 @@ def add(obj):
     # abstracts seem to be missing. why?
     date_grant = datetime.strptime(obj.date_grant, '%Y%m%d')
     date_app = datetime.strptime(obj.date_app, '%Y%m%d')
-    pat = Patent(obj.pat_type, obj.patent, obj.country, date_grant,
+    pat = Patent(obj.patent, obj.pat_type, obj.patent, obj.country, date_grant,
                  obj.abstract, obj.invention_title, obj.kind, obj.clm_num)
     pat.application = Application(obj.code_app, obj.patent_app,
                                   obj.country_app, date_app)
