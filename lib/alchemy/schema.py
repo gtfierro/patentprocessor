@@ -48,7 +48,8 @@ class Patent(Base):
         "Citation",
         primaryjoin="Patent.uuid == Citation.citation_uuid",
         backref="citation")
-    othercitations = relationship("OtherCitation", backref="patent")
+    otherreferences = relationship("OtherReference", backref="patent")
+    usreldocs = relationship("USRelDoc", backref="patent")
 
     kw = ["type", "number", "country", "date",
           "abstract", "title", "kind", "claims"]
@@ -205,14 +206,19 @@ class Citation(Base):
           "kind", "country", "category"]
 
 
-class OtherCitation(Base):
-    __tablename__ = "othercitation"
+class OtherReference(Base):
+    __tablename__ = "otherreference"
     uuid = Column(Integer, primary_key=True)
     patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
     text = Column(Text)
     sequence = Column(Integer, index=True)
     kw = ["sequence", "text"]
 
+
+class USRelDoc(Base):
+    __tablename__ = "usreldoc"
+    uuid = Column(Integer, primary_key=True)
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
 
 # CLASSIFICATIONS ------------------
 
