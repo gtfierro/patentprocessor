@@ -46,6 +46,13 @@ def add(obj):
         asg.location = loc
         pat.assignees.append(asg)
 
+    for cit in obj.citation_list():
+        cit = Citation(**cit)
+        pat.citations.append(cit)
+
+    for ref in obj.citation_list(category="other"):
+        ref = OtherReference(**ref)
+        pat.otherreferences.append(ref)
 
 
     #add classes
@@ -72,6 +79,7 @@ def add(obj):
         session.merge(lc)
         iv.location = lc
         pat.inventors.append(iv)
+
 
 
     """
@@ -112,17 +120,18 @@ def add(obj):
     # 2 [u'cited by examiner', u'US', u'6052492', u'20000400', u'A', u'Bruckhaus', '']
     # 3 [u'cited by examiner', u'US', u'6282327', u'20010800', u'B1', u'Betrisey et al.', '']
     #15 [u'cited by other', '', '', '', '', '', u'Pagoulatos et al.: \u201cInteractive 3-D Registration of Ultrasound and Magnetic Resonance Images Based on a Magnetic Positio
-    h = 0
-    for i, cit in enumerate(obj.cit_list):
-        if cit[3]:
-            cit[3] = cit[3][:7] + "1"
-            date = datetime.strptime(cit[3], '%Y%m%d')
-            pc = Citation(i, date, cit[2], cit[5], cit[4], cit[1], cit[0])
-            pat.citations.append(pc)
-        else:
-            pc = OtherReference(h, cit[6])
-            pat.otherreferences.append(pc)
-            h += 1
+
+    #h = 0
+    #for i, cit in enumerate(obj.cit_list):
+    #    if cit[3]:
+    #        cit[3] = cit[3][:7] + "1"
+    #        date = datetime.strptime(cit[3], '%Y%m%d')
+    #        pc = Citation(i, date, cit[2], cit[5], cit[4], cit[1], cit[0])
+    #        pat.citations.append(pc)
+    #    else:
+    #        pc = OtherReference(h, cit[6])
+    #        pat.otherreferences.append(pc)
+    #        h += 1
 
     #add usreldocs
     # us reldocs looks a bit problematic. ruh roh
@@ -141,7 +150,6 @@ def add(obj):
     #for i, usr in enumerate(obj.rel_list):
     #    print i, usr
 
-    #print obj.citation_list()
     #print obj.inventor_list()
     print ""
 

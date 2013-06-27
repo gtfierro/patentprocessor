@@ -6,6 +6,7 @@ from patent grant documents
 """
 
 import cStringIO
+from datetime import datetime
 from xml_driver import *
 from xml_util import *
 from xml.sax import xmlreader
@@ -215,7 +216,7 @@ class PatentGrant(object):
 
     # --- RON FUNCTION
 
-    def lintDict(self, data):
+    def lint_dict(self, data):
         """
         Returns a dictionary that removes the blank values
         Might not actually be necessary
@@ -230,18 +231,31 @@ class PatentGrant(object):
         else:
             return data_list
 
+    def fetch_item(self, data):
+        if data:
+            return data[0]
+        else:
+            return None
+
+    def date_me(self, data, field="date"):
+        if field in data:
+            if data[field][-2:] == "00":
+                data[field] = data[field][:6] + "01"
+            data[field] = datetime.strptime(data[field], '%Y%m%d')
+        return data
+
     # --- GABE FUNCTIONS
 
     def assignee_list(self):
         """
-        Returns a dictionary related to assignee and location
-          assignee:
+        Returns a list of list of assignee dictionary and location dictionary
+        assignee:
             name_last
             name_first
             residence
             nationality
             sequence
-          location:
+        location:
             city
             state
             country
@@ -258,10 +272,10 @@ class PatentGrant(object):
             asg.update(self._name_helper(assignee, return_dict=True))
             for tag, key in asgkey.iteritems():
                 asg.update({key: assignee.contents_of(tag, as_string=True)})
-            asg["nationality"] = assignee.nationality.contents_of('country')[0]
-            asg["residence"] = assignee.residence.contents_of('country')[0]
+            asg["nationality"] = self.fetch_item(assignee.nationality.contents_of('country'))
+            asg["residence"] = self.fetch_item(assignee.residence.contents_of('country'))
             asg["sequence"] = i
-            asg = self.lintDict(asg)
+            asg = self.lint_dict(asg)
 
             # Location
             loc = {}
@@ -290,27 +304,58 @@ class PatentGrant(object):
             data.append(citation.contents_of('category', as_string=True))
             doc_number = citation.contents_of('doc_number', as_string=True)
             data.append(normalize_document_identifier(doc_number))
-            res.append(data)
         return self._add_sequence(res)
 
-    def citation_list(self):
+    def citation_list(self, category="citation"):
         """
+        Returns list of dictionary related citations/othercitation
+        citation:
+            date
+            name
+            kind
+            country
+            category
+            number
+            sequence
         """
         citations = self.xml.references_cited.citation
         if not citations:
             return []
         res = []
-        for i, citation in enumerate(citations):
+        i = 0
+        for citation in citations:
+            data = {}
+            citkey = {"date": "date", "name": "name", "kind": "kind",
+                      "category": "category", "doc_number": "number"}
+            for tag, key in citkey.iteritems():
+                data[key] = citation.contents_of(tag, as_string=True)
+            data["country"] = self.fetch_item(citation.contents_of('country'))
+            data["number"] = normalize_document_identifier(data["number"])
+            data = self.lint_dict(data)
+            data = self.date_me(data, "date")
 
-            data = [self.patent, '']  # blank space for generated citation_id
-            for tag in ['date', 'name', 'kind']:
-                data.append(citation.contents_of(tag, as_string=True))
-            data.append(citation.contents_of('country')[0])
-            data.append(citation.contents_of('category', as_string=True))
-            doc_number = citation.contents_of('doc_number', as_string=True)
-            data.append(normalize_document_identifier(doc_number))
-            res.append(data)
-        return self._add_sequence(res)
+            # TODO: Gabe, can you help me clean this?
+            contents = citation.contents_of('othercit')
+            text = ""
+            for chunk in contents:
+                if isinstance(chunk, list):
+                    text = u"".join([escape_html_nosub(x) for x in chunk])
+                else:
+                    text = escape_html_nosub(chunk)
+                if type(text).__name__ in ('tuple', 'list'):
+                    text = u"".join(text)
+            data["text"] = text
+            # ---------------------------------------
+
+            data["sequence"] = i
+            # there are also other citations
+            if "number" in data and category == "citation":
+                res.append(data)
+                i = i + 1
+            elif "number" not in data and category == "other":
+                res.append(data)
+                i = i + 1
+        return res
 
     def inventor_list(self):
         """
