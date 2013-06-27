@@ -124,7 +124,7 @@ class Assignee(Base):
     kw = ["sequence"]
     __table_args__ = (
         ForeignKeyConstraint(
-            [loc_city, loc_state, loc_country],
+            [location_city, location_state, location_country],
             [Location.city, Location.state, Location.country]
         ),
     )
@@ -152,7 +152,7 @@ class Inventor(Base):
     kw = ["sequence", "name_last", "name_first", "nationality"]
     __table_args__ = (
         ForeignKeyConstraint(
-            [loc_city, loc_state, loc_country],
+            [location_city, location_state, location_country],
             [Location.city, Location.state, Location.country]
         ),
     )
