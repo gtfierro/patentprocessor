@@ -50,7 +50,7 @@ class PatentGrant(object):
             "type": self.pat_type,
             "number": self.patent,
             "country": self.country,
-            "date": datetime.strptime(self.date_grant, '%Y%m%d'),
+            "date": self.date_me(self.date_grant),
             "abstract": self.abstract,
             "title": self.invention_title,
             "kind": self.kind,
@@ -60,7 +60,7 @@ class PatentGrant(object):
             "type": self.code_app,
             "number": self.patent_app,
             "country": self.country_app,
-            "date": datetime.strptime(self.date_app, '%Y%m%d')
+            "date": self.date_me(self.date_app)
         }
 
     def _invention_title(self):
@@ -250,16 +250,24 @@ class PatentGrant(object):
             return data_list
 
     def fetch_item(self, data):
+        """
+        Looks at a list. If its empty returns None, if it has
+        values, returns the first element of the list
+        """
         if data:
             return data[0]
         else:
             return None
 
-    def date_me(self, data, field="date"):
-        if field in data:
-            if data[field][-2:] == "00":
-                data[field] = data[field][:6] + "01"
-            data[field] = datetime.strptime(data[field], '%Y%m%d')
+    def date_me(self, data):
+        """
+        Converts a number to a Date, checks for just YY/MM like in Citation
+        """
+        if not data:
+            return None
+        if data[-2:] == "00":
+            data = data[:6] + "01"
+        data = datetime.strptime(data, '%Y%m%d')
         return data
 
     # --- GABE FUNCTIONS
@@ -335,8 +343,8 @@ class PatentGrant(object):
                 data[key] = citation.contents_of(tag, as_string=True)
             data["country"] = self.fetch_item(citation.contents_of('country'))
             data["number"] = normalize_document_identifier(data["number"])
+            data["date"] = self.date_me(data.get("date"))
             data = self.lint_dict(data)
-            data = self.date_me(data, "date")
 
             # TODO: Gabe, can you help me clean this?
             contents = citation.contents_of('othercit')
@@ -394,4 +402,29 @@ class PatentGrant(object):
                 loc.update({tag: inventor.addressbook.contents_of(tag, as_string=True)})
 
             res.append([inv, loc])
+        return res
+
+    def lawyer_list(self):
+        """
+        Returns a list of lawyer dictionary
+        lawyer:
+            name_last
+            name_first
+            organization
+            country
+            sequence
+        """
+        res = []
+        lawyers = self.xml.parties.agents.agent
+        if not lawyers:
+            return []
+        res = []
+        for i, lawyer in enumerate(lawyers):
+            law = {}
+            law.update(self._name_helper(lawyer, return_dict=True))
+            law["country"] = lawyer.contents_of('country',as_string=True)
+            law["organization"] = lawyer.contents_of('orgname',as_string=True)
+            law["sequence"] = i
+            law = self.lint_dict(law)
+            res.append(law)
         return res
