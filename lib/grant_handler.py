@@ -45,6 +45,24 @@ class PatentGrant(object):
         self.inv_list = self._inv_list()
         self.law_list = self._law_list()
 
+        self.pat = {
+            "id": self.patent,
+            "type": self.pat_type,
+            "number": self.patent,
+            "country": self.country,
+            "date": datetime.strptime(self.date_grant, '%Y%m%d'),
+            "abstract": self.abstract,
+            "title": self.invention_title,
+            "kind": self.kind,
+            "claims": self.clm_num
+        }
+        self.app = {
+            "type": self.code_app,
+            "number": self.patent_app,
+            "country": self.country_app,
+            "date": datetime.strptime(self.date_app, '%Y%m%d')
+        }
+
     def _invention_title(self):
         original = self.xml.contents_of('invention_title')[0]
         if isinstance(original, list):
