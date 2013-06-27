@@ -61,6 +61,11 @@ def add(obj):
         ref = OtherReference(**ref)
         pat.otherreferences.append(ref)
 
+    #+law
+    for law in obj.lawyer_list():
+        law = Lawyer(**law)
+        pat.lawyers.append(law)
+
     # ----------------------------------------
 
     #+classes
@@ -74,17 +79,6 @@ def add(obj):
         uspc.subclass = sc
         pat.classes.append(uspc)
 
-    #add lawyer
-    # does this have city, state, country?
-    #
-    # -- SAMPLE --
-    # 0 ['', '', u'unknown', u'Wenderoth, Lind & Ponack, L.L.P.']
-    # 0 [u'Tran', u'Bao', u'unknown', '']
-    # 1 [u'Kolodka', u'Joseph', u'unknown', '']
-    # 0 [u'C. Basch', u'Duane', u'unknown', '']
-    for i, law in enumerate(obj.law_list):
-        lc = Lawyer(i, law[0], law[1], law[3], law[2])
-        pat.lawyers.append(lc)
 
     #add usreldocs
     # us reldocs looks a bit problematic. ruh roh
