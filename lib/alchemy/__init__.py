@@ -86,6 +86,17 @@ def add(obj):
         pa.location = lc
         pat.assignees.append(pa)
 
+    #add lawyer
+    #
+    # -- SAMPLE --
+    # 0 ['', '', u'unknown', u'Wenderoth, Lind & Ponack, L.L.P.']
+    # 0 [u'Tran', u'Bao', u'unknown', '']
+    # 1 [u'Kolodka', u'Joseph', u'unknown', '']
+    # 0 [u'C. Basch', u'Duane', u'unknown', '']
+    for i, law in enumerate(obj.law_list):
+        lc = Lawyer(i, law[0], law[1], law[3], law[2])
+        pat.lawyers.append(lc)
+
     #add citation
     # other citation
     # is there a way we can tell the doc number as a US patent?
