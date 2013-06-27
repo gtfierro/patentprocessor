@@ -121,6 +121,8 @@ class Assignee(Base):
     location_city = Column(Unicode(128))
     location_state = Column(Unicode(10), index=True)
     location_country = Column(Unicode(10), index=True)
+    residence = Column(Unicode(10))
+    nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
     kw = ["sequence"]
     __table_args__ = (

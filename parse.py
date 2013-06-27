@@ -61,16 +61,17 @@ def parallel_parse(filelist):
 
 def apply_xmlclass(us_patent_grant):
     parsed_grants = []
-    try:
+    if 1==1:
+    #try:
         patobj = PatentGrant(us_patent_grant, True)
         # RL added >>>>>>
         alchemy.add(patobj)
         # <<<<<<
         for xmlclass in xmlclasses:
             parsed_grants.append(xmlclass(patobj))
-    except Exception as inst:
-        logging.error(type(inst))
-        logging.error("  - Error parsing patent: %s" % (us_patent_grant[:400]))
+    #except Exception as inst:
+    #    logging.error(type(inst))
+    #    logging.error("  - Error parsing patent: %s" % (us_patent_grant[:400]))
     return parsed_grants
 
 

@@ -39,6 +39,15 @@ def add(obj):
     pat.application = Application(obj.code_app, obj.patent_app,
                                   obj.country_app, date_app)
 
+    for asg, loc in obj.assignee_list():
+        asg = Assignee(**asg)
+        loc = Location(**loc)
+        session.merge(loc)
+        asg.location = loc
+        pat.assignees.append(asg)
+
+
+
     #add classes
     for i, cls in enumerate(obj.classes):
         uspc = USPC(i)
@@ -64,17 +73,8 @@ def add(obj):
         iv.location = lc
         pat.inventors.append(iv)
 
-    #add assignee
-    # is there some sort of assignee number?
-    # some of the patents don't have assignees. why?
-    # for example: 8089324
-    #
-    # separating out firstname/lastname with organization
-    #
-    # -- SAMPLE --
-    # [0, u'Huizhou Light Engine Ltd.', u'03', '', u'Huizhou, Guangdong', '', u'CN', '', '', '']
-    # [0, u'Koninklijke Philips Electronics N.V.', u'03', '', u'Eindhoven', '', u'NL', '', '', '']
-    # [0, u'Kueberit Profile Systems GmbH &amp; Co. KG', u'03', '', u'Luedenscheid', '', u'DE', '', '', '']
+
+    """
     for i, asg in enumerate(obj.asg_list):
         pa = Assignee(i)
         lc = Location(inv[3], inv[4], inv[5])
@@ -85,6 +85,7 @@ def add(obj):
             pa.asg(asg[1], asg[2])
         pa.location = lc
         pat.assignees.append(pa)
+    """
 
     #add lawyer
     # does this have city, state, country?
@@ -140,10 +141,9 @@ def add(obj):
     #for i, usr in enumerate(obj.rel_list):
     #    print i, usr
 
-
-    #print obj.assignee_list()
     #print obj.citation_list()
     #print obj.inventor_list()
+    print ""
 
     session.merge(pat)
     try:
