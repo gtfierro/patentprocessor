@@ -58,10 +58,13 @@ class PatentGrant(object):
             it.extend(further)
         return [ [x[:3].replace(' ',''), x[3:].replace(' ','')] for x in it]
 
-    def _name_helper(self, tag_root):
+    def _name_helper(self, tag_root, return_dict=False):
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
-        return associate_prefix(firstname, lastname)
+        if return_dict:
+            return {"name_first": firstname, "name_last": lastname}
+        else:
+            return associate_prefix(firstname, lastname)
 
     def _add_sequence(self, list_of_fields):
         """
@@ -94,28 +97,6 @@ class PatentGrant(object):
         data.extend(doc.residence.contents_of('country'))
         return [data]
 
-    def assignee_list(self):
-        """
-        Returns list of assignees, each of form
-        [asg__firstname, asg__lastname, asg__orgname, asg__role, addr__city,
-         addr__state, addr__country, addr__longitude, addr_latitude, nationality,
-         residence, sequence]
-        NOTE: longitude and latitude will be empty until the geocoding step
-        """
-        assignees = self.xml.assignees.assignee
-        if not assignees: return []
-        res = []
-        for assignee in assignees:
-            data = []
-            data.extend(self._name_helper(assignee)) # add firstname, lastname
-            for tag in ['orgname','role','city','state','country']:
-                data.append(assignee.contents_of(tag,as_string=True))
-            data.extend(['','']) # placeholders for longitude, latitude
-            data.extend(assignee.nationality.contents_of('country'))
-            data.extend(assignee.residence.contents_of('country'))
-            res.append(data)
-        return self._add_sequence(res)
-
     def _cit_list(self):
         res = []
         citations = self.xml.references_cited.citation
@@ -139,26 +120,6 @@ class PatentGrant(object):
                         cit_data.append(escape_html_nosub(chunk))
             res.append(cit_data)
         return res
-
-    def citation_list(self):
-        """
-        Returns list of citations, each of form
-        [patent_id, citation_id, date__cit, cit__name, cit__kind, cit__country
-         category, cit__num, sequence]
-        """
-        citations = self.xml.references_cited.citation
-        if not citations: return []
-        res = []
-        for citation in citations:
-            data = [self.patent, ''] # blank space for generated citation_id
-            for tag in ['date','name','kind']:
-                data.append(citation.contents_of(tag, as_string=True))
-            data.append(citation.contents_of('country')[0])
-            data.append(citation.contents_of('category',as_string=True))
-            doc_number = citation.contents_of('doc_number',as_string=True)
-            data.append(normalize_document_identifier(doc_number))
-            res.append(data)
-        return self._add_sequence(res)
 
     def _rel_helper(self, base, roots, taglist):
         """
@@ -238,27 +199,6 @@ class PatentGrant(object):
             res.append(data)
         return res
 
-    def inventor_list(self):
-        """
-        method for new inventor schema. Returns lists of
-        [name__first, name__last, addr__city, addr__state, addr__country,
-         addr__longitude, addr__latitude, nationality, sequence]
-        NOTE: addr__longitude and addr__latitude will be empty until
-        the geocoding step]
-        """
-        inventors = self.xml.parties.applicant
-        if not inventors: return []
-        res = []
-        for inventor in inventors:
-            data = []
-            data.extend(self._name_helper(inventor.addressbook))
-            for tag in ['city','state','country']:
-                data.append(inventor.addressbook.contents_of(tag,as_string=True))
-            data.append(inventor.nationality.contents_of('country',as_string=True))
-            data.extend(['','']) # placeholders for longitude, latitude
-            res.append(data)
-        return self._add_sequence(res)
-
     def _law_list(self):
         lawyers = self.xml.parties.agents.agent
         if not lawyers: return []
@@ -272,3 +212,123 @@ class PatentGrant(object):
             data.append(lawyer.contents_of('orgname',as_string=True))
             res.append(data)
         return res
+
+    # --- RON FUNCTION
+
+    def lintDict(self, data):
+        """
+        Returns a dictionary that removes the blank values
+        Might not actually be necessary
+        """
+        if type(data).__name__ not in ('list', 'tuple'):
+            data = [data]
+        data_list = []
+        for item in data:
+            data_list.append(dict([(k, v) for k, v in item.iteritems() if v != ""]))
+        if len(data_list) == 1:
+            return data_list[0]
+        else:
+            return data_list
+
+    # --- GABE FUNCTIONS
+
+    def assignee_list(self):
+        """
+        Returns a dictionary related to assignee and location
+          assignee:
+            name_last
+            name_first
+            residence
+            nationality
+            sequence
+          location:
+            city
+            state
+            country
+        """
+        assignees = self.xml.assignees.assignee
+        if not assignees:
+            return []
+        res = []
+        for i, assignee in enumerate(assignees):
+            # Asignee
+            asg = {}
+            asgkey = {"orgname": "organization", "role": "type"}
+            # add firstname, lastname
+            asg.update(self._name_helper(assignee, return_dict=True))
+            for tag, key in asgkey.iteritems():
+                asg.update({key: assignee.contents_of(tag, as_string=True)})
+            asg["nationality"] = assignee.nationality.contents_of('country')[0]
+            asg["residence"] = assignee.residence.contents_of('country')[0]
+            asg["sequence"] = i
+            asg = self.lintDict(asg)
+
+            # Location
+            loc = {}
+            lockey = {"city": "city", "state": "state", "country": "country"}
+            for tag, key in lockey.iteritems():
+                loc.update({tag: assignee.contents_of(tag, as_string=True)})
+
+            res.append([asg, loc])
+        return res
+
+    def citation_list(self):
+        """
+        Returns list of citations, each of form
+        [patent_id, citation_id, date__cit, cit__name, cit__kind, cit__country
+         category, cit__num, sequence]
+        """
+        citations = self.xml.references_cited.citation
+        if not citations:
+            return []
+        res = []
+        for citation in citations:
+            data = [self.patent, '']  # blank space for generated citation_id
+            for tag in ['date', 'name', 'kind']:
+                data.append(citation.contents_of(tag, as_string=True))
+            data.append(citation.contents_of('country')[0])
+            data.append(citation.contents_of('category', as_string=True))
+            doc_number = citation.contents_of('doc_number', as_string=True)
+            data.append(normalize_document_identifier(doc_number))
+            res.append(data)
+        return self._add_sequence(res)
+
+    def citation_list(self):
+        """
+        """
+        citations = self.xml.references_cited.citation
+        if not citations:
+            return []
+        res = []
+        for i, citation in enumerate(citations):
+
+            data = [self.patent, '']  # blank space for generated citation_id
+            for tag in ['date', 'name', 'kind']:
+                data.append(citation.contents_of(tag, as_string=True))
+            data.append(citation.contents_of('country')[0])
+            data.append(citation.contents_of('category', as_string=True))
+            doc_number = citation.contents_of('doc_number', as_string=True)
+            data.append(normalize_document_identifier(doc_number))
+            res.append(data)
+        return self._add_sequence(res)
+
+    def inventor_list(self):
+        """
+        method for new inventor schema. Returns lists of
+        [name__first, name__last, addr__city, addr__state, addr__country,
+         addr__longitude, addr__latitude, nationality, sequence]
+        NOTE: addr__longitude and addr__latitude will be empty until
+        the geocoding step]
+        """
+        inventors = self.xml.parties.applicant
+        if not inventors:
+            return []
+        res = []
+        for inventor in inventors:
+            data = []
+            data.extend(self._name_helper(inventor.addressbook))
+            for tag in ['city', 'state', 'country']:
+                data.append(inventor.addressbook.contents_of(tag, as_string=True))
+            data.append(inventor.nationality.contents_of('country', as_string=True))
+            res.append(data)
+        return self._add_sequence(res)
