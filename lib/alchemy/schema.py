@@ -34,7 +34,12 @@ class Patent(Base):
     claims = Column(Integer)
 
     application = relationship("Application", uselist=False, backref="patent")
+    classes = relationship("USPC", backref="patent")
+
     assignees = relationship("Assignee", backref="patent")
+    inventors = relationship("Inventor", backref="patent")
+    lawyers = relationship("Lawyer", backref="patent")
+
     citations = relationship(
         "Citation",
         primaryjoin="Patent.uuid == Citation.patent_uuid",
@@ -43,8 +48,6 @@ class Patent(Base):
         "Citation",
         primaryjoin="Patent.uuid == Citation.citation_uuid",
         backref="citation")
-    classes = relationship("USPC", backref="patent")
-    inventors = relationship("Inventor", backref="patent")
     othercitations = relationship("OtherCitation", backref="patent")
 
     kw = ["type", "number", "country", "date",
@@ -104,32 +107,6 @@ class Location(Base):
 # OBJECTS --------------------------
 
 
-class Inventor(Base):
-    __tablename__ = "inventor"
-    uuid = Column(Integer, primary_key=True)
-    #location_uuid = Column(Integer, ForeignKey("location.uuid"))
-    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
-    name_last = Column(String(64))
-    name_first = Column(String(64))
-    loc_city = Column(String(128))
-    loc_state = Column(String(10), index=True)
-    loc_country = Column(String(10), index=True)
-    sequence = Column(Integer, index=True)
-    kw = ["sequence", "name_last", "name_first", "nationality"]
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [loc_city, loc_state, loc_country],
-            [Location.city, Location.state, Location.country]
-        ),
-    )
-
-    @hybrid_property
-    def name_full(self):
-        return "{first} {last}".format(
-            first=self.name_first,
-            last=self.name_last)
-
-
 class Assignee(Base):
     __tablename__ = "assignee"
     uuid = Column(Integer, primary_key=True)
@@ -139,9 +116,9 @@ class Assignee(Base):
     organization = Column(String(256))
     name_first = Column(String(64))
     name_last = Column(String(64))
-    loc_city = Column(String(128))
-    loc_state = Column(String(10), index=True)
-    loc_country = Column(String(10), index=True)
+    location_city = Column(String(128))
+    location_state = Column(String(10), index=True)
+    location_country = Column(String(10), index=True)
     sequence = Column(Integer, index=True)
     kw = ["sequence"]
     __table_args__ = (
@@ -158,6 +135,52 @@ class Assignee(Base):
     def person(self, *args):
         self.name_last = args[0]
         self.name_first = args[1]
+
+
+class Inventor(Base):
+    __tablename__ = "inventor"
+    uuid = Column(Integer, primary_key=True)
+    #location_uuid = Column(Integer, ForeignKey("location.uuid"))
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    name_last = Column(String(64))
+    name_first = Column(String(64))
+    location_city = Column(String(128))
+    location_state = Column(String(10), index=True)
+    location_country = Column(String(10), index=True)
+    sequence = Column(Integer, index=True)
+    kw = ["sequence", "name_last", "name_first", "nationality"]
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [loc_city, loc_state, loc_country],
+            [Location.city, Location.state, Location.country]
+        ),
+    )
+
+    @hybrid_property
+    def name_full(self):
+        return "{first} {last}".format(
+            first=self.name_first,
+            last=self.name_last)
+
+
+class Lawyer(Base):
+    __tablename__ = "lawyer"
+    uuid = Column(Integer, primary_key=True)
+    #location_uuid = Column(Integer, ForeignKey("location.uuid"))
+    id = Column(String(64), index=True)
+    patent_uuid = Column(Integer, ForeignKey("patent.uuid"))
+    name_last = Column(String(64))
+    name_first = Column(String(64))
+    organization = Column(String(64))
+    country = Column(String(10))
+    sequence = Column(Integer, index=True)
+    kw = ["sequence", "name_last", "name_first", "organization", "country"]
+
+    @hybrid_property
+    def name_full(self):
+        return "{first} {last}".format(
+            first=self.name_first,
+            last=self.name_last)
 
 
 # REFERENCES -----------------------
