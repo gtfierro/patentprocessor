@@ -105,6 +105,7 @@ def add(obj):
     # - citation date is just YYYY-MM-00
     # Seperate both citation and othercitation
     #
+    # -- SAMPLE --
     # 0 [u'cited by examiner', u'US', u'4672559', u'19870600', u'A', u'Jansson et al.', '']
     # 1 [u'cited by examiner', u'US', u'5999189', u'19991200', u'A', u'Kajiya et al.', '']
     # 2 [u'cited by examiner', u'US', u'6052492', u'20000400', u'A', u'Bruckhaus', '']
@@ -123,6 +124,19 @@ def add(obj):
             h += 1
 
     #add usreldocs
+    # us reldocs looks a bit problematic. ruh roh
+    #
+    # -- SAMPLE --
+    # 6 ['CONTINUATION-IN-PART', 1, u'12082601', u'US', '', u'20080412', u'PENDING', u'20080412', u'PENDING', u'20080412', u'PENDING']
+    # 7 ['CONTINUATION-IN-PART', -1, u'12082601', u'US', '', '', '', '', '', '', '']
+    # 8 ['CONTINUATION-IN-PART', 1, u'12079179', u'US', '', u'20080325', u'PENDING', u'20080325', u'PENDING', u'20080325', u'PENDING', u'20080325', u'PENDING']
+    # 9 ['CONTINUATION-IN-PART', -1, u'12079179', u'US', '', '', '', '', '', '', '', '', '']
+    # 10 ['CONTINUATION-IN-PART', 1, u'11593271', u'US', '', u'20061106', '', u'20061106', '', u'20061106', '', u'20061106', '', u'20061106', '', u'7511589', u'US', '', '', '', '', '', '', '', '', '', '', '']
+    # 11 ['CONTINUATION-IN-PART', 1, u'11593271', u'US', '', u'20061106', '', u'20061106', '', u'20061106', '', u'20061106', '', u'20061106', '', u'7511589', u'US', '', '', '', '', '', '', '', '', '', '', '']
+    # 12 ['CONTINUATION-IN-PART', -1, u'11593271', u'US', '', '', '', '', '', '', '', '', '', '', '']
+    # 13 ['CONTINUATION-IN-PART', 1, u'11500125', u'US', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'7525392', u'US', '', '', '', '', '', '', '', '', '', '', '', '', '']
+    # 14 ['CONTINUATION-IN-PART', 1, u'11500125', u'US', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'7525392', u'US', '', '', '', '', '', '', '', '', '', '', '', '', '']
+    # 0 ['CONTINUATION', -1, u'12964855', u'US', '']
     for i, usr in enumerate(obj.rel_list):
         print i, usr
 
