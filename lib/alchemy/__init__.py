@@ -89,16 +89,25 @@ def add(obj):
     # other citation
     # is there a way we can tell the doc number as a US patent?
     # I see lots of different patent types and numbers
+    # - citation date is just YYYY-MM-00
+    # Seperate both citation and othercitation
     #
     # 0 [u'cited by examiner', u'US', u'4672559', u'19870600', u'A', u'Jansson et al.', '']
     # 1 [u'cited by examiner', u'US', u'5999189', u'19991200', u'A', u'Kajiya et al.', '']
     # 2 [u'cited by examiner', u'US', u'6052492', u'20000400', u'A', u'Bruckhaus', '']
     # 3 [u'cited by examiner', u'US', u'6282327', u'20010800', u'B1', u'Betrisey et al.', '']
     #15 [u'cited by other', '', '', '', '', '', u'Pagoulatos et al.: \u201cInteractive 3-D Registration of Ultrasound and Magnetic Resonance Images Based on a Magnetic Positio
-    #for i, cit in enumerate(obj.cit_list):
-    #    print i, cit
-
-
+    h = 0
+    for i, cit in enumerate(obj.cit_list):
+        if cit[3]:
+            cit[3] = cit[3][:7] + "1"
+            date = datetime.strptime(cit[3], '%Y%m%d')
+            pc = Citation(i, date, cit[2], cit[5], cit[4], cit[1], cit[0])
+            pat.citations.append(pc)
+        else:
+            pc = OtherCitation(h, cit[6])
+            pat.othercitations.append(pc)
+            h += 1
 
     session.merge(pat)
     try:
