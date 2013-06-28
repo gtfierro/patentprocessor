@@ -31,8 +31,8 @@ def add(obj):
     """
 
     #if the patent exists, no need to recommit it (removes duplicates)
-    if session.query(Patent).filter(Patent.number == obj.patent).count():
-        return
+    #if session.query(Patent).filter(Patent.number == obj.patent).count():
+    #    return
 
     #add patentgra
     # lots of abstracts seem to be missing. why?

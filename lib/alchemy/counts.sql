@@ -1,12 +1,13 @@
-select count(*) from patent;
-select count(*) from application;
-select count(*) from citation;
-select count(*) from inventor;
-select count(*) from mainclass;
-select count(*) from subclass;
-select count(*) from assignee;
-select count(*) from lawyer;
-select count(*) from otherreference;
-select count(*) from uspc;
-select count(*) from location;
-select count(*) from usreldoc;
+.mode columns
+select "patent", count(*) from patent;
+select "applicat", count(*) from application;
+select "citation", count(*) from citation;
+select "inventor", count(*) from inventor;
+select "maincls", count(*) from mainclass;
+select "subclass", count(*) from subclass;
+select "assignee", count(*) from assignee;
+select "lawyer", count(*) from lawyer;
+select "otherref", count(*) from otherreference;
+select "uspc", count(*) from uspc;
+select "location", count(*) from location;
+select "usreldoc", count(*) from usreldoc;
