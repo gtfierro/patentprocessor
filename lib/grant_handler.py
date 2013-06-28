@@ -77,7 +77,11 @@ class PatentGrant(object):
             it.extend(further)
         return [ [x[:3].replace(' ',''), x[3:].replace(' ','')] for x in it]
 
-    def _name_helper(self, tag_root, return_dict=False):
+    def _name_helper(self, tag_root):
+        """
+        Returns dictionary of firstname, lastname with prefix associated
+        with lastname
+        """
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
         if return_dict:
@@ -85,17 +89,26 @@ class PatentGrant(object):
         else:
             return associate_prefix(firstname, lastname)
 
-    def _add_sequence(self, list_of_fields):
+    def _name_helper_dict(self, tag_root):
         """
-        Given a list of lists (the internal lists will represent lawyers, etc), extend
-        each list by the order it is received. The first list will have sequence 0,
-        the second will have sequence 1, etc
+        Returns dictionary of firstname, lastname with prefix associated
+        with lastname
         """
-        res = []
-        for idx, item in enumerate(list_of_fields):
-            item.append(idx)
-            res.append(item)
-        return res
+        firstname = tag_root.contents_of('first_name', as_string=True)
+        lastname = tag_root.contents_of('last_name', as_string=True)
+        firstname, lastname = associate_prefix(firstname, lastname)
+        return {'name_first':firstname, 'name_last':lastname}
+
+    def _fix_date(self, datestring):
+        """
+        Converts a number representing YY/MM to a Date
+        """
+        if not datestring: return None
+        # default to first of month in absence of day
+        if datestring[-2:] == '00':
+            datestring = datestring[:6] + '01'
+        datestring = datetime.strptime(datestring, '%Y%m%d')
+        return datestring
 
     def _asg_list(self):
         doc = self.xml.assignees.assignee
@@ -187,21 +200,6 @@ class PatentGrant(object):
             if res: break
         return res
 
-    def augmented_rel_list(self):
-        """includes the sequence number at the end of the list"""
-        res = []
-        seq = []
-        root = self.xml.us_related_documents
-        if not root: return
-        root = root[0]
-        for usreldoc in root.children:
-            for relation in usreldoc.relation:
-                relnumber = -1 if relation.child_doc else 1
-                docinfo = [usreldoc._name, relnumber, relation.contents_of('doc_number')[0],\
-                          relation.contents_of('country')[0], relation.contents_of('kind')]
-                print docinfo
-
-
     def _inv_list(self):
         inventors = self.xml.parties.applicant
         if not inventors: return []
@@ -234,21 +232,6 @@ class PatentGrant(object):
 
     # --- RON FUNCTION
 
-    def lint_dict(self, data):
-        """
-        Returns a dictionary that removes the blank values
-        Might not actually be necessary
-        """
-        if type(data).__name__ not in ('list', 'tuple'):
-            data = [data]
-        data_list = []
-        for item in data:
-            data_list.append(dict([(k, v) for k, v in item.iteritems() if v != ""]))
-        if len(data_list) == 1:
-            return data_list[0]
-        else:
-            return data_list
-
     def fetch_item(self, data):
         """
         Looks at a list. If its empty returns None, if it has
@@ -270,137 +253,103 @@ class PatentGrant(object):
         data = datetime.strptime(data, '%Y%m%d')
         return data
 
-    # --- GABE FUNCTIONS
-
     def assignee_list(self):
         """
-        Returns a list of list of assignee dictionary and location dictionary
+        Returns list of dictionaries:
         assignee:
-            name_last
-            name_first
-            residence
-            nationality
-            sequence
+          name_last
+          name_first
+          residence
+          nationality
+          sequence
         location:
-            city
-            state
-            country
+          city
+          state
+          country
         """
         assignees = self.xml.assignees.assignee
-        if not assignees:
-            return []
+        if not assignees: return []
         res = []
-        for i, assignee in enumerate(assignees):
-            # Asignee
+        for i,assignee in enumerate(assignees):
+            # add assignee data
             asg = {}
-            asgkey = {"orgname": "organization", "role": "type"}
-            # add firstname, lastname
-            asg.update(self._name_helper(assignee, return_dict=True))
-            for tag, key in asgkey.iteritems():
-                asg.update({key: assignee.contents_of(tag, as_string=True)})
-            asg["nationality"] = self.fetch_item(assignee.nationality.contents_of('country'))
-            asg["residence"] = self.fetch_item(assignee.residence.contents_of('country'))
-            asg["sequence"] = i
-            asg = self.lint_dict(asg)
-
-            # Location
+            asg.update(self._name_helper_dict(assignee)) # add firstname, lastname
+            asg['orgname'] = assignee.contents_of('orgname',as_string=True)
+            asg['role'] = assignee.contents_of('role',as_string=True)
+            asg['nationality'] = assignee.nationality.contents_of('country')[0]
+            asg['residence'] = assignee.nationality.contents_of('country')[0]
+            asg['sequence'] = i
+            # add location data for assignee
             loc = {}
-            lockey = {"city": "city", "state": "state", "country": "country"}
-            for tag, key in lockey.iteritems():
-                loc.update({tag: assignee.contents_of(tag, as_string=True)})
-
+            for tag in ['city','state','country']:
+                loc[tag] = assignee.contents_of(tag,as_string=True)
             res.append([asg, loc])
         return res
 
-    def citation_list(self, category="citation"):
+    def citation_list(self):
         """
-        Returns list of dictionary related citations/othercitation
-        This is more complicated then necessary because Citation/Other
-        combined together in the same area
-
+        Returns a list of two lists. The first list is normal citations,
+        the second is other citations.
         citation:
-            date
-            name
-            kind
-            country
-            category
-            number
-            sequence
+          date
+          name
+          kind
+          country
+          category
+          number
+          sequence
+        OR
         otherreference:
-            text
-            sequence
+          text
+          sequence
         """
         citations = self.xml.references_cited.citation
-        if not citations:
-            return []
-        res = []
-        i = 0
-        for citation in citations:
+        if not citations: return []
+        regular_cits = []
+        other_cits = []
+        for i,citation in enumerate(citations):
             data = {}
-            citkey = {"date": "date", "name": "name", "kind": "kind",
-                      "category": "category", "doc_number": "number"}
-            for tag, key in citkey.iteritems():
-                data[key] = citation.contents_of(tag, as_string=True)
-            data["country"] = self.fetch_item(citation.contents_of('country'))
-            data["number"] = normalize_document_identifier(data["number"])
-            data["date"] = self.date_me(data.get("date"))
-            data = self.lint_dict(data)
-
-            # TODO: Gabe, can you help me clean this?
-            contents = citation.contents_of('othercit')
-            text = ""
-            for chunk in contents:
-                if isinstance(chunk, list):
-                    text = u"".join([escape_html_nosub(x) for x in chunk])
-                else:
-                    text = escape_html_nosub(chunk)
-                if type(text).__name__ in ('tuple', 'list'):
-                    text = u"".join(text)
-            data["text"] = text
-            # ---------------------------------------
-
-            data["sequence"] = i
-            # there are also other citations
-            if "number" in data and category == "citation":
-                res.append(data)
-                i += 1
-            elif "number" not in data and category == "other":
-                res.append(data)
-                i += 1
-        return res
+            if citation.othercit:
+                data['text'] = citation.contents_of('othercit', as_string=True)
+                data['sequence'] = i
+                other_cits.append(data)
+            else:
+                for tag in ['name','kind','category']:
+                    data[tag] = citation.contents_of(tag, as_string=True)
+                data['date'] = self._fix_date(citation.contents_of('date', as_string=True))
+                data['country'] = citation.contents_of('country', default=[''])[0]
+                doc_number = citation.contents_of('doc_number', as_string=True)
+                data['number'] = normalize_document_identifier(doc_number)
+                data['sequence'] = i
+                regular_cits.append(data)
+        return [regular_cits, other_cits]
 
     def inventor_list(self):
         """
-        *VERY similar to assignee_list
-        Returns a list of list of inventor dictionary and location dictionary
+        Returns list of lists of inventor dictionary and location dictionary
         inventor:
-            name_last
-            name_first
-            nationality
-            sequence
+          name_last
+          name_first
+          nationality
+          sequence
         location:
-            city
-            state
-            country
+          city
+          state
+          country
         """
         inventors = self.xml.parties.applicant
-        if not inventors:
-            return []
+        if not inventors: return []
         res = []
-        for i, inventor in enumerate(inventors):
-            # Asignee
+        for i,inventor in enumerate(inventors):
+            # add inventor data
             inv = {}
-            inv.update(self._name_helper(inventor.addressbook, return_dict=True))
-            inv["nationality"] = self.fetch_item(inventor.nationality.contents_of('country'))
-            inv["sequence"] = i
-            inv = self.lint_dict(inv)
-
-            # Location
+            inv.update(self._name_helper_dict(inventor.addressbook))
+            inv['nationality'] = inventor.nationality.contents_of('country', as_string=True)
+            inv['sequence'] = i
+            # add location data for inventor
             loc = {}
-            lockey = {"city": "city", "state": "state", "country": "country"}
-            for tag, key in lockey.iteritems():
-                loc.update({tag: inventor.addressbook.contents_of(tag, as_string=True)})
-
+            for tag in ['city','state','country']:
+                loc[tag] = inventor.addressbook.contents_of(tag,as_string=True)
             res.append([inv, loc])
         return res
 
@@ -414,17 +363,68 @@ class PatentGrant(object):
             country
             sequence
         """
-        res = []
         lawyers = self.xml.parties.agents.agent
-        if not lawyers:
-            return []
+        if not lawyers: return []
         res = []
-        for i, lawyer in enumerate(lawyers):
+        for i,lawyer in enumerate(lawyers):
             law = {}
-            law.update(self._name_helper(lawyer, return_dict=True))
-            law["country"] = lawyer.contents_of('country',as_string=True)
-            law["organization"] = lawyer.contents_of('orgname',as_string=True)
-            law["sequence"] = i
-            law = self.lint_dict(law)
+            law.update(self._name_helper_dict(lawyer))
+            law['country'] = lawyer.contents_of('country',as_string=True)
+            law['orgname'] = lawyer.contents_of('orgname',as_string=True)
             res.append(law)
+        return res
+
+
+    def _get_doc_info(self, root):
+        """
+        Accepts an XMLElement root as an argument. Returns list of
+        [country, doc-number, kind, date] for the given root
+        """
+        res = {}
+        for tag in ['country','kind','date']:
+            data = root.contents_of(tag)
+            res[tag] = data[0] if data else ''
+        res['number'] = normalize_document_identifier(\
+            root.contents_of('doc_number', as_string=True))
+        return res
+
+    def us_relation_list(self):
+        """
+        returns list of dictionaries for us reldoc:
+        usreldoc:
+          doctype
+          status (parent status)
+          date
+          number
+          kind
+          country
+          relationship
+          sequence
+        """
+        # TODO: look at PatentGrantXMLv42, page 30 and onward and figure out the best way to parse this
+        root = self.xml.us_related_documents
+        if not root: return []
+        root = root[0]
+        res = []
+        i = 0
+        for reldoc in root.children:
+            if reldoc._name == 'related_publication' or\
+               reldoc._name == 'us_provisional_application':
+                data = {'doctype':reldoc._name}
+                data.update(self._get_doc_info(reldoc))
+                data['sequence'] = i
+                i = i + 1
+                res.append(data)
+            for relation in reldoc.relation:
+                for relationship in ['parent_doc','parent_grant_document',\
+                                     'parent_pct_document','child_doc']:
+                    data = {'doctype':reldoc._name}
+                    doc = getattr(relation, relationship)
+                    if not doc: continue
+                    data.update(self._get_doc_info(doc[0]))
+                    data['status'] = doc[0].contents_of('parent_status', as_string=True)
+                    data['relationship'] = relationship # parent/child
+                    data['sequence'] = i
+                    i = i + 1
+                    res.append(data)
         return res
