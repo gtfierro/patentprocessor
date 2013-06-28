@@ -17,6 +17,8 @@ def fetch(year):
         fname = f.split("/")
         os.system("cd {0}; wget {1}; unzip {2}".format(directory, f, fname))
 
+r = open("../lib/alchemy/urls.txt", "wb")
+r = eval(r.readline())
 
 for year in xrange(2005, 2014):
     print year, datetime.now()
