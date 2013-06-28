@@ -89,18 +89,6 @@ class PatentGrant(object):
         datestring = datetime.strptime(datestring, '%Y%m%d')
         return datestring
 
-    def _add_sequence(self, list_of_fields):
-        """
-        Given a list of lists (the internal lists will represent lawyers, etc), extend
-        each list by the order it is received. The first list will have sequence 0,
-        the second will have sequence 1, etc
-        """
-        res = []
-        for idx, item in enumerate(list_of_fields):
-            item.append(idx)
-            res.append(item)
-        return res
-
     def _asg_list(self):
         doc = self.xml.assignees.assignee
         data = []
