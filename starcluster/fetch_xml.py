@@ -18,10 +18,11 @@ def fetch(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
     for f in files:
+        fname = f.split("/")[-1]
         os.chdir(directory)
-        os.system("wget {0}".format(f))
-        f = f.split("/")[-1]
-        os.system("unzip {0}".format(f))
+        if not os.path.exists(fname):
+            os.system("wget {0}".format(f))
+            os.system("unzip {0}".format(fname))
 
 
 fname = open("{0}/urls.pickle".format(config.get('directory', 'sqlalchemy')), "rb")
@@ -31,4 +32,5 @@ for year in xrange(2005, 2014):
     print year, datetime.now()
     dview.scatter("files", urls[year])
     directory = "{0}/{1}".format(config.get('directory', 'local'), year)
+    print "  *", directory
     fetch(directory)
