@@ -1,7 +1,6 @@
 import os
 import ConfigParser
 
-from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from schema import *
@@ -30,7 +29,12 @@ def add(obj):
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
     """
-    #add patent
+
+    #if the patent exists, no need to recommit it (removes duplicates)
+    if session.query(Patent).filter(Patent.number == obj.patent).count():
+        return
+
+    #add patentgra
     # lots of abstracts seem to be missing. why?
     pat = Patent(**obj.pat)
     pat.application = Application(**obj.app)
