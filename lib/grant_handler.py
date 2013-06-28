@@ -278,8 +278,9 @@ class PatentGrant(object):
         res = []
         for i,citation in enumerate(citations):
             data = {}
-            for tag in ['date','name','kind','category']:
+            for tag in ['name','kind','category']:
                 data[tag] = citation.contents_of(tag, as_string=True)
+            data['date'] = self._fix_date(citation.contents_of('date', as_string=True))
             data['country'] = citation.contents_of('country', default=[''])[0]
             doc_number = citation.contents_of('doc_number', as_string=True)
             data['number'] = normalize_document_identifier(doc_number)
