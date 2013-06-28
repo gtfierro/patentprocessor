@@ -98,28 +98,6 @@ class PatentGrant(object):
         data.extend(doc.residence.contents_of('country'))
         return [data]
 
-    def assignee_list(self):
-        """
-        Returns list of assignees, each of form
-        [asg__firstname, asg__lastname, asg__orgname, asg__role, addr__city,
-         addr__state, addr__country, addr__longitude, addr_latitude, nationality,
-         residence, sequence]
-        NOTE: longitude and latitude will be empty until the geocoding step
-        """
-        assignees = self.xml.assignees.assignee
-        if not assignees: return []
-        res = []
-        for assignee in assignees:
-            data = []
-            data.extend(self._name_helper(assignee)) # add firstname, lastname
-            for tag in ['orgname','role','city','state','country']:
-                data.append(assignee.contents_of(tag,as_string=True))
-            data.extend(['','']) # placeholders for longitude, latitude
-            data.extend(assignee.nationality.contents_of('country'))
-            data.extend(assignee.residence.contents_of('country'))
-            res.append(data)
-        return self._add_sequence(res)
-
     def _cit_list(self):
         res = []
         citations = self.xml.references_cited.citation
@@ -275,4 +253,37 @@ class PatentGrant(object):
             data.append(lawyer.contents_of('country',as_string=True))
             data.append(lawyer.contents_of('orgname',as_string=True))
             res.append(data)
+        return res
+
+    def assignee_list(self):
+        """
+        Returns list of dictionaries:
+        assignee:
+          name_last
+          name_first
+          residence
+          nationality
+          sequence
+        location:
+          city
+          state
+          country
+        """
+        assignees = self.xml.assignees.assignee
+        if not assignees: return []
+        res = []
+        for i,assignee in enumerate(assignees):
+            # add assignee data
+            asg_dict = {}
+            asg_dict.update(self._name_helper(assignee)) # add firstname, lastname
+            asg_dict['orgname'] = assignee.contents_of('orgname',as_string=True)
+            asg_dict['role'] = assignee.contents_of('role',as_string=True)
+            asg_dict['nationality'] = assignee.nationality.contents_of('country')[0]
+            asg_dict['residence'] = assignee.nationality.contents_of('country')[0]
+            asg_dict['sequence'] = i
+            # add location data for assignee
+            location = {}
+            for tag in ['city','state','country']:
+                location[tag] = assignee.contents_of(tag,as_string=True)
+            res.append([asg_dict, location])
         return res
