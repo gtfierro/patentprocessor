@@ -59,9 +59,13 @@ class PatentGrant(object):
         return [ [x[:3].replace(' ',''), x[3:].replace(' ','')] for x in it]
 
     def _name_helper(self, tag_root):
+        """
+        Returns dictionary of firstname, lastname with prefix associated
+        with lastname
+        """
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
-        return associate_prefix(firstname, lastname)
+        return {'firstname':firstname, 'lastname':lastname}
 
     def _add_sequence(self, list_of_fields):
         """
