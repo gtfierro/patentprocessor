@@ -24,7 +24,7 @@ def fetch(directory):
         os.system("unzip {0}".format(f))
 
 
-url = pickle.loads(open("{}/urls.pickle".format(config.get('directory', 'sqlalchemy'), "rb")
+url = pickle.load(open("{0}/urls.pickle".format(config.get('directory', 'sqlalchemy')), "rb")
 
 for year in xrange(2005, 2014):
     print year, datetime.now()
