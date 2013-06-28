@@ -14,7 +14,7 @@ def fetch(year):
     if not os.path.exists(directory):
         os.makedirs(directory)
     for f in files:
-        os.system("{}; wget {}".format(directory, f))
+        os.system("cd {0}; wget {1}; unzip {1]".format(directory, f))
 
 
 for year in xrange(2005, 2014):
