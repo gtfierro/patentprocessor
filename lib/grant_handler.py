@@ -210,27 +210,6 @@ class PatentGrant(object):
             res.append(data)
         return res
 
-    def inventor_list(self):
-        """
-        method for new inventor schema. Returns lists of
-        [name__first, name__last, addr__city, addr__state, addr__country,
-         addr__longitude, addr__latitude, nationality, sequence]
-        NOTE: addr__longitude and addr__latitude will be empty until
-        the geocoding step]
-        """
-        inventors = self.xml.parties.applicant
-        if not inventors: return []
-        res = []
-        for inventor in inventors:
-            data = []
-            data.extend(self._name_helper(inventor.addressbook))
-            for tag in ['city','state','country']:
-                data.append(inventor.addressbook.contents_of(tag,as_string=True))
-            data.append(inventor.nationality.contents_of('country',as_string=True))
-            data.extend(['','']) # placeholders for longitude, latitude
-            res.append(data)
-        return self._add_sequence(res)
-
     def _law_list(self):
         lawyers = self.xml.parties.agents.agent
         if not lawyers: return []
@@ -307,5 +286,34 @@ class PatentGrant(object):
             data['text'] = citation.contents_of('othercit', as_string=True)
             data['sequence'] = i
             res.append(data)
+        return res
+
+    def inventor_list(self):
+        """
+        Returns list of lists of inventor dictionary and location dictionary
+        inventor:
+          name_last
+          name_first
+          nationality
+          sequence
+        location:
+          city
+          state
+          country
+        """
+        inventors = self.xml.parties.applicant
+        if not inventors: return []
+        res = []
+        for i,inventor in enumerate(inventors):
+            # add inventor data
+            inv = {}
+            inv.update(self._name_helper_dict(inventor.addressbook))
+            inv['nationality'] = inventor.nationality.contents_of('country', as_string=True)
+            inv['sequence'] = i
+            # add location data for inventor
+            loc = {}
+            for tag in ['city','state','country']:
+                loc[tag] = inventor.addressbook.contents_of(tag,as_string=True)
+            res.append([inv, loc])
         return res
 
