@@ -13,10 +13,16 @@ print rc.ids
 
 
 @dview.remote(block=True)
+def makedir(directory):
+    import os
+    try:
+        os.makedirs(directory)
+    except:
+        pass
+
+@dview.remote(block=True)
 def fetch(directory):
     import os
-    if not os.path.exists(directory):
-        os.makedirs(directory)
     for f in files:
         fname = f.split("/")[-1]
         os.chdir(directory)
@@ -33,4 +39,5 @@ for year in xrange(2005, 2014):
     dview.scatter("files", urls[year])
     directory = "{0}/{1}".format(config.get('directory', 'local'), year)
     print "  *", directory
+    makedir(directory)
     fetch(directory)
