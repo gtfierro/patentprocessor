@@ -322,9 +322,11 @@ class PatentGrant(object):
         [country, doc-number, kind, date] for the given root
         """
         res = {}
-        for tag in ['country','doc_number','kind','date']:
+        for tag in ['country','kind','date']:
             data = root.contents_of(tag)
             res[tag] = data[0] if data else ''
+        res['number'] = normalize_document_identifier(\
+            root.contents_of('doc_number', as_string=True))
         return res
 
     def us_relation_list(self):
