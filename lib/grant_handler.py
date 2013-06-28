@@ -330,3 +330,55 @@ class PatentGrant(object):
             res.append(law)
         return res
 
+
+    def _get_doc_info(self, root):
+        """
+        Accepts an XMLElement root as an argument. Returns list of
+        [country, doc-number, kind, date] for the given root
+        """
+        res = {}
+        for tag in ['country','doc_number','kind','date']:
+            data = root.contents_of(tag)
+            res[tag] = data[0] if data else ''
+        return res
+
+    def us_relation_list(self):
+        """
+        returns list of dictionaries for us reldoc:
+        usreldoc:
+          doctype
+          status (parent status)
+          date
+          number
+          kind
+          country
+          relationship
+          sequence
+        """
+        # TODO: look at PatentGrantXMLv42, page 30 and onward and figure out the best way to parse this
+        root = self.xml.us_related_documents
+        if not root: return []
+        root = root[0]
+        res = []
+        i = 0
+        for reldoc in root.children:
+            if reldoc._name == 'related_publication' or\
+               reldoc._name == 'us_provisional_application':
+                data = {'doctype':reldoc._name}
+                data.update(self._get_doc_info(reldoc))
+                data['sequence'] = i
+                i = i + 1
+                res.append(data)
+            for relation in reldoc.relation:
+                for relationship in ['parent_doc','parent_grant_document',\
+                                     'parent_pct_document','child_doc']:
+                    data = {'doctype':reldoc._name}
+                    doc = getattr(relation, relationship)
+                    if not doc: continue
+                    data.update(self._get_doc_info(doc[0]))
+                    data['status'] = doc[0].contents_of('parent_status', as_string=True)
+                    data['relationship'] = relationship # parent/child
+                    data['sequence'] = i
+                    i = i + 1
+                    res.append(data)
+        return res
