@@ -8,6 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # Extend the Base >>>>>>
 Base = declarative_base()
+cascade = "all, delete, delete-orphan"
 
 
 def init(self, *args, **kwargs):
@@ -21,7 +22,6 @@ Base.__init__ = init
 
 # PATENT ---------------------------
 
-
 class Patent(Base):
     __tablename__ = "patent"
     id = Column(Unicode(20), primary_key=True)
@@ -34,23 +34,23 @@ class Patent(Base):
     kind = Column(Unicode(10))
     claims = Column(Integer)
 
-    application = relationship("Application", uselist=False, backref="patent")
-    classes = relationship("USPC", backref="patent")
+    application = relationship("Application", uselist=False, backref="patent", cascade=cascade)
+    classes = relationship("USPC", backref="patent", cascade=cascade)
 
-    assignees = relationship("Assignee", backref="patent")
-    inventors = relationship("Inventor", backref="patent")
-    lawyers = relationship("Lawyer", backref="patent")
+    assignees = relationship("Assignee", backref="patent", cascade=cascade)
+    inventors = relationship("Inventor", backref="patent", cascade=cascade)
+    lawyers = relationship("Lawyer", backref="patent", cascade=cascade)
 
     citations = relationship(
         "Citation",
         primaryjoin="Patent.id == Citation.patent_id",
-        backref="patent")
+        backref="patent", cascade=cascade)
     citedby = relationship(
         "Citation",
         primaryjoin="Patent.id == Citation.citation_id",
         backref="citation")
-    otherreferences = relationship("OtherReference", backref="patent")
-    usreldocs = relationship("USRelDoc", backref="patent")
+    otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
+    usreldocs = relationship("USRelDoc", backref="patent", cascade=cascade)
 
     kw = ["id", "type", "number", "country", "date",
           "abstract", "title", "kind", "claims"]
@@ -223,6 +223,7 @@ class USRelDoc(Base):
     __tablename__ = "usreldoc"
     uuid = Column(Integer, primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+
 
 # CLASSIFICATIONS ------------------
 
