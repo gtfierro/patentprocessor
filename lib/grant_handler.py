@@ -285,7 +285,7 @@ class PatentGrant(object):
         for i,assignee in enumerate(assignees):
             # add assignee data
             asg_dict = {}
-            asg_dict.update(self._name_helper(assignee)) # add firstname, lastname
+            asg_dict.update(self._name_helper_dict(assignee)) # add firstname, lastname
             asg_dict['orgname'] = assignee.contents_of('orgname',as_string=True)
             asg_dict['role'] = assignee.contents_of('role',as_string=True)
             asg_dict['nationality'] = assignee.nationality.contents_of('country')[0]
