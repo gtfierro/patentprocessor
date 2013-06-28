@@ -244,7 +244,8 @@ class PatentGrant(object):
 
     def citation_list(self):
         """
-        Returns list of dictionaries:
+        Returns a list of two lists. The first list is normal citations,
+        the second is other citations.
         citation:
           date
           name
@@ -260,19 +261,24 @@ class PatentGrant(object):
         """
         citations = self.xml.references_cited.citation
         if not citations: return []
-        res = []
+        regular_cits = []
+        other_cits = []
         for i,citation in enumerate(citations):
             data = {}
-            for tag in ['name','kind','category']:
-                data[tag] = citation.contents_of(tag, as_string=True)
-            data['date'] = self._fix_date(citation.contents_of('date', as_string=True))
-            data['country'] = citation.contents_of('country', default=[''])[0]
-            doc_number = citation.contents_of('doc_number', as_string=True)
-            data['number'] = normalize_document_identifier(doc_number)
-            data['text'] = citation.contents_of('othercit', as_string=True)
-            data['sequence'] = i
-            res.append(data)
-        return res
+            if citation.othercit:
+                data['text'] = citation.contents_of('othercit', as_string=True)
+                data['sequence'] = i
+                other_cits.append(data)
+            else:
+                for tag in ['name','kind','category']:
+                    data[tag] = citation.contents_of(tag, as_string=True)
+                data['date'] = self._fix_date(citation.contents_of('date', as_string=True))
+                data['country'] = citation.contents_of('country', default=[''])[0]
+                doc_number = citation.contents_of('doc_number', as_string=True)
+                data['number'] = normalize_document_identifier(doc_number)
+                data['sequence'] = i
+                regular_cits.append(data)
+        return [regular_cits, other_cits]
 
     def inventor_list(self):
         """
