@@ -375,3 +375,24 @@ class PatentGrant(object):
                     i = i + 1
                     res.append(data)
         return res
+
+    def us_classifications(self):
+        """
+        Returns list of dictionaries representing us classification
+        main:
+          class
+          subclass
+        further:
+          class
+          subclass
+        """
+        main = self.xml.classification_national.contents_of('main_classification')
+        mainclass = [{'class': main[0][:3].replace(' ',''),
+                     'subclass': main[0][3:].replace(' ','')}]
+        further = self.xml.classification_national.contents_of('further_classification')
+        furtherclasses = []
+        for classification in further:
+            fc = {'class': classification[:3].replace(' ',''),
+                  'subclass': classification[3:].replace(' ','')}
+            furtherclasses.append(fc)
+        return [mainclass, furtherclasses]
