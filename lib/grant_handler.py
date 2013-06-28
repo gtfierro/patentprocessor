@@ -75,7 +75,7 @@ class PatentGrant(object):
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
         firstname, lastname = associate_prefix(firstname, lastname)
-        return {'firstname':firstname, 'lastname':lastname}
+        return {'name_first':firstname, 'name_last':lastname}
 
     def _add_sequence(self, list_of_fields):
         """
