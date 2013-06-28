@@ -25,10 +25,10 @@ def fetch(directory):
 
 
 fname = open("{0}/urls.pickle".format(config.get('directory', 'sqlalchemy')), "rb")
-urls = pickle.load(filename)
+urls = pickle.load(fname)
 
 for year in xrange(2005, 2014):
     print year, datetime.now()
     dview.scatter("files", urls[year])
-    directory = "{}/{}".format(config.get('directory', 'storage'), year)
+    directory = "{0}/{1}".format(config.get('directory', 'local'), year)
     fetch(directory)
