@@ -1,6 +1,11 @@
 import os
+import pickle
 from datetime import datetime
+from ConfigParser import ConfigParser
 from IPython.parallel import Client
+
+config = ConfigParser()
+config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
 
 rc = Client(packer="pickle")
 dview = rc[:]
@@ -8,19 +13,21 @@ print rc.ids
 
 
 @dview.remote(block=True)
-def fetch(year):
+def fetch(directory):
     import os
-    directory = "/mnt/sgeadmin/{}".format(year)
     if not os.path.exists(directory):
         os.makedirs(directory)
     for f in files:
-        fname = f.split("/")
-        os.system("cd {0}; wget {1}; unzip {2}".format(directory, f, fname))
+        os.chdir(directory)
+        os.system("wget {0}".format(f))
+        f = f.split("/")[-1]
+        os.system("unzip {0}".format(f))
 
-r = open("../lib/alchemy/urls.txt", "wb")
-r = eval(r.readline())
+
+url = pickle.loads(open("{}/urls.pickle".format(config.get('directory', 'sqlalchemy'), "rb")
 
 for year in xrange(2005, 2014):
     print year, datetime.now()
-    dview.scatter("files", r[year])
-    fetch(year)
+    dview.scatter("files", urls[year])
+    directory = "{}/{}".format(config.get('directory', 'storage'), year)
+    fetch(directory)
