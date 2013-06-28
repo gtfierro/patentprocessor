@@ -317,3 +317,15 @@ class PatentGrant(object):
             res.append([inv, loc])
         return res
 
+    def lawyer_list(self):
+        lawyers = self.xml.parties.agents.agent
+        if not lawyers: return []
+        res = []
+        for i,lawyer in enumerate(lawyers):
+            law = {}
+            law.update(self._name_helper_dict(lawyer))
+            law['country'] = lawyer.contents_of('country',as_string=True)
+            law['orgname'] = lawyer.contents_of('orgname',as_string=True)
+            res.append(law)
+        return res
+
