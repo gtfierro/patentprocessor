@@ -6,6 +6,7 @@ from patent grant documents
 """
 
 import cStringIO
+from datetime import datetime
 from xml_driver import *
 from xml_util import *
 from xml.sax import xmlreader
@@ -76,6 +77,17 @@ class PatentGrant(object):
         lastname = tag_root.contents_of('last_name', as_string=True)
         firstname, lastname = associate_prefix(firstname, lastname)
         return {'name_first':firstname, 'name_last':lastname}
+
+    def _fix_date(self, datestring):
+        """
+        Converts a number representing YY/MM to a Date
+        """
+        if not datestring: return None
+        # default to first of month in absence of day
+        if datestring[-2:] == '00':
+            datestring = datestring[:6] + '01'
+        datestring = datetime.strptime(datestring, '%Y%m%d')
+        return datestring
 
     def _add_sequence(self, list_of_fields):
         """
