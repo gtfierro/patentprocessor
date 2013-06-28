@@ -243,18 +243,18 @@ class PatentGrant(object):
         res = []
         for i,assignee in enumerate(assignees):
             # add assignee data
-            asg_dict = {}
-            asg_dict.update(self._name_helper_dict(assignee)) # add firstname, lastname
-            asg_dict['orgname'] = assignee.contents_of('orgname',as_string=True)
-            asg_dict['role'] = assignee.contents_of('role',as_string=True)
-            asg_dict['nationality'] = assignee.nationality.contents_of('country')[0]
-            asg_dict['residence'] = assignee.nationality.contents_of('country')[0]
-            asg_dict['sequence'] = i
+            asg = {}
+            asg.update(self._name_helper_dict(assignee)) # add firstname, lastname
+            asg['orgname'] = assignee.contents_of('orgname',as_string=True)
+            asg['role'] = assignee.contents_of('role',as_string=True)
+            asg['nationality'] = assignee.nationality.contents_of('country')[0]
+            asg['residence'] = assignee.nationality.contents_of('country')[0]
+            asg['sequence'] = i
             # add location data for assignee
-            location = {}
+            loc = {}
             for tag in ['city','state','country']:
-                location[tag] = assignee.contents_of(tag,as_string=True)
-            res.append([asg_dict, location])
+                loc[tag] = assignee.contents_of(tag,as_string=True)
+            res.append([asg, loc])
         return res
 
     def citation_list(self):
