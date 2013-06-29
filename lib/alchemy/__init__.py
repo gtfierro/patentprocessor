@@ -30,6 +30,7 @@ def add(obj, override=True):
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
     """
 
+    # if a patent exists, remove it so we can replace it
     if override:
         pat_query = session.query(Patent).filter(Patent.number == obj.patent)
         if pat_query.count():
