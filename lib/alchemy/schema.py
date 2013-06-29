@@ -231,13 +231,13 @@ class USRelDoc(Base):
     uuid = Column(Integer, primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     rel_id = Column(Unicode(20), ForeignKey("patent.id"))
-    doctype = Column(Unicode(20), index=True)
+    doctype = Column(Unicode(64), index=True)
     status = Column(Unicode(20))
     date = Column(Date, index=True)
     number = Column(Unicode(20), index=True)
     kind = Column(Unicode(10))
     country = Column(Unicode(20), index=True)
-    relationship = Column(Unicode(20))
+    relationship = Column(Unicode(64))
     sequence = Column(Integer, index=True)
 
 
