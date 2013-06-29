@@ -84,10 +84,7 @@ class PatentGrant(object):
         """
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
-        if return_dict:
-            return {"name_first": firstname, "name_last": lastname}
-        else:
-            return associate_prefix(firstname, lastname)
+        return associate_prefix(firstname, lastname)
 
     def _name_helper_dict(self, tag_root):
         """
@@ -232,16 +229,6 @@ class PatentGrant(object):
 
     # --- RON FUNCTION
 
-    def fetch_item(self, data):
-        """
-        Looks at a list. If its empty returns None, if it has
-        values, returns the first element of the list
-        """
-        if data:
-            return data[0]
-        else:
-            return None
-
     def date_me(self, data):
         """
         Converts a number to a Date, checks for just YY/MM like in Citation
@@ -252,6 +239,8 @@ class PatentGrant(object):
             data = data[:6] + "01"
         data = datetime.strptime(data, '%Y%m%d')
         return data
+
+    # ----------------
 
     def assignee_list(self):
         """
@@ -268,14 +257,15 @@ class PatentGrant(object):
           country
         """
         assignees = self.xml.assignees.assignee
-        if not assignees: return []
+        if not assignees:
+            return []
         res = []
-        for i,assignee in enumerate(assignees):
+        for i, assignee in enumerate(assignees):
             # add assignee data
             asg = {}
             asg.update(self._name_helper_dict(assignee)) # add firstname, lastname
-            asg['orgname'] = assignee.contents_of('orgname',as_string=True)
-            asg['role'] = assignee.contents_of('role',as_string=True)
+            asg['orgname'] = assignee.contents_of('orgname', as_string=True)
+            asg['role'] = assignee.contents_of('role', as_string=True)
             asg['nationality'] = assignee.nationality.contents_of('country')[0]
             asg['residence'] = assignee.nationality.contents_of('country')[0]
             asg['sequence'] = i
@@ -304,24 +294,29 @@ class PatentGrant(object):
           sequence
         """
         citations = self.xml.references_cited.citation
-        if not citations: return []
+        if not citations:
+            return []
         regular_cits = []
         other_cits = []
-        for i,citation in enumerate(citations):
+        ocnt = 0
+        ccnt = 0
+        for citation in citations:
             data = {}
             if citation.othercit:
                 data['text'] = citation.contents_of('othercit', as_string=True)
-                data['sequence'] = i
+                data['sequence'] = ocnt
                 other_cits.append(data)
+                ocnt += 1
             else:
-                for tag in ['name','kind','category']:
+                for tag in ['name', 'kind', 'category']:
                     data[tag] = citation.contents_of(tag, as_string=True)
                 data['date'] = self._fix_date(citation.contents_of('date', as_string=True))
                 data['country'] = citation.contents_of('country', default=[''])[0]
                 doc_number = citation.contents_of('doc_number', as_string=True)
                 data['number'] = normalize_document_identifier(doc_number)
-                data['sequence'] = i
+                data['sequence'] = ccnt
                 regular_cits.append(data)
+                ccnt += 1
         return [regular_cits, other_cits]
 
     def inventor_list(self):
@@ -348,7 +343,7 @@ class PatentGrant(object):
             inv['sequence'] = i
             # add location data for inventor
             loc = {}
-            for tag in ['city','state','country']:
+            for tag in ['city', 'state', 'country']:
                 loc[tag] = inventor.addressbook.contents_of(tag,as_string=True)
             res.append([inv, loc])
         return res
@@ -381,7 +376,7 @@ class PatentGrant(object):
         [country, doc-number, kind, date] for the given root
         """
         res = {}
-        for tag in ['country','kind','date']:
+        for tag in ['country', 'kind', 'date']:
             data = root.contents_of(tag)
             res[tag] = data[0] if data else ''
         res['number'] = normalize_document_identifier(\
@@ -410,18 +405,20 @@ class PatentGrant(object):
         for reldoc in root.children:
             if reldoc._name == 'related_publication' or\
                reldoc._name == 'us_provisional_application':
-                data = {'doctype':reldoc._name}
+                data = {'doctype': reldoc._name}
                 data.update(self._get_doc_info(reldoc))
+                data['date'] = self.date_me(data['date'])
                 data['sequence'] = i
                 i = i + 1
                 res.append(data)
             for relation in reldoc.relation:
-                for relationship in ['parent_doc','parent_grant_document',\
-                                     'parent_pct_document','child_doc']:
+                for relationship in ['parent_doc', 'parent_grant_document', \
+                                     'parent_pct_document', 'child_doc']:
                     data = {'doctype':reldoc._name}
                     doc = getattr(relation, relationship)
                     if not doc: continue
                     data.update(self._get_doc_info(doc[0]))
+                    data['date'] = self.date_me(data['date'])
                     data['status'] = doc[0].contents_of('parent_status', as_string=True)
                     data['relationship'] = relationship # parent/child
                     data['sequence'] = i
