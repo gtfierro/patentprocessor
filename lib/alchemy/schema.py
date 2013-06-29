@@ -41,6 +41,7 @@ class Patent(Base):
     inventors = relationship("Inventor", backref="patent", cascade=cascade)
     lawyers = relationship("Lawyer", backref="patent", cascade=cascade)
 
+    otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
     citations = relationship(
         "Citation",
         primaryjoin="Patent.id == Citation.patent_id",
@@ -49,8 +50,14 @@ class Patent(Base):
         "Citation",
         primaryjoin="Patent.id == Citation.citation_id",
         backref="citation")
-    otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
-    usreldocs = relationship("USRelDoc", backref="patent", cascade=cascade)
+    usreldocs = relationship(
+        "USRelDoc",
+        primaryjoin="Patent.id == USRelDoc.patent_id",
+        backref="patent", cascade=cascade)
+    relpatents = relationship(
+        "USRelDoc",
+        primaryjoin="Patent.id == USRelDoc.rel_id",
+        backref="relpatent")
 
     kw = ["id", "type", "number", "country", "date",
           "abstract", "title", "kind", "claims"]
@@ -223,6 +230,15 @@ class USRelDoc(Base):
     __tablename__ = "usreldoc"
     uuid = Column(Integer, primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    rel_id = Column(Unicode(20), ForeignKey("patent.id"))
+    doctype = Column(Unicode(20), index=True)
+    status = Column(Unicode(20))
+    date = Column(Date, index=True)
+    number = Column(Unicode(20), index=True)
+    kind = Column(Unicode(10))
+    country = Column(Unicode(20), index=True)
+    relationship = Column(Unicode(20))
+    sequence = Column(Integer, index=True)
 
 
 # CLASSIFICATIONS ------------------

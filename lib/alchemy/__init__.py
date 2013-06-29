@@ -24,18 +24,20 @@ def fetch_engine():
     return engine
 
 
-def add(obj):
+def add(obj, override=True):
     """
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
     """
 
-    #if the patent exists, no need to recommit it (removes duplicates)
-    #if session.query(Patent).filter(Patent.number == obj.patent).count():
-    #    return
+    if override:
+        pat_query = session.query(Patent).filter(Patent.number == obj.patent)
+        if pat_query.count():
+            session.delete(pat_query.one())
 
-    #add patentgra
+    #add
     # lots of abstracts seem to be missing. why?
+
     pat = Patent(**obj.pat)
     pat.application = Application(**obj.app)
 
@@ -55,13 +57,12 @@ def add(obj):
         inv.location = loc
         pat.inventors.append(inv)
 
-    #+cit
-    for cit in obj.citation_list():
+    #+cit, +othercit
+    cits, refs = obj.citation_list()
+    for cit in cits:
         cit = Citation(**cit)
         pat.citations.append(cit)
-
-    #+othercit
-    for ref in obj.citation_list(category="other"):
+    for ref in refs:
         ref = OtherReference(**ref)
         pat.otherreferences.append(ref)
 
@@ -69,6 +70,11 @@ def add(obj):
     for law in obj.lawyer_list():
         law = Lawyer(**law)
         pat.lawyers.append(law)
+
+    #+usreldoc
+    for usr in enumerate(obj.us_relation_list()):
+        usr = USRelDoc(**usr)
+        pat.usreldocs.append(usr)
 
     # ----------------------------------------
 
@@ -82,23 +88,6 @@ def add(obj):
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
-
-    #add usreldocs
-    # us reldocs looks a bit problematic. ruh roh
-    #
-    # -- SAMPLE --
-    # 6 ['CONTINUATION-IN-PART', 1, u'12082601', u'US', '', u'20080412', u'PENDING', u'20080412', u'PENDING', u'20080412', u'PENDING']
-    # 7 ['CONTINUATION-IN-PART', -1, u'12082601', u'US', '', '', '', '', '', '', '']
-    # 8 ['CONTINUATION-IN-PART', 1, u'12079179', u'US', '', u'20080325', u'PENDING', u'20080325', u'PENDING', u'20080325', u'PENDING', u'20080325', u'PENDING']
-    # 9 ['CONTINUATION-IN-PART', -1, u'12079179', u'US', '', '', '', '', '', '', '', '', '']
-    # 10 ['CONTINUATION-IN-PART', 1, u'11593271', u'US', '', u'20061106', '', u'20061106', '', u'20061106', '', u'20061106', '', u'20061106', '', u'7511589', u'US', '', '', '', '', '', '', '', '', '', '', '']
-    # 11 ['CONTINUATION-IN-PART', 1, u'11593271', u'US', '', u'20061106', '', u'20061106', '', u'20061106', '', u'20061106', '', u'20061106', '', u'7511589', u'US', '', '', '', '', '', '', '', '', '', '', '']
-    # 12 ['CONTINUATION-IN-PART', -1, u'11593271', u'US', '', '', '', '', '', '', '', '', '', '', '']
-    # 13 ['CONTINUATION-IN-PART', 1, u'11500125', u'US', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'7525392', u'US', '', '', '', '', '', '', '', '', '', '', '', '', '']
-    # 14 ['CONTINUATION-IN-PART', 1, u'11500125', u'US', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'20060805', '', u'7525392', u'US', '', '', '', '', '', '', '', '', '', '', '', '', '']
-    # 0 ['CONTINUATION', -1, u'12964855', u'US', '']
-    #for i, usr in enumerate(obj.rel_list):
-    #    print i, usr
 
     session.merge(pat)
     try:
