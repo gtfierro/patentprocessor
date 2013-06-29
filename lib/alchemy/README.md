@@ -1,7 +1,7 @@
 README
 ======
 
-There are a few items that are required:
+Installation:
 
     sudo apt-get install -y git
     sudo apt-get install -y python-pip
@@ -9,10 +9,11 @@ There are a few items that are required:
     sudo apt-get install -y python-mysqldb
     sudo pip install -r requirements.txt
 
-Executing Some sample scripts
+Executing sample scripts
 
     sqlite3 alchemy.db < ~/patentprocessor/lib/alchemy/counts.sql
 
-Functions
+Personal Notes
 
   * [Adding Indices](http://stackoverflow.com/questions/6626810/multiple-columns-index-when-using-the-declarative-orm-extension-of-sqlalchemy)
+  * [Ignoring Files](https://help.github.com/articles/ignoring-files)

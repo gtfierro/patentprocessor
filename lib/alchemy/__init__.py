@@ -73,7 +73,7 @@ def add(obj, override=True):
         pat.lawyers.append(law)
 
     #+usreldoc
-    for usr in enumerate(obj.us_relation_list()):
+    for usr in obj.us_relation_list():
         usr = USRelDoc(**usr)
         pat.usreldocs.append(usr)
 
