@@ -89,9 +89,10 @@ class Application(Base):
 class Location(Base):
     #TODO: Anyway we can consolidate to 1 PrimaryKey
     __tablename__ = "location"
-    city = Column(Unicode(128), primary_key=True)
-    state = Column(Unicode(10), index=True, primary_key=True)
-    country = Column(Unicode(10), index=True, primary_key=True)
+    id = Column(Unicode(256), primary_key=True)
+    city = Column(Unicode(128))
+    state = Column(Unicode(10), index=True)
+    country = Column(Unicode(10), index=True)
     latitude = Column(Float)
     longitude = Column(Float)
     inventors = relationship("Inventor", backref="location")
@@ -99,6 +100,7 @@ class Location(Base):
     kw = ["city", "state", "country", "longitude", "latitude"]
     __table_args__ = (
         Index("loc_idx1", "latitude", "longitude"),
+        Index("loc_idx2", "city", "state", "country"),
     )
 
     @hybrid_property
@@ -127,17 +129,18 @@ class Assignee(Base):
     name_last = Column(Unicode(64))
     residence = Column(Unicode(10))
     nationality = Column(Unicode(10))
-    location_city = Column(Unicode(128))
-    location_state = Column(Unicode(10), index=True)
-    location_country = Column(Unicode(10), index=True)
+    location_id = Column(Unicode(256), ForeignKey("location.id"))
+    #location_city = Column(Unicode(128))
+    #location_state = Column(Unicode(10), index=True)
+    #location_country = Column(Unicode(10), index=True)
     sequence = Column(Integer, index=True)
     kw = ["sequence"]
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [location_city, location_state, location_country],
-            [Location.city, Location.state, Location.country]
-        ),
-    )
+    #__table_args__ = (
+    #    ForeignKeyConstraint(
+    #        [location_city, location_state, location_country],
+    #        [Location.city, Location.state, Location.country]
+    #    ),
+    #)
 
     def asg(self, *args):
         self.organization = args[0]
@@ -156,17 +159,18 @@ class Inventor(Base):
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
     nationality = Column(Unicode(10))
-    location_city = Column(Unicode(128))
-    location_state = Column(Unicode(10), index=True)
-    location_country = Column(Unicode(10), index=True)
+    location_id = Column(Unicode(256), ForeignKey("location.id"))
+    #location_city = Column(Unicode(128))
+    #location_state = Column(Unicode(10), index=True)
+    #location_country = Column(Unicode(10), index=True)
     sequence = Column(Integer, index=True)
     kw = ["sequence", "name_last", "name_first", "nationality"]
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [location_city, location_state, location_country],
-            [Location.city, Location.state, Location.country]
-        ),
-    )
+    #__table_args__ = (
+    #    ForeignKeyConstraint(
+    #        [location_city, location_state, location_country],
+    #        [Location.city, Location.state, Location.country]
+    #    ),
+    #)
 
     @hybrid_property
     def name_full(self):

@@ -7,23 +7,21 @@ from patent grant documents
 
 from cStringIO import StringIO
 from datetime import datetime
+from unidecode import unidecode
 from xml_driver import *
 from xml_util import *
 from xml.sax import xmlreader
 
 
 class PatentGrant(object):
-    def __init__(self, filename, is_string=False):
+    def __init__(self, xml_string):
         xh = XMLHandler()
         parser = make_parser()
         parser.setContentHandler(xh)
         parser.setFeature(handler.feature_external_ges, False)
         l = xmlreader.Locator()
         xh.setDocumentLocator(l)
-        if is_string:
-            parser.parse(StringIO(filename))
-        else:
-            parser.parse(filename)
+        parser.parse(StringIO(xml_string))
         self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
 
         self.country = self.xml.publication_reference.contents_of('country')[0]
@@ -107,11 +105,19 @@ class PatentGrant(object):
         """
         if not datestring:
             return None
+        elif datestring[:4] < "1900":
+            return None
         # default to first of month in absence of day
+        if datestring[-4:-2] == '00':
+            datestring = datestring[:-4] + '01' + datestring[-2:]
         if datestring[-2:] == '00':
             datestring = datestring[:6] + '01'
-        datestring = datetime.strptime(datestring, '%Y%m%d')
-        return datestring
+        try:
+            datestring = datetime.strptime(datestring, '%Y%m%d')
+            return datestring
+        except Exception as inst:
+            print inst, datestring
+            return None
 
     def _asg_list(self):
         doc = self.xml.assignees.assignee
@@ -248,6 +254,7 @@ class PatentGrant(object):
           nationality
           sequence
         location:
+          id
           city
           state
           country
@@ -269,6 +276,8 @@ class PatentGrant(object):
             loc = {}
             for tag in ['city', 'state', 'country']:
                 loc[tag] = assignee.contents_of(tag, as_string=True)
+            #this is created because of MySQL foreign key case sensitivities
+            loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             res.append([asg, loc])
         return res
 
@@ -291,7 +300,7 @@ class PatentGrant(object):
         """
         citations = self.xml.references_cited.citation
         if not citations:
-            return []
+            return [[], []]
         regular_cits = []
         other_cits = []
         ocnt = 0
@@ -324,6 +333,7 @@ class PatentGrant(object):
           nationality
           sequence
         location:
+          id
           city
           state
           country
@@ -342,6 +352,8 @@ class PatentGrant(object):
             loc = {}
             for tag in ['city', 'state', 'country']:
                 loc[tag] = inventor.addressbook.contents_of(tag, as_string=True)
+            #this is created because of MySQL foreign key case sensitivities
+            loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             res.append([inv, loc])
         return res
 
