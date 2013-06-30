@@ -16,7 +16,7 @@ def fetch_engine():
     if config.get('global', 'database') == "sqlite":
         engine = create_engine('sqlite:///{0}'.format(config.get('sqlite', 'database')), echo=echo)
     else:
-        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=latin1'.format(
+        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
             config.get('mysql', 'user'),
             config.get('mysql', 'password'),
             config.get('mysql', 'host'),
@@ -28,13 +28,28 @@ def add(obj, override=True):
     """
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
+
+    Case Sensitivity and Table Reflection
+    MySQL has inconsistent support for case-sensitive identifier names,
+    basing support on specific details of the underlying operating system.
+    However, it has been observed that no matter what case sensitivity
+    behavior is present, the names of tables in foreign key declarations
+    are always received from the database as all-lower case, making it
+    impossible to accurately reflect a schema where inter-related tables
+    use mixed-case identifier names.
+
+    Therefore it is strongly advised that table names be declared as all
+    lower case both within SQLAlchemy as well as on the MySQL database
+    itself, especially if database reflection features are to be used.
     """
 
     # if a patent exists, remove it so we can replace it
-    if override:
-        pat_query = session.query(Patent).filter(Patent.number == obj.patent)
-        if pat_query.count():
+    pat_query = session.query(Patent).filter(Patent.number == obj.patent)
+    if pat_query.count():
+        if override:
             session.delete(pat_query.one())
+        else:
+            return
 
     #add
     # lots of abstracts seem to be missing. why?
@@ -43,17 +58,39 @@ def add(obj, override=True):
     pat.application = Application(**obj.app)
 
     #+asg
-    for asg, loc in obj.assignee_list():
+    for asg, lct in obj.assignee_list():
         asg = Assignee(**asg)
-        loc = Location(**loc)
+
+        # we do this in the short term because
+        # mysql is a bit weird in the usage of
+        # foreignkey constraints and merge
+        # - doesn't consider properly case sensitivity?
+        loc = Location(**lct)
+        """
+        if loc not in session:
+            print loc, lct
+            loc_query = session.query(Location).\
+                filter(Location.city == lct["city"]).\
+                filter(Location.state == lct["state"]).\
+                filter(Location.country == lct["country"])
+            if loc_query.count():
+                loc = loc_query.one()
+            else:
+                session.merge(loc)
+        """
         session.merge(loc)
+
         asg.location = loc
         pat.assignees.append(asg)
 
     #+inv
-    for inv, loc in obj.inventor_list():
+    for inv, lct in obj.inventor_list():
         inv = Inventor(**inv)
-        loc = Location(**loc)
+        loc = Location(**lct)
+        loc_query = session.query(Location).\
+            filter(Location.city == lct["city"]).\
+            filter(Location.state == lct["state"]).\
+            filter(Location.country == lct["country"])
         session.merge(loc)
         inv.location = loc
         pat.inventors.append(inv)
@@ -91,6 +128,9 @@ def add(obj, override=True):
         pat.classes.append(uspc)
 
     session.merge(pat)
+
+
+def commit():
     try:
         session.commit()
     except Exception, e:

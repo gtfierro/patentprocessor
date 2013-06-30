@@ -1,3 +1,4 @@
 sqlalchemy
 ipython
+unidecode
 MySQL-python

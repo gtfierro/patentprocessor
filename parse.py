@@ -20,10 +20,22 @@ from grant_handler import PatentGrant
 from patSQL import *
 from argconfig_parse import ArgHandler
 
+regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML,
               PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
 
-regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
+
+def xml_gen(obj):
+    """
+    XML generator for iteration of the large XML file
+    (otherwise high memory required) in replacement of RE
+    """
+    data = []
+    for rec in obj:
+        data.append(rec)
+        if rec.find("</us-patent-grant>") >= 0:
+            yield "".join(data)
+            data = []
 
 
 def list_files(patentroot, xmlregex):
