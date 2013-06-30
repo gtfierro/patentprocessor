@@ -22,12 +22,12 @@ if __name__ == '__main__':
     else:
         params['commit'] = 1
 
-    if os.path.exists("loaded.pickle"):
-        loaded = pickle.load(open("loaded.pickle", "rb"))
+    if os.path.exists("/mnt/sgeadmin/loaded.pickle"):
+        loaded = pickle.load(open("/mnt/sgeadmin/loaded.pickle", "rb"))
     else:
         loaded = []
 
-    f = open("status", "ab")
+    f = open("/mnt/sgeadmin/status", "ab")
     os.chdir(params['patentroot'])
 
     for xml in glob("*.xml"):
@@ -36,7 +36,7 @@ if __name__ == '__main__':
             try:
                 parse_sq.main(**params)
                 loaded.append(xml)
-                pickle.dump(open("loaded.pickle", "wb"), loaded)
+                pickle.dump(open("/mnt/sgeadmin/loaded.pickle", "wb"), loaded)
             except Exception as inst:
                 print xml, inst
                 f.write("{} {}\n".format(xml, inst))
