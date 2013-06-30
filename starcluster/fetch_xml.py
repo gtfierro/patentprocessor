@@ -25,9 +25,8 @@ def fetch(master, node, node_base):
     for f in files:
         fname = f.split("/")[-1].split(".")[0]
         os.chdir(master)
-        if not os.path.exists("{0}/{1}.zip".format(master, fname)):
-            os.system("wget {0}".format(f))
         if not os.path.exists("{0}/{1}.xml".format(node_base, fname)):
+            os.system("wget {0}.zip".format(f))
             os.system("unzip {1}.zip -d {0}".format(node_base, fname))
 
 
