@@ -118,6 +118,8 @@ def add(obj, override=True):
 
     #+classes (TODO for later)
     for i, cls in enumerate(obj.classes):
+        if length(cls) > 2:
+            continue
         uspc = USPC(i)
         mc = MainClass(cls[0])
         sc = SubClass("/".join(cls))

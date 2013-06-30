@@ -36,7 +36,7 @@ if __name__ == '__main__':
             try:
                 parse_sq.main(**params)
                 loaded.append(xml)
-                pickle.dump(open("/mnt/sgeadmin/loaded.pickle", "wb"), loaded)
+                pickle.dump(loaded, open("/mnt/sgeadmin/loaded.pickle", "wb"))
             except Exception as inst:
                 print xml, inst
                 f.write("{} {}\n".format(xml, inst))
