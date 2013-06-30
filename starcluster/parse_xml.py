@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.append("..")
 import parse_sq
 from glob import glob
 from ConfigParser import ConfigParser
@@ -21,11 +24,9 @@ if __name__ == '__main__':
     f = open("status", "ab")
     os.chdir(params['patentroot'])
     for xml in glob("*.xml"):
-        params.
-    try:
-        parse_sq.main(**params)
-    except Exception as inst:
-        print inst, 
-        return None
-
-    except Exception 
+        params["xmlregex"] = xml
+        try:
+            parse_sq.main(**params)
+        except Exception as inst:
+            print xml, inst
+            f.write("{} {}\n".format(xml, inst))
