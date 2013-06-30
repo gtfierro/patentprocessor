@@ -44,13 +44,10 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=1000):
                 patobj = PatentGrant(xml_string)
             except Exception as inst:
                 print " *", inst
-            try:
+            if patobj:
                 alchemy.add(patobj, override=False)
-            except Exception as inst:
-                print " *", inst
-                alchemy.rollback()
             if i % commit == 0:
-                print " *", datetime.now() - t, "- rec:", i
+                print " *", datetime.now() - t, "- rec:", i, filename
                 alchemy.commit()
         print filename, datetime.now() - t
 
