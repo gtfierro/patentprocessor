@@ -26,10 +26,7 @@ def xml_gen(obj):
             data = []
 
 
-def main(patentroot, xmlregex, verbosity, output_directory='.'):
-    logging.basicConfig(filename=logfile, level=verbosity)
-    logging.info("Starting parse on {0} on directory {1}".format(str(datetime.today()), patentroot))
-
+def main(patentroot, xmlregex="ipg\d{6}.xml", commit=1000):
     """
     Returns listing of all files within patentroot
     whose filenames match xmlregex
@@ -49,19 +46,18 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
                 print " *", inst
             if patobj:
                 alchemy.add(patobj, override=False)
-            if i % 1000 == 0:
+            if i % commit == 0:
                 print " *", datetime.now() - t, "- rec:", i
                 alchemy.commit()
         print filename, datetime.now() - t
 
 
 if __name__ == '__main__':
+    print "Loaded"
     args = ArgHandler(sys.argv[1:])
 
     XMLREGEX = args.get_xmlregex()
     PATENTROOT = args.get_patentroot()
-    VERBOSITY = args.get_verbosity()
-    PATENTOUTPUTDIR = args.get_output_directory()
 
     logfile = "./" + 'xml-parsing.log'
-    main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR)
+    main(PATENTROOT, XMLREGEX)
