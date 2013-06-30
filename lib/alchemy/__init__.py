@@ -108,6 +108,10 @@ def add(obj, override=True):
     session.merge(pat)
 
 
+def rollback():
+    session.rollback()
+
+
 def commit():
     try:
         session.commit()
