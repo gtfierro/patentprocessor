@@ -20,23 +20,15 @@ def makedir(node):
 
 
 @dview.remote(block=True)
-def fetch(master, node):
+def fetch(master, node, node_base):
     import os
     for f in files:
-        fname = f.split("/")[-1]
+        fname = f.split("/")[-1].split("."[0])
         os.chdir(master)
-        if not os.path.exists("{0}/{1}".format(master, fname)):
-            os.system("wget {0}".format(f))
-
-
-@dview.remote(block=True)
-def extract(master, node):
-    import os
-    for f in files:
-        fname = f.split("/")[-1].split(".")[0]
-        os.chdir(master)
-        if not os.path.exists("{0}/{1}.xml".format(node, fname)):
-            os.system("unzip {1} -d {0}.zip".format(node, fname))
+        if not os.path.exists("{0}/{1}.zip".format(master, fname)):
+            os.system("wget {0}.zip".format(f))
+        if not os.path.exists("{0}/{1}.xml".format(node_base, fname)):
+            os.system("unzip {1} -d {0}.zip".format(node_base, fname))
 
 
 fname = open("{0}/urls.pickle".format(config.get('directory', 'sqlalchemy')), "rb")
@@ -56,17 +48,9 @@ for year in urls.keys():
     dview.scatter("files", urls[year])
     master = "{0}/{1}".format(config.get('directory', 'xml'), year)
     node = "{0}/{1}".format(config.get('directory', 'local'), year)
+    node_base = config.get('directory', 'local')
     print "  *", master
-    fetch(master, node)
-
-print "extract"
-for year in urls.keys():
-    print year, datetime.now()
-    dview.scatter("files", urls[year])
-    master = "{0}/{1}".format(config.get('directory', 'xml'), year)
-    node = "{0}".format(config.get('directory', 'local'))
-    print "  *", master
-    fetch(master, node)
+    fetch(master, node, node_base)
 
 #sudo apt-get install -y python-mysqldb python-pip sqlite3
 #sudo pip install unidecode sqlalchemy
