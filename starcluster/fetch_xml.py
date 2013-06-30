@@ -20,7 +20,7 @@ def makedir(node):
 
 
 @dview.remote(block=True)
-def fetch(dirt, base, year):
+def fetch(master, node):
     import os
     for f in files:
         fname = f.split("/")[-1]
@@ -30,7 +30,7 @@ def fetch(dirt, base, year):
 
 
 @dview.remote(block=True)
-def extract():
+def extract(master, node):
     import os
     for f in files:
         fname = f.split("/")[-1].split(".")[0]
@@ -42,16 +42,16 @@ def extract():
 fname = open("{0}/urls.pickle".format(config.get('directory', 'sqlalchemy')), "rb")
 urls = pickle.load(fname)
 
+print "mkdir"
 for year in urls.keys():
-    print "mkdir"
     master = "{0}/{1}".format(config.get('directory', 'xml'), year)
     node = "{0}/{1}".format(config.get('directory', 'local'), year)
     if not os.path.exists(master):
         os.makedirs(master)
     makedir(node)
 
+print "wget"
 for year in urls.keys():
-    print "wget"
     print year, datetime.now()
     dview.scatter("files", urls[year])
     master = "{0}/{1}".format(config.get('directory', 'xml'), year)
@@ -59,8 +59,8 @@ for year in urls.keys():
     print "  *", master
     fetch(master, node)
 
+print "extract"
 for year in urls.keys():
-    print "extract"
     print year, datetime.now()
     dview.scatter("files", urls[year])
     master = "{0}/{1}".format(config.get('directory', 'xml'), year)
