@@ -49,7 +49,7 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
                 print " *", inst
             if patobj:
                 alchemy.add(patobj, override=False)
-            if i % 500 == 0:
+            if i % 1000 == 0:
                 print " *", datetime.now() - t, "- rec:", i
                 alchemy.commit()
         print filename, datetime.now() - t
