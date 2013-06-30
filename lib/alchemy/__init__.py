@@ -58,39 +58,17 @@ def add(obj, override=True):
     pat.application = Application(**obj.app)
 
     #+asg
-    for asg, lct in obj.assignee_list():
+    for asg, loc in obj.assignee_list():
         asg = Assignee(**asg)
-
-        # we do this in the short term because
-        # mysql is a bit weird in the usage of
-        # foreignkey constraints and merge
-        # - doesn't consider properly case sensitivity?
-        loc = Location(**lct)
-        """
-        if loc not in session:
-            print loc, lct
-            loc_query = session.query(Location).\
-                filter(Location.city == lct["city"]).\
-                filter(Location.state == lct["state"]).\
-                filter(Location.country == lct["country"])
-            if loc_query.count():
-                loc = loc_query.one()
-            else:
-                session.merge(loc)
-        """
+        loc = Location(**loc)
         session.merge(loc)
-
         asg.location = loc
         pat.assignees.append(asg)
 
     #+inv
-    for inv, lct in obj.inventor_list():
+    for inv, loc in obj.inventor_list():
         inv = Inventor(**inv)
-        loc = Location(**lct)
-        loc_query = session.query(Location).\
-            filter(Location.city == lct["city"]).\
-            filter(Location.state == lct["state"]).\
-            filter(Location.country == lct["country"])
+        loc = Location(**loc)
         session.merge(loc)
         inv.location = loc
         pat.inventors.append(inv)
@@ -118,8 +96,6 @@ def add(obj, override=True):
 
     #+classes (TODO for later)
     for i, cls in enumerate(obj.classes):
-        if len(cls) > 2 and len(cls[0]) > 3:
-            continue
         uspc = USPC(i)
         mc = MainClass(cls[0])
         sc = SubClass("/".join(cls))
