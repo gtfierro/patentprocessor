@@ -32,7 +32,7 @@ def fetch(dirt, base, year):
             os.system("wget {0}".format(f))
             os.system("unzip {0}".format(fname))
             os.chdir(base)
-            os.system("./parse_sq.py -p XML/{0} -xmlregex {1}.xml".format(year, fname.split(".")[0]))
+            os.system("./parse_sq.py -p {0}/{1} -xmlregex {2}.xml".format(dirt, year, fname.split(".")[0]))
             os.chdir("{0}/{1}".format(dirt, year))
             os.system("mv {2} {0}/XML/{1}/{2}".format(base, year, fname))
 
