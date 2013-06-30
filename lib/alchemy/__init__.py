@@ -111,9 +111,11 @@ def add(obj, override=True):
 def commit():
     try:
         session.commit()
-    except Exception, e:
-        session.rollback()
-        print str(e)
+    except:
+        pass
+    #except Exception, e:
+    #    session.rollback()
+    #    print str(e)
 
 
 engine = fetch_engine()
