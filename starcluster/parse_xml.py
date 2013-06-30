@@ -1,7 +1,8 @@
 import os
 import sys
-sys.path.append("..")
+sys.path.append("/home/sgeadmin/patentprocessor")
 import parse_sq
+import pickle
 from glob import glob
 from ConfigParser import ConfigParser
 
@@ -19,14 +20,23 @@ if __name__ == '__main__':
     if len(sys.argv) >= 3:
         params['commit'] = sys.argv[2]
     else:
-        params['commit'] = 100
+        params['commit'] = 1
+
+    if os.path.exists("loaded.pickle"):
+        loaded = pickle.load(open("loaded.pickle", "rb"))
+    else:
+        loaded = []
 
     f = open("status", "ab")
     os.chdir(params['patentroot'])
+
     for xml in glob("*.xml"):
-        params["xmlregex"] = xml
-        try:
-            parse_sq.main(**params)
-        except Exception as inst:
-            print xml, inst
-            f.write("{} {}\n".format(xml, inst))
+        if xml not in loaded:
+            params["xmlregex"] = xml
+            try:
+                parse_sq.main(**params)
+                loaded.append(xml)
+                pickle.dump(open("loaded.pickle", "wb"), loaded)
+            except Exception as inst:
+                print xml, inst
+                f.write("{} {}\n".format(xml, inst))
