@@ -6,19 +6,19 @@ from patent grant documents
 """
 
 import cStringIO
-from datetime import datetime
-from xml_driver import *
-from xml_util import *
-from xml.sax import xmlreader
+import datetime
+import xml_driver
+import xml_util
+import xml.sax
 
 class PatentGrant(object):
 
     def __init__(self, filename, is_string=False):
-        xh = XMLHandler()
-        parser = make_parser()
+        xh = xml_driver.XMLHandler()
+        parser = xml_driver.make_parser()
         parser.setContentHandler(xh)
-        parser.setFeature(handler.feature_external_ges, False)
-        l = xmlreader.Locator()
+        parser.setFeature(xml_driver.handler.feature_external_ges, False)
+        l = xml.sax.xmlreader.Locator()
         xh.setDocumentLocator(l)
         if is_string:
             parser.parse(cStringIO.StringIO(filename))
@@ -27,7 +27,7 @@ class PatentGrant(object):
         self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
 
         self.country = self.xml.publication_reference.contents_of('country')[0]
-        self.patent = normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
+        self.patent = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
         self.date_grant = self.xml.publication_reference.contents_of('date')[0]
         self.pat_type = self.xml.application_reference[0].get_attribute('appl-type')
@@ -48,14 +48,14 @@ class PatentGrant(object):
     def _invention_title(self):
         original = self.xml.contents_of('invention_title')[0]
         if isinstance(original, list):
-          original = ''.join(original)
+            original = ''.join(original)
         return original
 
     def _classes(self):
         main = self.xml.classification_national.contents_of('main_classification')
         further = self.xml.classification_national.contents_of('further_classification')
-        it = [main[0] if has_content(main) else []]
-        if has_content(further):
+        it = [main[0] if xml_util.has_content(main) else []]
+        if xml_util.has_content(further):
             it.extend(further)
         return [ [x[:3].replace(' ',''), x[3:].replace(' ','')] for x in it]
 
@@ -66,7 +66,7 @@ class PatentGrant(object):
         """
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
-        return associate_prefix(firstname, lastname)
+        return xml_util.associate_prefix(firstname, lastname)
 
     def _name_helper_dict(self, tag_root):
         """
@@ -75,7 +75,7 @@ class PatentGrant(object):
         """
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
-        firstname, lastname = associate_prefix(firstname, lastname)
+        firstname, lastname = xml_util.associate_prefix(firstname, lastname)
         return {'name_first':firstname, 'name_last':lastname}
 
     def _fix_date(self, datestring):
@@ -86,7 +86,7 @@ class PatentGrant(object):
         # default to first of month in absence of day
         if datestring[-2:] == '00':
             datestring = datestring[:6] + '01'
-        datestring = datetime.strptime(datestring, '%Y%m%d')
+        datestring = datetime.datetime.strptime(datestring, '%Y%m%d')
         return datestring
 
     def _asg_list(self):
@@ -119,16 +119,16 @@ class PatentGrant(object):
                     if isinstance(contents, list) and contents:
                         cit_data.append(contents[0])
                     else:
-                        cit_data.append(contents if has_content(contents) else '')
+                        cit_data.append(contents if xml_util.has_content(contents) else '')
                 cit_data.append('')
             if citation.othercit:
                 contents = citation.contents_of('othercit')
                 for chunk in contents:
                     cit_data.extend(['','','','',''])
                     if isinstance(chunk,list):
-                        cit_data.append(''.join([escape_html_nosub(x) for x in chunk]).upper())
+                        cit_data.append(''.join([xml_util.escape_html_nosub(x) for x in chunk]).upper())
                     else:
-                        cit_data.append(escape_html_nosub(chunk))
+                        cit_data.append(xml_util.escape_html_nosub(chunk))
             res.append(cit_data)
         return res
 
@@ -275,7 +275,7 @@ class PatentGrant(object):
                 data['date'] = self._fix_date(citation.contents_of('date', as_string=True))
                 data['country'] = citation.contents_of('country', default=[''])[0]
                 doc_number = citation.contents_of('doc_number', as_string=True)
-                data['number'] = normalize_document_identifier(doc_number)
+                data['number'] = xml_util.normalize_document_identifier(doc_number)
                 data['sequence'] = i
                 regular_cits.append(data)
         return [regular_cits, other_cits]
@@ -331,7 +331,7 @@ class PatentGrant(object):
         for tag in ['country','kind','date']:
             data = root.contents_of(tag)
             res[tag] = data[0] if data else ''
-        res['number'] = normalize_document_identifier(\
+        res['number'] = xml_util.normalize_document_identifier(\
             root.contents_of('doc_number', as_string=True))
         return res
 
