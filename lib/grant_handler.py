@@ -8,24 +8,25 @@ from patent grant documents
 from cStringIO import StringIO
 from datetime import datetime
 from unidecode import unidecode
-from xml_driver import *
-from xml_util import *
-from xml.sax import xmlreader
+import xml_driver
+import xml_util
+import xml.sax
 
 
 class PatentGrant(object):
-    def __init__(self, xml_string):
-        xh = XMLHandler()
-        parser = make_parser()
+
+    def __init__(self, xml_string, is_string=False):
+        xh = xml_driver.XMLHandler()
+        parser = xml_driver.make_parser()
         parser.setContentHandler(xh)
-        parser.setFeature(handler.feature_external_ges, False)
-        l = xmlreader.Locator()
+        parser.setFeature(xml_driver.handler.feature_external_ges, False)
+        l = xml.sax.xmlreader.Locator()
         xh.setDocumentLocator(l)
         parser.parse(StringIO(xml_string))
         self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
 
         self.country = self.xml.publication_reference.contents_of('country')[0]
-        self.patent = normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
+        self.patent = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
         self.date_grant = self.xml.publication_reference.contents_of('date')[0]
         if self.xml.application_reference:
@@ -78,8 +79,8 @@ class PatentGrant(object):
     def _classes(self):
         main = self.xml.classification_national.contents_of('main_classification')
         further = self.xml.classification_national.contents_of('further_classification')
-        it = [main[0] if has_content(main) else []]
-        if has_content(further):
+        it = [main[0] if xml_util.has_content(main) else []]
+        if xml_util.has_content(further):
             it.extend(further)
         if not it or not it[0]:
             return []
@@ -93,7 +94,7 @@ class PatentGrant(object):
         """
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
-        return associate_prefix(firstname, lastname)
+        return xml_util.associate_prefix(firstname, lastname)
 
     def _name_helper_dict(self, tag_root):
         """
@@ -102,8 +103,8 @@ class PatentGrant(object):
         """
         firstname = tag_root.contents_of('first_name', as_string=True)
         lastname = tag_root.contents_of('last_name', as_string=True)
-        firstname, lastname = associate_prefix(firstname, lastname)
-        return {'name_first': firstname, 'name_last': lastname}
+        firstname, lastname = xml_util.associate_prefix(firstname, lastname)
+        return {'name_first':firstname, 'name_last':lastname}
 
     def _fix_date(self, datestring):
         """
@@ -156,16 +157,16 @@ class PatentGrant(object):
                     if isinstance(contents, list) and contents:
                         cit_data.append(contents[0])
                     else:
-                        cit_data.append(contents if has_content(contents) else '')
+                        cit_data.append(contents if xml_util.has_content(contents) else '')
                 cit_data.append('')
             if citation.othercit:
                 contents = citation.contents_of('othercit')
                 for chunk in contents:
                     cit_data.extend(['', '', '', '', ''])
                     if isinstance(chunk, list):
-                        cit_data.append(''.join([escape_html_nosub(x) for x in chunk]).upper())
+                        cit_data.append(''.join([xml_util.escape_html_nosub(x) for x in chunk]).upper())
                     else:
-                        cit_data.append(escape_html_nosub(chunk))
+                        cit_data.append(xml_util.escape_html_nosub(chunk))
             res.append(cit_data)
         return res
 
@@ -326,7 +327,7 @@ class PatentGrant(object):
                 data['date'] = self._fix_date(citation.contents_of('date', as_string=True))
                 data['country'] = citation.contents_of('country', default=[''])[0]
                 doc_number = citation.contents_of('doc_number', as_string=True)
-                data['number'] = normalize_document_identifier(doc_number)
+                data['number'] = xml_util.normalize_document_identifier(doc_number)
                 data['sequence'] = ccnt
                 regular_cits.append(data)
                 ccnt += 1
@@ -396,7 +397,7 @@ class PatentGrant(object):
         for tag in ['country', 'kind', 'date']:
             data = root.contents_of(tag)
             res[tag] = data[0] if data else ''
-        res['number'] = normalize_document_identifier(
+        res['number'] = xml_util.normalize_document_identifier(\
             root.contents_of('doc_number', as_string=True))
         return res
 
@@ -443,4 +444,61 @@ class PatentGrant(object):
                     data['sequence'] = i
                     i = i + 1
                     res.append(data)
+        return res
+
+    def us_classifications(self):
+        """
+        Returns list of dictionaries representing us classification
+        main:
+          class
+          subclass
+        further:
+          class
+          subclass
+        """
+        main = self.xml.classification_national.contents_of('main_classification')
+        mainclass = [{'class': main[0][:3].replace(' ', ''),
+                     'subclass': main[0][3:].replace(' ', '')}]
+        further = self.xml.classification_national.contents_of('further_classification')
+        furtherclasses = []
+        for classification in further:
+            fc = {'class': classification[:3].replace(' ', ''),
+                  'subclass': classification[3:].replace(' ', '')}
+            furtherclasses.append(fc)
+        return [mainclass, furtherclasses]
+
+    def ipcr_classifications(self):
+        """
+        Returns list of dictionaries representing ipcr classifications
+        ipcr:
+          ipc_version_indicator
+          classification_level
+          section
+          class
+          subclass
+          main_group
+          subgroup
+          symbol_position
+          classification_value
+          action_date
+          classification_status
+          classification_data_source
+          sequence
+        """
+        ipcr_classifications = self.xml.classifications_ipcr
+        if not ipcr_classifications:
+            return []
+        res = []
+        # we can safely use [0] because there is only one ipcr_classifications tag
+        for i, ipcr in enumerate(ipcr_classifications.classification_ipcr):
+            data = {}
+            for tag in ['classification_level', 'section',
+                        'class', 'subclass', 'main_group', 'subgroup', 'symbol_position',
+                        'classification_value', 'classification_status',
+                        'classification_data_source']:
+                data[tag] = ipcr.contents_of(tag, as_string=True)
+            data['ipc_version_indicator'] = ipcr.ipc_version_indicator.contents_of('date', as_string=True)
+            data['action_date'] = ipcr.action_date.contents_of('date', as_string=True)
+            data['sequence'] = i
+            res.append(data)
         return res

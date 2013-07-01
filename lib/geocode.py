@@ -6,6 +6,7 @@
 
 import datetime
 # TODO: cover geocode setup functions with unit tests.
+import sqlite3
 import geocode_setup
 # geocode_replace_loc consists of a series of functions,
 # each with a SQL statement that is passed as a parameter
@@ -13,8 +14,8 @@ import geocode_setup
 # intermediate relations.
 import geocode_replace_loc
 
-conn = geocode_setup.get_connection("hashTbl.sqlite3")
-c = geocode_setup.get_cursor(conn)
+conn = sqlite3.connect("hashTbl.sqlite3")
+c = conn.cursor()
 geocode_setup.create_sql_helper_functions(conn)
 
 print "Start setup for geocoding: ", datetime.datetime.now()

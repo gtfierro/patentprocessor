@@ -1,5 +1,5 @@
-import csv, os, re, sqlite3, types, unicodedata, zipfile
-from ftplib import *
+import csv, re, types, unicodedata, zipfile, os
+import ftplib
 
 def jarow(s1,s2):
     try:
@@ -11,42 +11,42 @@ def jarow(s1,s2):
         #    return 0.0
         short, long = len(s1)>len(s2) and [s2, s1] or [s1, s2]
         for l in range(0, min(5, len(short))):
-          if short[l] != long[l]:
-            break
+            if short[l] != long[l]:
+                break
         mtch = ""
         mtch2=[]
         dist = len(long)/2-1
         m = 0.0
 
         for i, x in enumerate(long):
-          jx, jy = (lambda x,y: x==y and (x,y+1) or (x,y))(max(0, i-dist), min(len(short), i+dist))
-          for j in range(jx, jy):
-            if j<len(short) and x == short[j]:
-              m+=1
-              mtch+=x
-              mtch2.extend([[j,x]])
-              short=short[:j]+"*"+short[min(len(short), j+1):]
-              break
+            jx, jy = (lambda x,y: x==y and (x,y+1) or (x,y))(max(0, i-dist), min(len(short), i+dist))
+            for j in range(jx, jy):
+                if j<len(short) and x == short[j]:
+                    m+=1
+                    mtch+=x
+                    mtch2.extend([[j,x]])
+                    short=short[:j]+"*"+short[min(len(short), j+1):]
+                    break
         mtch2 = "".join(x[1] for x in sorted(mtch2))
         t = 0.0
 
         for i in range(0, len(mtch)):
-          if mtch[i]!=mtch2[i]:
-            t += 0.5
+            if mtch[i]!=mtch2[i]:
+                t += 0.5
 
         d = 0.1 
         # this is the jaro-distance 
         if m==0:
-          d_j = 0
+            d_j = 0
         else:
-          d_j = 1/3.0 * ((m/len(short)) + (m/len(long)) + ((m - t)/m))
+            d_j = 1/3.0 * ((m/len(short)) + (m/len(long)) + ((m - t)/m))
         return d_j + (l * d * (1 - d_j))
     except:
         print "Jaro-Winkler exception thrown on comparison between " + s1 + " and " + s2
         return 0
 
 def tblExist(c, table):
-	    return c.execute("SELECT count(*) FROM sqlite_master WHERE tbl_name='%s'" % table).fetchone()[0]>0
+    return c.execute("SELECT count(*) FROM sqlite_master WHERE tbl_name='%s'" % table).fetchone()[0]>0
 
 class uQvals:
     def __init__(self):
@@ -108,7 +108,7 @@ def get_ctypes(x):
              types.UnicodeType: "VARCHAR",
              types.IntType:     "INTEGER",
              types.FloatType:   "REAL"
-	   }[type(x)]
+       }[type(x)]
 
 def text_type(datatype):
     return type(datatype)==types.StringType or type(datatype)==types.UnicodeType
@@ -131,37 +131,37 @@ def is_all_digits(data):
 # TODO: There should be no reason to pass in the index i
 def get_ctype(typescan, data, i):
 
-	least = 2
-	ints = 1
-	length = min(typescan+1, len(data))
+    least = 2
+    ints = 1
+    length = min(typescan+1, len(data))
 
-	for j in range(1, length):
+    for j in range(1, length):
 
-	    if text_type(data[j][i]):
+        if text_type(data[j][i]):
 
-		if re.sub(r"[-,.]", "", data[j][i]).isdigit():
+            if re.sub(r"[-,.]", "", data[j][i]).isdigit():
+    
+                lengthall = is_real(data[j][i])
+    
+                if lengthall == 0:
+                    pass
+                elif lengthall == 1:
+                    ints = 0
+                else:
+                    least = 0;
+                # This break is unfortunate, prevents an easy refactoring of
+                # the conditional logic. General principal: try not to break
+                # out of loops from deeply nested conditionals.
+                break
+            else:
+                least = 0;
+                break
 
-		    lengthall = is_real(data[j][i])
-
-		    if lengthall == 0:
-		        pass
-		    elif lengthall == 1:
-			ints = 0
-		    else:
-			least = 0;
-			# This break is unfortunate, prevents an easy refactoring of
-			# the conditional logic. General principal: try not to break
-			# out of loops from deeply nested conditionals.
-			break
-		else:
-		    least = 0;
-		    break
-
-        key = max(least-ints, 0)
-	#print "key: ", key
-	value =  {0:"VARCHAR", 1:"INTEGER", 2:"REAL"}[key]
-	#print "value: ", value
-	return value 
+    key = max(least-ints, 0)
+    #print "key: ", key
+    value =  {0:"VARCHAR", 1:"INTEGER", 2:"REAL"}[key]
+    #print "value: ", value
+    return value 
 
 
 def create_column_labels(x, typescan, data, i, header, tList):
@@ -172,10 +172,10 @@ def create_column_labels(x, typescan, data, i, header, tList):
         cType = get_ctype(typescan, data, i)
 
     if header:
-	tList.append("%s %s" % (data[0][i], cType))
+        tList.append("%s %s" % (data[0][i], cType))
     else:
-	# Create "fake" column labels v0, v1, v2,...
-	tList.append("v%d %s" % (i, cType))
+        # Create "fake" column labels v0, v1, v2,...
+        tList.append("v%d %s" % (i, cType))
 
     return tList
 
@@ -192,13 +192,12 @@ def create_schema(data, header, typescan, typeList):
     # Find out why this is spinning data[1] instead of data[0]
     # Confusing.
     for i,x in enumerate(data[1]):
-	if have_schema_type(typeList, data[0][i]) < 0:
+        if have_schema_type(typeList, data[0][i]) < 0:
             tList = create_column_labels(x, typescan, data, i, header, tList)
-	else:
-	    #tList.extend([y for y in typeList if y.upper().find("%s " % data[0][i].upper())==0])
-	    # TODO: Check for an embedded override here on the schema
-	    tList.extend([y for y in typeList if have_schema_type(y, data[0][i]) == 0])
-
+        else:
+            #tList.extend([y for y in typeList if y.upper().find("%s " % data[0][i].upper())==0])
+            # TODO: Check for an embedded override here on the schema
+            tList.extend([y for y in typeList if have_schema_type(y, data[0][i]) == 0])
     schema = ", ".join(tList)
     return schema
 
@@ -211,12 +210,12 @@ def quickSQL_create_table(c, data, header, table, typescan, typeList):
 def quickSQL2(c, data, table="", header=False, typescan=50, typeList = []):
 
     if table=="":
-	print "Table empty string"
-	sql_statement = "SELECT tbl_name FROM sqlite_master WHERE type='table' order by tbl_name"
+        print "Table empty string"
+        sql_statement = "SELECT tbl_name FROM sqlite_master WHERE type='table' order by tbl_name"
         table = "debug%d" % len([x[0] for x in c.execute(sql_statement) if len(re.findall(r"debug[0-9]+", x[0]))>0])
     else:
         if c.execute("SELECT count(*) FROM sqlite_master WHERE tbl_name='%s'" % table).fetchone()[0]>0:
-	    print "else block at beginning of function fired..."
+            print "else block at beginning of function fired..."
             return
 
     quickSQL_create_table(c, data, header, table, typescan, typeList)
@@ -501,7 +500,7 @@ def cityctry(city, ctry, ret="city"):
 
 
 def ftpUpload(filename, password="", zips=True, ftp="people.hbs.edu", login="rolai", direc="protectedWWW", debug=False):
-    ftp = FTP(ftp)
+    ftp = ftplib.FTP(ftp)
     if password=="":
         password = raw_input("passwd:")
         os.system("clear")

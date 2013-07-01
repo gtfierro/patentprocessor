@@ -1,11 +1,8 @@
-import sys
-
-from SQLite import *
-from senAdd import *
+import SQLite
+import senAdd
 import datetime
+import re
 import scipy
-import scipy.stats
-
 
 #SET UP DATABASE - Prep a 'AdsgNum' in the beginning
 class orgClean():
@@ -17,10 +14,9 @@ class orgClean():
         self.uqKey = uqKey
         self.other = other
         self.table = table
-        self.s = SQLite(db)
+        self.s = SQLite.SQLite(db)
 
     def disambig(self):
-        import datetime
         s = self.s
         # Probably don't need this open() call anymore.
         #s.open()
@@ -30,7 +26,7 @@ class orgClean():
         other = self.other
         table = self.table
 
-        s.conn.create_function("jarow", 2, jarow)
+        s.conn.create_function("jarow", 2, senAdd.jarow)
         s.c.executescript("""
 
                 DROP TABLE IF EXISTS grp;
@@ -313,7 +309,7 @@ class orgClean():
         s.conn.commit()
         s.close()
         if db!=None:
-            t = SQLite(db)
+            t = SQLite.SQLite(db)
             for k in keys:
                 t.c.execute("UPDATE %s SET %s='%s' WHERE %s='%s'" % (tbl, self.uqKey, k1, self.uqKey, k))
             t.conn.commit()
@@ -337,7 +333,7 @@ class orgClean():
         s.open()
         OrgDct = dict(s.c.execute("SELECT %s, %s2 FROM grp" % (self.fld, self.uqKey)).fetchall())
         s.close()
-        t = SQLite(db)
+        t = SQLite.SQLite(db)
         def OrgDctIt(x):
             if x in OrgDct:
                 return OrgDct[x]
