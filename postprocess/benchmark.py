@@ -8,12 +8,9 @@
 
 import sqlite3
 import csv
-import datetime;
-import lib.fwork
-
+import datetime
 import sys
-sys.path.append( './lib/' )
-sys.path.append("lib")
+import lib.fwork as fwork
 
 def bmVerify(results, filepath="", outdir = ""):
         """
@@ -67,7 +64,7 @@ def bmVerify(results, filepath="", outdir = ""):
                         return sorted([(self.list.count(x), x) for x in set(self.list)], reverse=True)[0][1]
 
                 #MAKE THIS SO IT CAN ATTACH SQLITE3 FOR BENCHMARK
-                dataS = lib.fwork.uniVert([x for x in csv.reader(open(fileS, "rb"))])
+                dataS = fwork.uniVert([x for x in csv.reader(open(fileS, "rb"))])
                 
                 #print dataS
 
@@ -88,7 +85,7 @@ def bmVerify(results, filepath="", outdir = ""):
 
                 conn = sqlite3.connect(":memory:")
                 #conn = sqlite3.connect("benchmark.sqlite3")
-                conn.create_function("jarow", 2, lib.fwork.jarow)
+                conn.create_function("jarow", 2, fwork.jarow)
                 conn.create_function("errD", 2, lambda x,y: (x!=y) and 1 or None)
                 conn.create_aggregate("freqUQ", 1, freqUQ)
                 c = conn.cursor()
@@ -108,8 +105,8 @@ def bmVerify(results, filepath="", outdir = ""):
                 exCom = ", ".join(exact)
 
                 if fileB.split(".")[-1].lower()=="csv":
-                    dataB = lib.fwork.uniVert([x for x in csv.reader(open("%s" % fileB, "rb"))])
-                    lib.fwork.quickSQL(c, data=dataB,  table="dataB", header=True, typeList=["Patent VARCHAR"])
+                    dataB = fwork.uniVert([x for x in csv.reader(open("%s" % fileB, "rb"))])
+                    fwork.quickSQL(c, data=dataB,  table="dataB", header=True, typeList=["Patent VARCHAR"])
                     c.execute("CREATE INDEX IF NOT EXISTS dB_E ON dataB (%s)" % exCom)
                     c.execute("CREATE INDEX IF NOT EXISTS dB_U ON dataB (%s)" % uqB)
                     fBnme = "dataB"
@@ -120,7 +117,7 @@ def bmVerify(results, filepath="", outdir = ""):
                     else:
                         fBnme = "db.%s" % tblB
 
-                lib.fwork.quickSQL(c, data=dataS2, table="dataS", header=True, typeList=tList)
+                fwork.quickSQL(c, data=dataS2, table="dataS", header=True, typeList=tList)
 
                 if fuzzy:
                     c.execute("CREATE INDEX IF NOT EXISTS dS_E ON dataS (%s);" % (exCom))
