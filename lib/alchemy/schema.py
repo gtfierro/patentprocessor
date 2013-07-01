@@ -241,7 +241,7 @@ class USPC(Base):
     mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
     subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
-    kw = ["sequence"]
+    kw = ["uuid", "sequence"]
 
 
 class IPCR(Base):
