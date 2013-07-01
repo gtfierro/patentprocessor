@@ -92,24 +92,23 @@ def add(obj, override=True):
         usr = USRelDoc(**usr)
         pat.usreldocs.append(usr)
 
-    # ----------------------------------------
-
-    #+classes (TODO for later)
-    for i, cls in enumerate(obj.classes):
+    #+classes
+    for i, cls in enumerate(obj.us_classifications()):
         uspc = USPC(i)
-        mc = MainClass(cls[0].upper())
-        sc = SubClass("/".join(cls).upper())
+        mc = MainClass(cls['class'].upper())
+        sc = SubClass("{class}/{subclass}".format(**cls).upper())
         session.merge(mc)
         session.merge(sc)
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
 
+    #+ipcr
+    for ipc in obj.ipcr_classifications():
+        ipc = IPCR(**ipc)
+        pat.ipcrs.append(ipc)
+
     session.merge(pat)
-
-
-def rollback():
-    session.rollback()
 
 
 def commit():
