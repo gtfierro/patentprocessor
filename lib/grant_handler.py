@@ -28,7 +28,10 @@ class PatentGrant(object):
         self.patent = normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
         self.date_grant = self.xml.publication_reference.contents_of('date')[0]
-        self.pat_type = self.xml.application_reference[0].get_attribute('appl-type')
+        if self.xml.application_reference:
+            self.pat_type = self.xml.application_reference[0].get_attribute('appl-type')
+        else:
+            self.pat_type = None
         self.date_app = self.xml.application_reference.contents_of('date')[0]
         self.country_app = self.xml.application_reference.contents_of('country')[0]
         self.patent_app = self.xml.application_reference.contents_of('doc_number')[0]
@@ -39,11 +42,11 @@ class PatentGrant(object):
         self.invention_title = self._invention_title()
 
         # To depreciate >>>>>>
-        self.asg_list = self._asg_list()
-        self.cit_list = self._cit_list()
-        self.rel_list = self._rel_list()
-        self.inv_list = self._inv_list()
-        self.law_list = self._law_list()
+        #self.asg_list = self._asg_list()
+        #self.cit_list = self._cit_list()
+        #self.rel_list = self._rel_list()
+        #self.inv_list = self._inv_list()
+        #self.law_list = self._law_list()
         # <<<<<<
 
         # To consolidate with above? >>>>>>
@@ -78,7 +81,10 @@ class PatentGrant(object):
         it = [main[0] if has_content(main) else []]
         if has_content(further):
             it.extend(further)
-        return [[x[:3].replace(' ', ''), x[3:].replace(' ', '')] for x in it]
+        if not it or not it[0]:
+            return []
+        else:
+            return [[x[:3].replace(' ', ''), x[3:].replace(' ', '')] for x in it]
 
     def _name_helper(self, tag_root):
         """
