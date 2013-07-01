@@ -130,9 +130,6 @@ class Assignee(Base):
     residence = Column(Unicode(10))
     nationality = Column(Unicode(10))
     location_id = Column(Unicode(256), ForeignKey("location.id"))
-    #location_city = Column(Unicode(128))
-    #location_state = Column(Unicode(10), index=True)
-    #location_country = Column(Unicode(10), index=True)
     sequence = Column(Integer, index=True)
     kw = ["sequence"]
     #__table_args__ = (
@@ -249,7 +246,7 @@ class USPC(Base):
 
 class IPCR(Base):
     __tablename__ = "ipcr"
-    uuid = Column(Column(36), primary_key=True)
+    uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     classification_level = Column(Unicode(20))
     section = Column(Unicode(20))
