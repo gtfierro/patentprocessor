@@ -157,7 +157,7 @@ def get_ctype(typescan, data, i):
                 least = 0;
                 break
 
-        key = max(least-ints, 0)
+    key = max(least-ints, 0)
     #print "key: ", key
     value =  {0:"VARCHAR", 1:"INTEGER", 2:"REAL"}[key]
     #print "value: ", value
