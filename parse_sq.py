@@ -21,9 +21,10 @@ def xml_gen(obj):
     data = []
     for rec in obj:
         data.append(rec)
-        if rec.find("</us-patent-grant>") >= 0:
-            yield "".join(data)
-            data = []
+        if rec.find("<?xml version=") >= 0 and len(data) > 1:
+            yield "".join(data[:-1])
+            data = [data[-1]]
+    yield "".join(data)
 
 
 def main(patentroot, xmlregex="ipg\d{6}.xml", commit=1000):
@@ -40,8 +41,9 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=1000):
     for filename in files:
         t = datetime.now()
         for i, xml_string in enumerate(xml_gen(open(filename, "rb"))):
+            patobj = PatentGrant(xml_string)
             try:
-                patobj = PatentGrant(xml_string)
+                pass
             except Exception as inst:
                 print " *", inst
             if patobj:
