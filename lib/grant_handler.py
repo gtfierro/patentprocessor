@@ -8,6 +8,7 @@ from patent grant documents
 from cStringIO import StringIO
 from datetime import datetime
 from unidecode import unidecode
+import uuid
 import xml_driver
 import xml_util
 import xml.sax
@@ -63,6 +64,7 @@ class PatentGrant(object):
             "claims": self.clm_num
         }
         self.app = {
+            "uuid": str(uuid.uuid1()),
             "type": self.code_app,
             "number": self.patent_app,
             "country": self.country_app,
@@ -287,7 +289,9 @@ class PatentGrant(object):
                 loc[tag] = assignee.contents_of(tag, as_string=True)
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
-            res.append([asg, loc])
+            if any(asg.values()) or any(loc.values()):
+                asg['uuid'] = str(uuid.uuid1())
+                res.append([asg, loc])
         return res
 
     def citation_list(self):
@@ -319,8 +323,10 @@ class PatentGrant(object):
             if citation.othercit:
                 data['text'] = citation.contents_of('othercit', as_string=True)
                 data['sequence'] = ocnt
-                other_cits.append(data)
-                ocnt += 1
+                if any(data.values()):
+                    data['uuid'] = str(uuid.uuid1())
+                    other_cits.append(data)
+                    ocnt += 1
             else:
                 for tag in ['name', 'kind', 'category']:
                     data[tag] = citation.contents_of(tag, as_string=True)
@@ -329,8 +335,10 @@ class PatentGrant(object):
                 doc_number = citation.contents_of('doc_number', as_string=True)
                 data['number'] = xml_util.normalize_document_identifier(doc_number)
                 data['sequence'] = ccnt
-                regular_cits.append(data)
-                ccnt += 1
+                if any(data.values()):
+                    data['uuid'] = str(uuid.uuid1())
+                    regular_cits.append(data)
+                    ccnt += 1
         return [regular_cits, other_cits]
 
     def inventor_list(self):
@@ -363,7 +371,9 @@ class PatentGrant(object):
                 loc[tag] = inventor.addressbook.contents_of(tag, as_string=True)
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
-            res.append([inv, loc])
+            if any(inv.values()) or any(loc.values()):
+                inv['uuid'] = str(uuid.uuid1())
+                res.append([inv, loc])
         return res
 
     def lawyer_list(self):
@@ -384,8 +394,10 @@ class PatentGrant(object):
             law = {}
             law.update(self._name_helper_dict(lawyer))
             law['country'] = lawyer.contents_of('country', as_string=True)
-            law['orgname'] = lawyer.contents_of('orgname', as_string=True)
-            res.append(law)
+            law['organization'] = lawyer.contents_of('orgname', as_string=True)
+            if any(law.values()):
+                law['uuid'] = str(uuid.uuid1())
+                res.append(law)
         return res
 
     def _get_doc_info(self, root):
@@ -428,8 +440,10 @@ class PatentGrant(object):
                 data.update(self._get_doc_info(reldoc))
                 data['date'] = self._fix_date(data['date'])
                 data['sequence'] = i
-                i = i + 1
-                res.append(data)
+                if any(data.values()):
+                    data['uuid'] = str(uuid.uuid1())
+                    i = i + 1
+                    res.append(data)
             for relation in reldoc.relation:
                 for relationship in ['parent_doc', 'parent_grant_document',
                                      'parent_pct_document', 'child_doc']:
@@ -442,8 +456,10 @@ class PatentGrant(object):
                     data['status'] = doc[0].contents_of('parent_status', as_string=True)
                     data['relationship'] = relationship  # parent/child
                     data['sequence'] = i
-                    i = i + 1
-                    res.append(data)
+                    if any(data.values()):
+                        data['uuid'] = str(uuid.uuid1())
+                        i = i + 1
+                        res.append(data)
         return res
 
     def us_classifications(self):
@@ -452,20 +468,22 @@ class PatentGrant(object):
         main:
           class
           subclass
-        further:
-          class
-          subclass
         """
+        classes = []
         main = self.xml.classification_national.contents_of('main_classification')
-        mainclass = [{'class': main[0][:3].replace(' ', ''),
-                     'subclass': main[0][3:].replace(' ', '')}]
+        data = {'class': main[0][:3].replace(' ', ''),
+                'subclass': main[0][3:].replace(' ', '')}
+        if any(data.values()):
+            data['uuid'] = str(uuid.uuid1())
+            classes.append(data)
         further = self.xml.classification_national.contents_of('further_classification')
-        furtherclasses = []
         for classification in further:
-            fc = {'class': classification[:3].replace(' ', ''),
-                  'subclass': classification[3:].replace(' ', '')}
-            furtherclasses.append(fc)
-        return [mainclass, furtherclasses]
+            data = {'class': classification[:3].replace(' ', ''),
+                    'subclass': classification[3:].replace(' ', '')}
+            if any(data.values()):
+                data['uuid'] = str(uuid.uuid1())
+                classes.append(data)
+        return classes
 
     def ipcr_classifications(self):
         """
@@ -497,8 +515,10 @@ class PatentGrant(object):
                         'classification_value', 'classification_status',
                         'classification_data_source']:
                 data[tag] = ipcr.contents_of(tag, as_string=True)
-            data['ipc_version_indicator'] = ipcr.ipc_version_indicator.contents_of('date', as_string=True)
-            data['action_date'] = ipcr.action_date.contents_of('date', as_string=True)
+            data['ipc_version_indicator'] = self._fix_date(ipcr.ipc_version_indicator.contents_of('date', as_string=True))
+            data['action_date'] = self._fix_date(ipcr.action_date.contents_of('date', as_string=True))
             data['sequence'] = i
-            res.append(data)
+            if any(data.values()):
+                data['uuid'] = str(uuid.uuid1())
+                res.append(data)
         return res
