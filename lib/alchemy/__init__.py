@@ -97,8 +97,8 @@ def add(obj, override=True):
     #+classes (TODO for later)
     for i, cls in enumerate(obj.classes):
         uspc = USPC(i)
-        mc = MainClass(cls[0])
-        sc = SubClass("/".join(cls))
+        mc = MainClass(cls[0].upper())
+        sc = SubClass("/".join(cls).upper())
         session.merge(mc)
         session.merge(sc)
         uspc.mainclass = mc
