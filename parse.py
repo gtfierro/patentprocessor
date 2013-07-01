@@ -8,15 +8,13 @@ import mmap
 import contextlib
 import itertools
 import sys
-import lib.grant_handler
-import lib.patSQL
-import lib.argconfig_parse
-sys.path.append( '.' )
-sys.path.append( './lib/' )
+import lib.grant_handler as grant_handler 
+import lib.patSQL as patSQL
+import lib.argconfig_parse as argconfig_parse
 
-xmlclasses = [lib.patSQL.AssigneeXML, lib.patSQL.CitationXML, lib.patSQL.ClassXML, \
-              lib.patSQL.InventorXML, lib.patSQL.PatentXML, lib.patSQL.PatdescXML, \
-              lib.patSQL.LawyerXML, lib.patSQL.ScirefXML, lib.patSQL.UsreldocXML]
+xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
+              patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
+              patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 
@@ -51,7 +49,7 @@ def parallel_parse(filelist):
 def apply_xmlclass(us_patent_grant):
     parsed_grants = []
     try:
-        patobj = lib.grant_handler.PatentGrant(us_patent_grant, True)
+        patobj = grant_handler.PatentGrant(us_patent_grant, True)
         for xmlclass in xmlclasses:
             parsed_grants.append(xmlclass(patobj))
     except Exception as inst:
@@ -70,9 +68,9 @@ def build_tables(parsed_grants):
         parsed_grant.insert_table()
 
 def get_tables():
-    return (lib.patSQL.assignee_table, lib.patSQL.citation_table, lib.patSQL.class_table, lib.patSQL.inventor_table,\
-           lib.patSQL.patent_table, lib.patSQL.patdesc_table, lib.patSQL.lawyer_table, lib.patSQL.sciref_table,\
-           lib.patSQL.usreldoc_table)
+    return (patSQL.assignee_table, patSQL.citation_table, patSQL.class_table, patSQL.inventor_table,\
+           patSQL.patent_table, patSQL.patdesc_table, patSQL.lawyer_table, patSQL.sciref_table,\
+           patSQL.usreldoc_table)
 
 def get_inserts():
     return [(x, x.inserts) for x in get_tables()]
@@ -114,7 +112,7 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
 
 if __name__ == '__main__':
 
-    args = lib.argconfig_parse.ArgHandler(sys.argv[1:])
+    args = argconfig_parse.ArgHandler(sys.argv[1:])
 
     XMLREGEX = args.get_xmlregex()
     PATENTROOT = args.get_patentroot()
