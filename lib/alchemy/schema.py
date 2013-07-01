@@ -36,6 +36,7 @@ class Patent(Base):
 
     application = relationship("Application", uselist=False, backref="patent", cascade=cascade)
     classes = relationship("USPC", backref="patent", cascade=cascade)
+    ipcrs = relationship("IPCR", backref="patent", cascade=cascade)
 
     assignees = relationship("Assignee", backref="patent", cascade=cascade)
     inventors = relationship("Inventor", backref="patent", cascade=cascade)
@@ -69,7 +70,7 @@ class Patent(Base):
 
 class Application(Base):
     __tablename__ = "application"
-    uuid = Column(Integer, primary_key=True)
+    uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     type = Column(Unicode(20))
     number = Column(Unicode(20))
@@ -120,8 +121,7 @@ class Location(Base):
 
 class Assignee(Base):
     __tablename__ = "assignee"
-    uuid = Column(Integer, primary_key=True)
-    #location_uuid = Column(Integer, ForeignKey("location.uuid"))
+    uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     type = Column(Unicode(10))
     organization = Column(Unicode(256))
@@ -153,24 +153,14 @@ class Assignee(Base):
 
 class Inventor(Base):
     __tablename__ = "inventor"
-    uuid = Column(Integer, primary_key=True)
-    #location_uuid = Column(Integer, ForeignKey("location.uuid"))
+    uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
     nationality = Column(Unicode(10))
     location_id = Column(Unicode(256), ForeignKey("location.id"))
-    #location_city = Column(Unicode(128))
-    #location_state = Column(Unicode(10), index=True)
-    #location_country = Column(Unicode(10), index=True)
     sequence = Column(Integer, index=True)
     kw = ["sequence", "name_last", "name_first", "nationality"]
-    #__table_args__ = (
-    #    ForeignKeyConstraint(
-    #        [location_city, location_state, location_country],
-    #        [Location.city, Location.state, Location.country]
-    #    ),
-    #)
 
     @hybrid_property
     def name_full(self):
@@ -181,8 +171,7 @@ class Inventor(Base):
 
 class Lawyer(Base):
     __tablename__ = "lawyer"
-    uuid = Column(Integer, primary_key=True)
-    #location_uuid = Column(Integer, ForeignKey("location.uuid"))
+    uuid = Column(Unicode(36), primary_key=True)
     id = Column(Unicode(64), index=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
@@ -207,7 +196,7 @@ class Citation(Base):
     Two types of citations?
     """
     __tablename__ = "citation"
-    uuid = Column(Integer, primary_key=True)
+    uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     citation_id = Column(Unicode(20), ForeignKey("patent.id"))
     date = Column(Date, index=True)
@@ -223,7 +212,7 @@ class Citation(Base):
 
 class OtherReference(Base):
     __tablename__ = "otherreference"
-    uuid = Column(Integer, primary_key=True)
+    uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     text = deferred(Column(UnicodeText))
     sequence = Column(Integer, index=True)
@@ -232,7 +221,7 @@ class OtherReference(Base):
 
 class USRelDoc(Base):
     __tablename__ = "usreldoc"
-    uuid = Column(Integer, primary_key=True)
+    uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     rel_id = Column(Unicode(20), ForeignKey("patent.id"))
     doctype = Column(Unicode(64), index=True)
@@ -250,12 +239,30 @@ class USRelDoc(Base):
 
 class USPC(Base):
     __tablename__ = "uspc"
-    uuid = Column(Integer, primary_key=True)
+    uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
     subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
     kw = ["sequence"]
+
+
+class IPCR(Base):
+    __tablename__ = "ipcr"
+    uuid = Column(Column(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    classification_level = Column(Unicode(20))
+    section = Column(Unicode(20))
+    subclass = Column(Unicode(20))
+    main_group = Column(Unicode(20))
+    subgroup = Column(Unicode(20))
+    symbol_position = Column(Unicode(20))
+    classification_value = Column(Unicode(20))
+    classification_status = Column(Unicode(20))
+    classification_data_source = Column(Unicode(20))
+    action_date = Column(Date, index=True)
+    ipc_version_indicator = Column(Date, index=True)
+    sequence = Column(Integer, index=True)
 
 
 class MainClass(Base):
