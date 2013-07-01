@@ -396,3 +396,38 @@ class PatentGrant(object):
                   'subclass': classification[3:].replace(' ','')}
             furtherclasses.append(fc)
         return [mainclass, furtherclasses]
+
+    def ipcr_classifications(self):
+        """
+        Returns list of dictionaries representing ipcr classifications
+        ipcr:
+          ipc_version_indicator
+          classification_level
+          section
+          class
+          subclass
+          main_group
+          subgroup
+          symbol_position
+          classification_value
+          action_date
+          classification_status
+          classification_data_source
+          sequence
+        """
+        ipcr_classifications = self.xml.classifications_ipcr
+        if not ipcr_classifications: return []
+        res = []
+        # we can safely use [0] because there is only one ipcr_classifications tag
+        for i, ipcr in enumerate(ipcr_classifications.classification_ipcr):
+            data = {}
+            for tag in ['classification_level','section',\
+                        'class','subclass','main_group','subgroup','symbol_position',\
+                        'classification_value','classification_status',\
+                        'classification_data_source']:
+                data[tag] = ipcr.contents_of(tag, as_string=True)
+            data['ipc_version_indicator'] = ipcr.ipc_version_indicator.contents_of('date', as_string=True)
+            data['action_date'] = ipcr.action_date.contents_of('date', as_string=True)
+            data['sequence'] = i
+            res.append(data)
+        return res
