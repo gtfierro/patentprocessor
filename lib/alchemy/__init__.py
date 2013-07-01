@@ -93,10 +93,10 @@ def add(obj, override=True):
         pat.usreldocs.append(usr)
 
     #+classes
-    for i, cls in enumerate(obj.us_classifications()):
-        uspc = USPC(i)
-        mc = MainClass(cls['class'].upper())
-        sc = SubClass("{class}/{subclass}".format(**cls).upper())
+    for uspc, mc, sc in obj.us_classifications():
+        uspc = USPC(**uspc)
+        mc = MainClass(**mc)
+        sc = SubClass(**sc)
         session.merge(mc)
         session.merge(sc)
         uspc.mainclass = mc

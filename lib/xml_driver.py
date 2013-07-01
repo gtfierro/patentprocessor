@@ -84,7 +84,10 @@ class XMLElement(object):
         else:
             res = default
         if as_string:
-            return ' '.join(res)
+            if res and type(res[0]).__name__ in ('list', 'tuples'):
+                return ''
+            else:
+                return ' '.join(res)
         return res
 
     def get_content(self):
