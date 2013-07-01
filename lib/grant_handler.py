@@ -282,7 +282,6 @@ class PatentGrant(object):
             asg['role'] = assignee.contents_of('role', as_string=True)
             asg['nationality'] = assignee.nationality.contents_of('country')[0]
             asg['residence'] = assignee.nationality.contents_of('country')[0]
-            asg['sequence'] = i
             # add location data for assignee
             loc = {}
             for tag in ['city', 'state', 'country']:
@@ -290,6 +289,7 @@ class PatentGrant(object):
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(asg.values()) or any(loc.values()):
+                asg['sequence'] = i
                 asg['uuid'] = str(uuid.uuid1())
                 res.append([asg, loc])
         return res
@@ -322,8 +322,8 @@ class PatentGrant(object):
             data = {}
             if citation.othercit:
                 data['text'] = citation.contents_of('othercit', as_string=True)
-                data['sequence'] = ocnt
                 if any(data.values()):
+                    data['sequence'] = ocnt
                     data['uuid'] = str(uuid.uuid1())
                     other_cits.append(data)
                     ocnt += 1
@@ -334,8 +334,8 @@ class PatentGrant(object):
                 data['country'] = citation.contents_of('country', default=[''])[0]
                 doc_number = citation.contents_of('doc_number', as_string=True)
                 data['number'] = xml_util.normalize_document_identifier(doc_number)
-                data['sequence'] = ccnt
                 if any(data.values()):
+                    data['sequence'] = ccnt
                     data['uuid'] = str(uuid.uuid1())
                     regular_cits.append(data)
                     ccnt += 1
@@ -364,7 +364,6 @@ class PatentGrant(object):
             inv = {}
             inv.update(self._name_helper_dict(inventor.addressbook))
             inv['nationality'] = inventor.nationality.contents_of('country', as_string=True)
-            inv['sequence'] = i
             # add location data for inventor
             loc = {}
             for tag in ['city', 'state', 'country']:
@@ -372,6 +371,7 @@ class PatentGrant(object):
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(inv.values()) or any(loc.values()):
+                inv['sequence'] = i
                 inv['uuid'] = str(uuid.uuid1())
                 res.append([inv, loc])
         return res
@@ -439,8 +439,8 @@ class PatentGrant(object):
                 data = {'doctype': reldoc._name}
                 data.update(self._get_doc_info(reldoc))
                 data['date'] = self._fix_date(data['date'])
-                data['sequence'] = i
                 if any(data.values()):
+                    data['sequence'] = i
                     data['uuid'] = str(uuid.uuid1())
                     i = i + 1
                     res.append(data)
@@ -455,8 +455,8 @@ class PatentGrant(object):
                     data['date'] = self._fix_date(data['date'])
                     data['status'] = doc[0].contents_of('parent_status', as_string=True)
                     data['relationship'] = relationship  # parent/child
-                    data['sequence'] = i
                     if any(data.values()):
+                        data['sequence'] = i
                         data['uuid'] = str(uuid.uuid1())
                         i = i + 1
                         res.append(data)
@@ -470,19 +470,26 @@ class PatentGrant(object):
           subclass
         """
         classes = []
+        i = 0
         main = self.xml.classification_national.contents_of('main_classification')
         data = {'class': main[0][:3].replace(' ', ''),
                 'subclass': main[0][3:].replace(' ', '')}
         if any(data.values()):
-            data['uuid'] = str(uuid.uuid1())
-            classes.append(data)
+            classes.append([
+                {'uuid': str(uuid.uuid1()), 'sequence': i},
+                {'id': data['class'].upper()},
+                {'id': "{class}/{subclass}".format(**data).upper()}])
+            i = i + 1
         further = self.xml.classification_national.contents_of('further_classification')
         for classification in further:
             data = {'class': classification[:3].replace(' ', ''),
                     'subclass': classification[3:].replace(' ', '')}
             if any(data.values()):
-                data['uuid'] = str(uuid.uuid1())
-                classes.append(data)
+                classes.append([
+                    {'uuid': str(uuid.uuid1()), 'sequence': i},
+                    {'id': data['class'].upper()},
+                    {'id': "{class}/{subclass}".format(**data).upper()}])
+                i = i + 1
         return classes
 
     def ipcr_classifications(self):
@@ -517,8 +524,8 @@ class PatentGrant(object):
                 data[tag] = ipcr.contents_of(tag, as_string=True)
             data['ipc_version_indicator'] = self._fix_date(ipcr.ipc_version_indicator.contents_of('date', as_string=True))
             data['action_date'] = self._fix_date(ipcr.action_date.contents_of('date', as_string=True))
-            data['sequence'] = i
             if any(data.values()):
+                data['sequence'] = i
                 data['uuid'] = str(uuid.uuid1())
                 res.append(data)
         return res
