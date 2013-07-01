@@ -7,19 +7,16 @@ import re
 import mmap
 import contextlib
 import itertools
-import shutil
-from xml.sax import SAXException
-
 import sys
+import lib.grant_handler
+import lib.patSQL
+import lib.argconfig_parse
 sys.path.append( '.' )
 sys.path.append( './lib/' )
 
-from grant_handler import PatentGrant
-from patSQL import *
-from argconfig_parse import ArgHandler
-
-xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \
-              PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
+xmlclasses = [lib.patSQL.AssigneeXML, lib.patSQL.CitationXML, lib.patSQL.ClassXML, \
+              lib.patSQL.InventorXML, lib.patSQL.PatentXML, lib.patSQL.PatdescXML, \
+              lib.patSQL.LawyerXML, lib.patSQL.ScirefXML, lib.patSQL.UsreldocXML]
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 
@@ -54,7 +51,7 @@ def parallel_parse(filelist):
 def apply_xmlclass(us_patent_grant):
     parsed_grants = []
     try:
-        patobj = PatentGrant(us_patent_grant, True)
+        patobj = lib.grant_handler.PatentGrant(us_patent_grant, True)
         for xmlclass in xmlclasses:
             parsed_grants.append(xmlclass(patobj))
     except Exception as inst:
@@ -73,9 +70,9 @@ def build_tables(parsed_grants):
         parsed_grant.insert_table()
 
 def get_tables():
-    return (assignee_table, citation_table, class_table, inventor_table,\
-           patent_table, patdesc_table, lawyer_table, sciref_table,\
-           usreldoc_table)
+    return (lib.patSQL.assignee_table, lib.patSQL.citation_table, lib.patSQL.class_table, lib.patSQL.inventor_table,\
+           lib.patSQL.patent_table, lib.patSQL.patdesc_table, lib.patSQL.lawyer_table, lib.patSQL.sciref_table,\
+           lib.patSQL.usreldoc_table)
 
 def get_inserts():
     return [(x, x.inserts) for x in get_tables()]
@@ -117,7 +114,7 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
 
 if __name__ == '__main__':
 
-    args = ArgHandler(sys.argv[1:])
+    args = lib.argconfig_parse.ArgHandler(sys.argv[1:])
 
     XMLREGEX = args.get_xmlregex()
     PATENTROOT = args.get_patentroot()
