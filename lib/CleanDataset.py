@@ -1,5 +1,5 @@
-import datetime, math, re, sqlite3, unicodedata
-from fwork import *
+import sqlite3
+import fwork
 
 class TopX:
 
@@ -32,8 +32,8 @@ def assignees(vers=1):
     print "Assignee %d" % vers
     if vers==1:
         conn = sqlite3.connect("assignee_1.sqlite3")
-        conn.create_function("ascit",    1, ascit)
-        conn.create_function("cityctry", 3, cityctry)
+        conn.create_function("ascit",    1, fwork.ascit)
+        conn.create_function("cityctry", 3, fwork.cityctry)
         c = conn.cursor()
         c.executescript("""
             PRAGMA CACHE_SIZE = 25000;
@@ -191,8 +191,8 @@ def inventors(vers=1):
     print "Inventor %d" % vers
     if vers==1:
         conn = sqlite3.connect("../sqlite/inventor_1.sqlite3")
-        conn.create_function("ascit",    1, ascit)
-        conn.create_function("cityctry", 3, cityctry)
+        conn.create_function("ascit",    1, fwork.ascit)
+        conn.create_function("cityctry", 3, fwork.cityctry)
         c = conn.cursor()
         c.executescript("""
             PRAGMA CACHE_SIZE = 25000;
@@ -258,7 +258,7 @@ def lawyers(vers=1):
     print "Lawyer %d" % vers
     if vers==1:
         conn = sqlite3.connect("../sqlite/lawyer_1.sqlite3")
-        conn.create_function("ascit",    1, ascit)
+        conn.create_function("ascit",    1, fwork.ascit)
         c = conn.cursor()
         c.executescript("""
             PRAGMA CACHE_SIZE = 25000;

@@ -8,15 +8,9 @@
 
 import sqlite3
 import csv
-import datetime;
-# http://docs.python.org/howto/argparse.html
-import argparse
-
+import datetime
 import sys
-sys.path.append( './lib/' )
-sys.path.append("lib")
-
-from fwork import *;
+import lib.fwork as fwork
 
 def bmVerify(results, filepath="", outdir = ""):
         """
@@ -70,9 +64,9 @@ def bmVerify(results, filepath="", outdir = ""):
                         return sorted([(self.list.count(x), x) for x in set(self.list)], reverse=True)[0][1]
 
                 #MAKE THIS SO IT CAN ATTACH SQLITE3 FOR BENCHMARK
-                dataS = uniVert([x for x in csv.reader(open(fileS, "rb"))])
-
-		#print dataS
+                dataS = fwork.uniVert([x for x in csv.reader(open(fileS, "rb"))])
+                
+                #print dataS
 
                 #1 = Variables, 2 = Type, 3 = Format (If necessary), 4 = Matching Type
                 tList = ["%s %s" % (dataS[0][i], x) for i,x in enumerate(dataS[1]) if  x != ""]
@@ -91,16 +85,16 @@ def bmVerify(results, filepath="", outdir = ""):
 
                 conn = sqlite3.connect(":memory:")
                 #conn = sqlite3.connect("benchmark.sqlite3")
-                conn.create_function("jarow", 2, jarow)
+                conn.create_function("jarow", 2, fwork.jarow)
                 conn.create_function("errD", 2, lambda x,y: (x!=y) and 1 or None)
                 conn.create_aggregate("freqUQ", 1, freqUQ)
                 c = conn.cursor()
 
                 #FIGURE OUT WHICH ONES HAVE EXACT/FUZZY
                 exact = [dataS[0][i] for i,x in enumerate(dataS[3]) if x.upper()[0]=="E"]
-		print "Exact: ", exact
+                print "Exact: ", exact
                 fuzzy = [dataS[0][i] for i,x in enumerate(dataS[3]) if x.upper()[0]=="F"]
-		print "Fuzzy: ", fuzzy
+                print "Fuzzy: ", fuzzy
                 uqS =   [dataS[0][i] for i,x in enumerate(dataS[3]) if x.upper()[0]=="U"][0]
 
 
@@ -111,8 +105,8 @@ def bmVerify(results, filepath="", outdir = ""):
                 exCom = ", ".join(exact)
 
                 if fileB.split(".")[-1].lower()=="csv":
-                    dataB = uniVert([x for x in csv.reader(open("%s" % fileB, "rb"))])
-                    quickSQL(c, data=dataB,  table="dataB", header=True, typeList=["Patent VARCHAR"])
+                    dataB = fwork.uniVert([x for x in csv.reader(open("%s" % fileB, "rb"))])
+                    fwork.quickSQL(c, data=dataB,  table="dataB", header=True, typeList=["Patent VARCHAR"])
                     c.execute("CREATE INDEX IF NOT EXISTS dB_E ON dataB (%s)" % exCom)
                     c.execute("CREATE INDEX IF NOT EXISTS dB_U ON dataB (%s)" % uqB)
                     fBnme = "dataB"
@@ -123,7 +117,7 @@ def bmVerify(results, filepath="", outdir = ""):
                     else:
                         fBnme = "db.%s" % tblB
 
-                quickSQL(c, data=dataS2, table="dataS", header=True, typeList=tList)
+                fwork.quickSQL(c, data=dataS2, table="dataS", header=True, typeList=tList)
 
                 if fuzzy:
                     c.execute("CREATE INDEX IF NOT EXISTS dS_E ON dataS (%s);" % (exCom))
@@ -195,15 +189,15 @@ def bmVerify(results, filepath="", outdir = ""):
                 writer.writerows(c.execute("SELECT * FROM dataM4").fetchall())
                 print "Printing results ..." + str(datetime.datetime.now())
                 rep = [list(x) for x in c.execute("SELECT ErrUQ, uqSUB FROM dataM4")]
-		#print "Rep: ", rep
+                #print "Rep: ", rep
                 orig = len([x for x in rep if x[1]!=None])
                 errm = sum([int(x[0]) for x in rep if x[0]!=None])
-		#print errm
+                #print errm
                 u = 1.0*errm/orig
                 o = 1-(float(orig)/len(rep))
                 recall = 1.0 - u
-		# overclumping is lumping
-		# underclumping is splitting
+                # overclumping is lumping
+                # underclumping is splitting
                 print """
 
                 RESULTS ==================
@@ -225,7 +219,6 @@ def bmVerify(results, filepath="", outdir = ""):
 
 
 if __name__ == "__main__":
-    import sys
     if(sys.argv[1] == 'help' or sys.argv[1] == '?'):
         print bmVerify.__doc__
 

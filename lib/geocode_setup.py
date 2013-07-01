@@ -1,18 +1,8 @@
 # sets up the geocoding databases
 
-import re, sqlite3
+import re
 import sep_wrd_geocode
 import fwork
-
-
-def get_connection(db):
-    conn = sqlite3.connect(db)
-    return conn
-
-
-def get_cursor(conn):
-    return conn.cursor()
-
 
 # TODO: Consider replacing the lambdas with functions which can be tested.
 def create_sql_helper_functions(conn):

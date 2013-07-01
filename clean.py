@@ -1,19 +1,16 @@
 import datetime
-import sys
 
-sys.path.append( '.' )
-sys.path.append( './lib/' )
+import lib.SQLite as SQLite
 
-import SQLite
 
 # ascit was refactored from senAdd in favor of ascit in fwork.
 # They differ by 1 line. Leave this comment until covered
 # by unit test.
-from senAdd import *
-from fwork import *
-from xml_util import normalize_document_identifier
-import locFunc
-import orgClean
+import lib.senAdd as senAdd
+import lib.fwork as fwork
+import lib.locFunc as locFunc
+import lib.orgClean as orgClean
+from lib.xml_util import normalize_document_identifier
 
 debug = False
 #debug = True
@@ -27,7 +24,7 @@ t1 = datetime.datetime.now()
 #import B2_LocationMatch
  # Geocode needs to run by itself.
 print "START: geocode", t1
-import geocode
+import lib.geocode
 #print "   - Loc Merge", "\n   -", datetime.datetime.now()-t1
 print"DONE: geocode"
 print "   -", datetime.datetime.now()-t1
@@ -36,8 +33,8 @@ print "   -", datetime.datetime.now()-t1
 # TODO: Refactor assignee statements
 ### Create copy of assignee table, add column for assigneeAsc
 s = SQLite.SQLite(db = 'assignee.sqlite3', tbl = 'assignee_1')
-s.conn.create_function("ascit", 1, ascit)
-s.conn.create_function("clean_assignee", 1, clean_assignee)
+s.conn.create_function("ascit", 1, fwork.ascit)
+s.conn.create_function("clean_assignee", 1, fwork.clean_assignee)
 s.conn.create_function("cc", 3, locFunc.cityctry)
 
 def normalize_doc_numbers():
@@ -118,7 +115,7 @@ def handle_inventor():
     ## Create new table inventor_1 to hold prepped data
 
     i = SQLite.SQLite(db = 'inventor.sqlite3', tbl = 'inventor_1')
-    i.conn.create_function("ascit", 1, ascit)
+    i.conn.create_function("ascit", 1, fwork.ascit)
     i.conn.create_function("cc",    3, locFunc.cityctry)
     i.c.execute('drop table if exists inventor_1')
     i.replicate(tableTo = 'inventor_1', table = 'inventor')
@@ -163,8 +160,8 @@ handle_inventor()
 # see CleanDataSet.py --> classes()
 # FIXME: Module importing not allowed in function.
 # TODO: get rid of in refactor
-from CleanDataset import *
-classes()
+import lib.CleanDataset as CleanDataset
+CleanDataset.classes()
 print "DONE: Classes!", "\n   -", datetime.datetime.now()-t1
 
 
@@ -178,7 +175,7 @@ print "DONE: Classes!", "\n   -", datetime.datetime.now()-t1
 # normalizes the application date and grant date
 def handle_patent():
     p = SQLite.SQLite(db = 'patent.sqlite3', tbl = 'patent')
-    p.conn.create_function('dVert', 1, dateVert)
+    p.conn.create_function('dVert', 1, senAdd.dateVert)
     p.c.execute("""update patent set AppDate=dVert(AppDate), GDate=dVert(GDate);""")
     p.commit()
     p.close()

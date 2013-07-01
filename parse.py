@@ -7,22 +7,14 @@ import re
 import mmap
 import contextlib
 import itertools
-import shutil
-
 import sys
-sys.path.append('.')
-sys.path.append('./lib/')
-# RL added >>>>>>
-import alchemy
-# <<<<<<
+import lib.grant_handler as grant_handler 
+import lib.patSQL as patSQL
+import lib.argconfig_parse as argconfig_parse
 
-from grant_handler import PatentGrant
-from patSQL import *
-from argconfig_parse import ArgHandler
-
-regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
-xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML,
-              PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
+xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
+              patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
+              patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
 
 
 def xml_gen(obj):
@@ -73,12 +65,8 @@ def parallel_parse(filelist):
 
 def apply_xmlclass(us_patent_grant):
     parsed_grants = []
-    if 1 == 1:
-    #try:
-        patobj = PatentGrant(us_patent_grant, True)
-        # RL added >>>>>>
-        alchemy.add(patobj)
-        # <<<<<<
+    try:
+        patobj = grant_handler.PatentGrant(us_patent_grant, True)
         for xmlclass in xmlclasses:
             parsed_grants.append(xmlclass(patobj))
     #except Exception as inst:
@@ -100,10 +88,9 @@ def build_tables(parsed_grants):
 
 
 def get_tables():
-    return (assignee_table, citation_table, class_table, inventor_table,
-            patent_table, patdesc_table, lawyer_table, sciref_table,
-            usreldoc_table)
-
+    return (patSQL.assignee_table, patSQL.citation_table, patSQL.class_table, patSQL.inventor_table,\
+           patSQL.patent_table, patSQL.patdesc_table, patSQL.lawyer_table, patSQL.sciref_table,\
+           patSQL.usreldoc_table)
 
 def get_inserts():
     return [(x, x.inserts) for x in get_tables()]
@@ -158,8 +145,7 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
     logging.info("Parse completed at {0}".format(str(datetime.datetime.today())))
 
 
-if __name__ == '__main__':
-    args = ArgHandler(sys.argv[1:])
+    args = argconfig_parse.ArgHandler(sys.argv[1:])
 
     XMLREGEX = args.get_xmlregex()
     PATENTROOT = args.get_patentroot()

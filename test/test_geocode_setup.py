@@ -7,27 +7,28 @@ import sys
 sys.path.append( '.' )
 sys.path.append( '../lib/' )
 
-from make_test_databases import *
-from geocode_setup import *
+import sqlite3
+import make_test_databases
+import geocode_setup
 
 
 class TestGeocodeSetup(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        remove_existing_databases()
-        self.conn = get_connection("hashTbl.sqlite3")
-        self.c = get_cursor(self.conn)
-        create_sql_helper_functions(self.conn)
-        geocode_db_initialize(self.c)
-        loc_create_table(self.c)
+        make_test_databases.remove_existing_databases()
+        self.conn = sqlite3.connect("hashTbl.sqlite3")
+        self.c = self.conn.cursor()
+        geocode_setup.create_sql_helper_functions(self.conn)
+        geocode_setup.geocode_db_initialize(self.c)
+        geocode_setup.loc_create_table(self.c)
 
     def setUp(self):
         pass
 
     def test_fix_city_country(self):
-        make_assignee_db()
-        fix_city_country(self.c)
+        make_test_databases.make_assignee_db()
+        geocode_setup.fix_city_country(self.c)
         # Inspect loc table in hashTbl, find something to assert.
         rows = self.c.execute('select * from loc order by city').fetchall()
         element = rows[0][1]
@@ -41,8 +42,8 @@ class TestGeocodeSetup(unittest.TestCase):
         pass
 
     def test_fix_state_zip(self):
-        make_inventor_db()
-        fix_state_zip(self.c)
+        make_test_databases.make_inventor_db()
+        geocode_setup.fix_state_zip(self.c)
         # Inspect loc table in hashTbl, find something to assert.
         rows = self.c.execute('select * from loc order by city').fetchall()
         element = rows[3][1]
@@ -54,8 +55,8 @@ class TestGeocodeSetup(unittest.TestCase):
         pass
 
     def test_create_usloc_table(self):
-        create_loc_indexes(self.conn)
-        create_usloc_table(self.c)
+        geocode_setup.create_loc_indexes(self.conn)
+        geocode_setup.create_usloc_table(self.c)
         rows = self.c.execute('select * from usloc').fetchall()
         element = rows[0][0]
         self.assertTrue(92274 == element, "{0} should be {1}".format(element,92274))
