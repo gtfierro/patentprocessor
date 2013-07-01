@@ -5,7 +5,7 @@ Collection of useful functions and tools for working with XML documents
 """
 
 import re
-from itertools import chain, izip
+from itertools import izip
 from unicodedata import normalize
 from cgi import escape
 
