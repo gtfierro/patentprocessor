@@ -6,12 +6,10 @@ Python's xml.sax module.  Works in conjunction with lib/xml_util.py, which
 provides useful helper methods to handle the parsed data.
 """
 
-import re
-from itertools import chain, izip
 from collections import deque
-from xml.sax import make_parser, handler, saxutils
-from cgi import escape
-from xml_util import *
+# Althogh make_parser is never referenced, the program inexplicably breaks when it is not imported.
+from xml.sax import make_parser, handler
+import xml_util
 
 class ChainList(list):
     """
@@ -91,9 +89,9 @@ class XMLElement(object):
 
     def get_content(self):
         if len(self.content) == 1:
-            return clean(self.content[0])
+            return xml_util.clean(self.content[0])
         else:
-            return map(clean, self.content)
+            return map(xml_util.clean, self.content)
 
     def put_content(self, content, lastlinenumber, linenumber):
         if not self.content or lastlinenumber != linenumber:
@@ -105,7 +103,7 @@ class XMLElement(object):
         self.children.append(child)
 
     def get_attribute(self, key):
-        return clean(self._attributes.get(key, None))
+        return xml_util.clean(self._attributes.get(key, None))
 
     def get_xmlelements(self, name):
         return filter(lambda x: x._name == name, self.children) \
