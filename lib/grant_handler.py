@@ -230,7 +230,7 @@ class PatentGrant(object):
             # add assignee data
             asg = {}
             asg.update(self._name_helper_dict(assignee)) # add firstname, lastname
-            asg['orgname'] = assignee.contents_of('orgname',as_string=True)
+            asg['organization'] = assignee.contents_of('orgname',as_string=True)
             asg['role'] = assignee.contents_of('role',as_string=True)
             asg['nationality'] = assignee.nationality.contents_of('country')[0]
             asg['residence'] = assignee.nationality.contents_of('country')[0]
@@ -317,7 +317,7 @@ class PatentGrant(object):
             law = {}
             law.update(self._name_helper_dict(lawyer))
             law['country'] = lawyer.contents_of('country',as_string=True)
-            law['orgname'] = lawyer.contents_of('orgname',as_string=True)
+            law['organization'] = lawyer.contents_of('orgname',as_string=True)
             res.append(law)
         return res
 
