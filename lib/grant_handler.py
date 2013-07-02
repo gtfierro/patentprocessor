@@ -332,7 +332,7 @@ class PatentGrant(object):
             data = root.contents_of(tag)
             res[tag] = data[0] if data else ''
         res['number'] = xml_util.normalize_document_identifier(\
-            root.contents_of('doc_number', as_string=True))
+                            root.contents_of('doc_number')[0])
         return res
 
     def us_relation_list(self):
