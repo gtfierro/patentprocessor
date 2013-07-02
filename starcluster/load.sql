@@ -6,22 +6,21 @@
 SET FOREIGN_KEY_CHECKS = 0;
 SET UNIQUE_CHECKS = 0;
 SET SESSION tx_isolation='READ-UNCOMMITTED';
-SET sql_log_bin = 0;
 
-LOAD DATA INFILE 'patent.txt' IGNORE INTO TABLE patent FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'location.txt' IGNORE INTO TABLE location FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'subclass.txt' IGNORE INTO TABLE subclass FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'mainclass.txt' IGNORE INTO TABLE mainclass FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'application.txt' IGNORE INTO TABLE application FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'assignee.txt' IGNORE INTO TABLE assignee FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'citation.txt' IGNORE INTO TABLE citation FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'inventor.txt' IGNORE INTO TABLE inventor FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'ipcr.txt' IGNORE INTO TABLE ipcr FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'lawyer.txt' IGNORE INTO TABLE lawyer FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'otherreference.txt' IGNORE INTO TABLE otherreference FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'usreldoc.txt' IGNORE INTO TABLE usreldoc FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
-LOAD DATA INFILE 'uspc.txt' IGNORE INTO TABLE uspc FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/patent.txt' IGNORE INTO TABLE patent FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/location.txt' IGNORE INTO TABLE location FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/subclass.txt' IGNORE INTO TABLE subclass FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/mainclass.txt' IGNORE INTO TABLE mainclass FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/application.txt' IGNORE INTO TABLE application FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/assignee.txt' IGNORE INTO TABLE assignee FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/citation.txt' IGNORE INTO TABLE citation FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/inventor.txt' IGNORE INTO TABLE inventor FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/ipcr.txt' IGNORE INTO TABLE ipcr FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/lawyer.txt' IGNORE INTO TABLE lawyer FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/otherreference.txt' IGNORE INTO TABLE otherreference FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/usreldoc.txt' IGNORE INTO TABLE usreldoc FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
+LOAD DATA LOCAL INFILE '/var/lib/mysql/uspto/uspc.txt' IGNORE INTO TABLE uspc FIELDS TERMINATED by '\t' ENCLOSED BY '\"';
 
 SET UNIQUE_CHECKS = 1;
 SET FOREIGN_KEY_CHECKS = 1;
-SET SESSION tx_isolation='READ-REPEATABLE';
+SET SESSION tx_isolation='REPEATABLE-READ';
