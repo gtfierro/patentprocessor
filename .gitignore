@@ -30,3 +30,4 @@ XML/*
 *.s3
 *.db
 lib/alchemy/config.ini
+*.pickle
