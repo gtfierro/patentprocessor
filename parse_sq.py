@@ -3,12 +3,13 @@
 import os
 import re
 import sys
-import logging
+import pickle
 sys.path.append('.')
 sys.path.append('./lib/')
 
 import alchemy
 from argconfig_parse import ArgHandler
+from ConfigParser import ConfigParser
 from datetime import datetime
 from grant_handler import PatentGrant
 
@@ -34,11 +35,20 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=1000):
     """
     files = [patentroot+'/'+fi for fi in os.listdir(patentroot)
              if re.search(xmlregex, fi, re.I) is not None]
-    if not files:
-        logging.error("No files matching {0} found in {1}".format(xmlregex, patentroot))
-        sys.exit(1)
+
+    config = ConfigParser()
+    config.read('{0}/lib/alchemy/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
+    is_loaded = eval(config.get('global', 'is_loaded'))
+    pickle_file = "{0}/loaded.pickle".format(config.get('global', 'loaded'))
+
+    loaded = []
+    if is_loaded:
+        if os.path.exists(pickle_file):
+            loaded = pickle.load(open(pickle_file, "rb"))
 
     for filename in files:
+        if filename in loaded:
+            continue
         t = datetime.now()
         for i, xml_string in enumerate(xml_gen(open(filename, "rb"))):
             patobj = PatentGrant(xml_string)
@@ -51,7 +61,12 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=1000):
             if i % commit == 0:
                 print " *", datetime.now() - t, "- rec:", i, filename
                 alchemy.commit()
+
+        alchemy.commit()
         print filename, datetime.now() - t
+        loaded.append(filename)
+        if is_loaded:
+            pickle.dump(loaded, open(pickle_file, "wb"))
 
 
 if __name__ == '__main__':
