@@ -78,7 +78,7 @@ class Application(Base):
     date = Column(Date)
     kw = ["type", "number", "country", "date"]
     __table_args__ = (
-        Index("app_idx1", "type", "number", unique=True),
+        Index("app_idx1", "type", "number"),
         Index("app_idx2", "date"),
     )
 #Index('pat_idx3', Patent.date__grant)
