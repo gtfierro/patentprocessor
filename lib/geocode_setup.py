@@ -11,7 +11,7 @@ def create_sql_helper_functions(conn):
     conn.create_function("jarow",     2, fwork.jarow)
     conn.create_function("cityctry",  3, fwork.cityctry)
     conn.create_function("sep_wrd",   2, sep_wrd_geocode.sep_wrd)
-    conn.create_function("rev_wrd",   2, lambda x,y:x.upper()[::-1][:y])
+    #conn.create_function("rev_wrd",   2, lambda x,y:x.upper()[::-1][:y])
 
 
 def geocode_db_initialize(cursor):
@@ -192,9 +192,9 @@ def create_usloc_table(cursor):
                     Latitude,
                     Longitude,
                     UPPER(City)                        AS City,
-                    blk_split(Upper(City))             AS BlkCity,
+                    blk_split(Upper(city))      AS BlkCity,
                     SUBSTR(UPPER(blk_split(City)),1,3) AS City3,
-                    rev_wrd(blk_split(City), 4)        AS City4R,
+                    UPPER(SUBSTR(REPLACE(City, ' ', ''),-4))        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
               FROM  loctbl.usloc
