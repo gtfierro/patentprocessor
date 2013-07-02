@@ -10,8 +10,6 @@ import sys
 # TODO: Unit test this so that it and the unit test can be
 # eliminated in a future redesign. Also, ensure that this
 # is the correct name for this function, and adjust accordingly.
-def table_temp1_has_rows(cursor):
-    return cursor.execute("SELECT count(*) FROM temp1").fetchone()[0] > 0
 
 def print_table_info(c):
     field = ["[%s]" % x[1] for x in c.execute("PRAGMA TABLE_INFO(temp1)")][2:6]
