@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Date, Integer, Float
-from sqlalchemy import ForeignKeyConstraint, ForeignKey, Index
+from sqlalchemy import ForeignKey, Index
 from sqlalchemy import Unicode, UnicodeText
 from sqlalchemy.orm import deferred, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
