@@ -47,6 +47,40 @@ def get_year_list(yearstring):
        years.extend(range(start,end))
     return years
 
+def download_files(downloaddir, years):
+    """
+    [downloaddir]: string representing base download directory. Will download
+    files to this directory in folders named for each year
+    [years]: list of length >=1 listing the years that are to be downloaded
+    Returns: False if files were not downloaded or if there was some error,
+    True otherwise
+    """
+    if not (downloaddir and years): return False
+    # check status of download directory
+    if not os.path.exists(downloaddir):
+        os.makedirs(downloaddir)
+    print 'downloading to',downloaddir
+    url = requests.get('https://www.google.com/googlebooks/uspto-patents-grants-text.html')
+    soup = bs(url.content)
+    years = get_year_list(years)
+
+    for header in soup.findAll('h3'):
+        if int(header['id']) in years:
+            print 'starting download of year',header['id']
+            a = header.findNext()
+            while a.name != 'h3':
+                filename = a['href'].split('/')[-1].replace('zip','xml')
+                if filename in os.listdir(downloaddir):
+                    a = a.findNext()
+                    continue
+                print 'downloading',a['href']
+                r = requests.get(a['href'])
+                z = zipfile.ZipFile(StringIO.StringIO(r.content))
+                print 'unzipping',a['href']
+                z.extractall(downloaddir)
+                a = a.findNext()
+
+
 def connect_client():
     """
     Loops for a minute until the Client connects to the local ipcluster
