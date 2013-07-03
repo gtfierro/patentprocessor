@@ -22,6 +22,8 @@ def extract_parse_options(handler, section):
     options = {}
     options['datadir'] = handler.get(section,'datadir')
     options['dataregex'] = handler.get(section,'dataregex')
+    options['years'] = handler.get(section,'years')
+    options['downloaddir'] = handler.get(section,'downloaddir')
     return options
 
 def get_config_options(configfile):
