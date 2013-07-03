@@ -10,6 +10,8 @@ sys.path.append('lib')
 from patSQL import *
 from config_parser import get_config_options
 
+# table bookkeeping for the parse script
+
 assignee_table = AssigneeSQL()
 citation_table = CitationSQL()
 class_table = ClassSQL()
@@ -49,6 +51,7 @@ def run_parse():
     parse.build_tables(parsed_grants)
     return parse.get_inserts()
 
+# TODO: these don't work
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
@@ -62,19 +65,27 @@ def run_consolidate(process_config):
 s = datetime.datetime.now()
 # accepts path to configuration file as command line option
 process_config, parse_config = get_config_options(sys.argv[1])
+
+# find files
 print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
 files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
 print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
+
+# connect to ipcluster and get config options
 dview = connect_client()
 dview.block=True
 dview.scatter('files',files)
 dview['process_config'] = process_config
 dview['parse_config'] = parse_config
+
+# run parse and commit SQL
 print 'Running parse...'
 inserts = list(itertools.chain.from_iterable(dview.apply(run_parse)))
 parse.commit_tables(inserts)
 f = datetime.datetime.now()
 print 'Finished parsing in {0}'.format(str(f-s))
+
+# run extra phases if needed, then move output files
 run_clean(process_config)
 run_consolidate(process_config)
 parse.move_tables(process_config['outputdir'])
