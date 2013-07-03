@@ -41,45 +41,69 @@ def get_year_list(yearstring):
     """
     years = []
     for subset in yearstring.split(','):
-       sublist = subset.split('-')
-       start = int(sublist[0])
-       end = int(sublist[1])+1 if len(sublist) > 1 else start+1
-       years.extend(range(start,end))
+        if subset == 'latest':
+            years.append('latest')
+            continue
+        sublist = subset.split('-')
+        start = int(sublist[0])
+        end = int(sublist[1])+1 if len(sublist) > 1 else start+1
+        years.extend(range(start,end))
     return years
 
-def download_files(downloaddir, years):
+def generate_download_list(years):
     """
-    [downloaddir]: string representing base download directory. Will download
-    files to this directory in folders named for each year
-    [years]: list of length >=1 listing the years that are to be downloaded
-    Returns: False if files were not downloaded or if there was some error,
-    True otherwise
+    Given the year string from the configuration file, return
+    a list of urls to be downloaded
     """
-    if not (downloaddir and years): return False
-    # check status of download directory
-    if not os.path.exists(downloaddir):
-        os.makedirs(downloaddir)
-    print 'downloading to',downloaddir
+    urls = []
     url = requests.get('https://www.google.com/googlebooks/uspto-patents-grants-text.html')
     soup = bs(url.content)
     years = get_year_list(years)
 
-    for header in soup.findAll('h3'):
-        if int(header['id']) in years:
-            print 'starting download of year',header['id']
-            a = header.findNext()
-            while a.name != 'h3':
-                filename = a['href'].split('/')[-1].replace('zip','xml')
-                if filename in os.listdir(downloaddir):
-                    a = a.findNext()
-                    continue
-                print 'downloading',a['href']
-                r = requests.get(a['href'])
-                z = zipfile.ZipFile(StringIO.StringIO(r.content))
-                print 'unzipping',a['href']
-                z.extractall(downloaddir)
-                a = a.findNext()
+    # latest file link
+    if 'latest' in years:
+        a = soup.h3.findNext('h3').findPrevious('a')
+        urls.append(a['href'])
+        years.remove('latest')
+    # get year links
+    for year in years:
+        header = soup.find('h3', {'id': str(year)})
+        a = header.findNext()
+        while a.name != 'h3':
+            urls.append(a['href'])
+            a = a.findNext()
+    return urls
 
+def download_files():
+    """
+    [downloaddir]: string representing base download directory. Will download
+    files to this directory in folders named for each year
+    Returns: False if files were not downloaded or if there was some error,
+    True otherwise
+    """
+    import os
+    import requests
+    import zipfile
+    import cStringIO as StringIO
+    if not (downloaddir and urls): return False
+    complete = True
+    print 'downloading to',downloaddir
+    for url in urls:
+        filename = url.split('/')[-1].replace('zip','xml')
+        if filename in os.listdir(downloaddir):
+            print 'already have',filename
+            continue
+        print 'downloading',url
+        try:
+            r = requests.get(url)
+            z = zipfile.ZipFile(StringIO.StringIO(r.content))
+            print 'unzipping',filename
+            z.extractall(downloaddir)
+        except:
+            print 'ERROR: downloading or unzipping',filename
+            complete = False
+            continue
+    return complete
 
 def connect_client():
     """
@@ -123,20 +147,30 @@ if __name__=='__main__':
     # accepts path to configuration file as command line option
     process_config, parse_config = get_config_options(sys.argv[1])
 
+    # connect to ipcluster and get config options
+    dview = connect_client()
+    dview.block=True
+    dview['process_config'] = process_config
+    dview['parse_config'] = parse_config
+
     # download the files to be parsed
-    download_files(parse_config['downloaddir'], parse_config['years'])
+    urls = generate_download_list(parse_config['years'])
+    dview.scatter('urls', urls)
+    # check download directory
+    downloaddir = parse_config['downloaddir']
+    if not os.path.exists(downloaddir):
+        os.makedirs(downloaddir)
+    dview['downloaddir'] = parse_config['downloaddir']
+    dview.apply(download_files)
+    print 'Downloaded files:',parse_config['years']
+    f = datetime.datetime.now()
+    print 'Finished downloading in {0}'.format(str(f-s))
 
     # find files
     print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
     files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
-    print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
-
-    # connect to ipcluster and get config options
-    dview = connect_client()
-    dview.block=True
     dview.scatter('files',files)
-    dview['process_config'] = process_config
-    dview['parse_config'] = parse_config
+    print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
 
     # run parse and commit SQL
     print 'Running parse...'
