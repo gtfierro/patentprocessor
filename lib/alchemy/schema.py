@@ -196,12 +196,12 @@ class Citation(Base):
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     citation_id = Column(Unicode(20), ForeignKey("patent.id"))
-    date = Column(Date, index=True)
+    date = Column(Date)
     name = Column(Unicode(64))
     kind = Column(Unicode(10))
-    number = Column(Unicode(20), index=True)
-    country = Column(Unicode(10), index=True)
-    category = Column(Unicode(20), index=True)
+    number = Column(Unicode(20))
+    country = Column(Unicode(10))
+    category = Column(Unicode(20))
     sequence = Column(Integer, index=True)
     kw = ["sequence", "date", "number", "name",
           "kind", "country", "category"]
