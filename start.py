@@ -1,10 +1,13 @@
 import re
+import os
 import sys
 import parse
 import time
 import itertools
 import datetime
 from IPython.parallel import Client
+import urllib2
+from BeautifulSoup import BeautifulSoup as bs
 
 sys.path.append('lib')
 from patSQL import *
