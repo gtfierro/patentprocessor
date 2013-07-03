@@ -6,7 +6,9 @@ import time
 import itertools
 import datetime
 from IPython.parallel import Client
-import urllib2
+import requests
+import zipfile
+import cStringIO as StringIO
 from BeautifulSoup import BeautifulSoup as bs
 
 sys.path.append('lib')
