@@ -29,7 +29,7 @@ for i in `ls *.xml`
 
     cp citation.txt citation_$i.txt
     cp otherreference.txt citation_$i.txt
-    tar -xzf $i.tar.gz *_$i.txt
+    tar -czf $i.tar.gz *_$i.txt
     rm *_$i.txt
     mv $i.tar.gz /mnt/sgeadmin
 
