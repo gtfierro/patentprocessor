@@ -91,6 +91,7 @@ class Location(Base):
     #TODO: Anyway we can consolidate to 1 PrimaryKey
     __tablename__ = "location"
     id = Column(Unicode(256), primary_key=True)
+    uid = Column(Unicode(64), index=True)
     city = Column(Unicode(128))
     state = Column(Unicode(10), index=True)
     country = Column(Unicode(10), index=True)
@@ -122,6 +123,7 @@ class Location(Base):
 class Assignee(Base):
     __tablename__ = "assignee"
     uuid = Column(Unicode(36), primary_key=True)
+    uid = Column(Unicode(64), index=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     type = Column(Unicode(10))
     organization = Column(Unicode(256))
@@ -151,6 +153,7 @@ class Assignee(Base):
 class Inventor(Base):
     __tablename__ = "inventor"
     uuid = Column(Unicode(36), primary_key=True)
+    uid = Column(Unicode(64), index=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
@@ -169,7 +172,7 @@ class Inventor(Base):
 class Lawyer(Base):
     __tablename__ = "lawyer"
     uuid = Column(Unicode(36), primary_key=True)
-    id = Column(Unicode(64), index=True)
+    uid = Column(Unicode(64), index=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
