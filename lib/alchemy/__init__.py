@@ -50,6 +50,9 @@ def add(obj, override=True):
         else:
             return
 
+    if not obj.pat["number"]:
+        return
+
     #add
     # lots of abstracts seem to be missing. why?
 
@@ -112,6 +115,9 @@ def add_cit():
             session.delete(pat_query.one())
         else:
             return
+
+    if not obj.pat["number"]:
+        return
 
     #+cit, +othercit
     cits, refs = obj.citation_list()
