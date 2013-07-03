@@ -5,8 +5,8 @@ defaults = {'parse': 'defaultparse',
             'consolidate': True,
             'datadir': '/data/patentdata/patents/2013',
             'dataregex': 'ipg\d{6}.xml',
-            'years': [2013],
-            'downloaddir' : 'tmp'}
+            'years': None,
+            'downloaddir' : None}
 
 def extract_process_options(handler):
     """
