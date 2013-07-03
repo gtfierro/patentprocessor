@@ -1,4 +1,4 @@
-import ConfigParser
+from ConfigParser import ConfigParser
 
 defaults = {'parse': 'defaultparse',
             'clean': True,
