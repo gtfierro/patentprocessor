@@ -62,30 +62,34 @@ def run_consolidate(process_config):
         print 'Running consolidate...'
         execfile('consolidate.py')
 
-s = datetime.datetime.now()
-# accepts path to configuration file as command line option
-process_config, parse_config = get_config_options(sys.argv[1])
+if __name__=='__main__':
+    s = datetime.datetime.now()
+    # accepts path to configuration file as command line option
+    process_config, parse_config = get_config_options(sys.argv[1])
 
-# find files
-print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
-files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
-print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
+    # download the files to be parsed
+    download_files(parse_config['downloaddir'], parse_config['years'])
 
-# connect to ipcluster and get config options
-dview = connect_client()
-dview.block=True
-dview.scatter('files',files)
-dview['process_config'] = process_config
-dview['parse_config'] = parse_config
+    # find files
+    print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
+    files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
+    print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
 
-# run parse and commit SQL
-print 'Running parse...'
-inserts = list(itertools.chain.from_iterable(dview.apply(run_parse)))
-parse.commit_tables(inserts)
-f = datetime.datetime.now()
-print 'Finished parsing in {0}'.format(str(f-s))
+    # connect to ipcluster and get config options
+    dview = connect_client()
+    dview.block=True
+    dview.scatter('files',files)
+    dview['process_config'] = process_config
+    dview['parse_config'] = parse_config
 
-# run extra phases if needed, then move output files
-run_clean(process_config)
-run_consolidate(process_config)
-parse.move_tables(process_config['outputdir'])
+    # run parse and commit SQL
+    print 'Running parse...'
+    inserts = list(itertools.chain.from_iterable(dview.apply(run_parse)))
+    parse.commit_tables(inserts)
+    f = datetime.datetime.now()
+    print 'Finished parsing in {0}'.format(str(f-s))
+
+    # run extra phases if needed, then move output files
+    run_clean(process_config)
+    run_consolidate(process_config)
+    parse.move_tables(process_config['outputdir'])
