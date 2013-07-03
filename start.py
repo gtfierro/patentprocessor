@@ -117,7 +117,7 @@ def connect_client():
             dview = c[:]
             break
         except:
-            time.sleep(5)
+            time.sleep(2)
             continue
     return dview
 
