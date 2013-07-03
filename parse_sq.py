@@ -28,7 +28,7 @@ def xml_gen(obj):
     yield "".join(data)
 
 
-def main(patentroot, xmlregex="ipg\d{6}.xml", commit=1000, func=alchemy.add):
+def main(patentroot, xmlregex="ipg\d{6}.xml", commit=200, func=alchemy.add):
     """
     Returns listing of all files within patentroot
     whose filenames match xmlregex

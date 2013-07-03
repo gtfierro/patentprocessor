@@ -42,6 +42,7 @@ def add(obj, override=True):
     lower case both within SQLAlchemy as well as on the MySQL database
     itself, especially if database reflection features are to be used.
     """
+
     # if a patent exists, remove it so we can replace it
     pat_query = session.query(Patent).filter(Patent.number == obj.patent)
     if pat_query.count():
@@ -49,7 +50,6 @@ def add(obj, override=True):
             session.delete(pat_query.one())
         else:
             return
-
     if not obj.pat["number"]:
         return
 
@@ -57,6 +57,7 @@ def add(obj, override=True):
     # lots of abstracts seem to be missing. why?
 
     pat = Patent(**obj.pat)
+    pat.application = Application(**obj.app)
 
     #+asg
     for asg, loc in obj.assignee_list():
@@ -103,11 +104,12 @@ def add(obj, override=True):
     session.merge(pat)
 
 
-def add_cit():
+def add_cit(obj, override=True):
     """
-    The citation data grows much larger the rest.
-    Keep this separated for now
+    Citations and OtherReference seem to be pretty intense so
+    we ignore these for the time being
     """
+
     # if a patent exists, remove it so we can replace it
     pat_query = session.query(Patent).filter(Patent.number == obj.patent)
     if pat_query.count():
@@ -115,9 +117,10 @@ def add_cit():
             session.delete(pat_query.one())
         else:
             return
-
     if not obj.pat["number"]:
         return
+
+    pat = Patent(**obj.pat)
 
     #+cit, +othercit
     cits, refs = obj.citation_list()
@@ -128,9 +131,7 @@ def add_cit():
         ref = OtherReference(**ref)
         pat.otherreferences.append(ref)
 
-
-    pat = Patent(**obj.pat)
-
+    session.merge(pat)
 
 
 def commit():
