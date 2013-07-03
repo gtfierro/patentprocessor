@@ -28,6 +28,23 @@ usreldoc_table = UsreldocSQL()
 xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \
               PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
 
+def get_year_list(yearstring):
+    """
+    Given a [yearstring] of forms
+    year1
+    year1-year2
+    year1,year2,year3
+    year1-year2,year3-year4
+    Expands into a list of year integers, and returns
+    """
+    years = []
+    for subset in yearstring.split(','):
+       sublist = subset.split('-')
+       start = int(sublist[0])
+       end = int(sublist[1])+1 if len(sublist) > 1 else start+1
+       years.extend(range(start,end))
+    return years
+
 def connect_client():
     """
     Loops for a minute until the Client connects to the local ipcluster
