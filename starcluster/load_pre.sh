@@ -12,6 +12,10 @@ for i in `ls *.xml`
     echo " - drop database"
     mysql -root uspto < starcluster/load_drop.sql
     echo " - ingest"
-    mysql [options] --local-infile=1 uspto < starcluster/load.sql
+    mysql [options] --local-infile=1 uspto < starcluster/load_easy.sql
+    echo " - duplicate"
+    cd /var/lib/mysql/uspto
+    cp citation.txt citation_$i.txt
+    cp otherreference.txt citation_$i.txt
 
 done
