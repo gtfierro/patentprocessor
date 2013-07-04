@@ -102,27 +102,6 @@ def add(obj, override=True):
         ipc = IPCR(**ipc)
         pat.ipcrs.append(ipc)
 
-    session.merge(pat)
-
-
-def add_cit(obj, override=True):
-    """
-    Citations and OtherReference seem to be pretty intense so
-    we ignore these for the time being
-    """
-
-    # if a patent exists, remove it so we can replace it
-    pat_query = session.query(Patent).filter(Patent.number == obj.patent)
-    if pat_query.count():
-        if override:
-            session.delete(pat_query.one())
-        else:
-            return
-    if not obj.pat["number"]:
-        return
-
-    pat = Patent(**obj.pat)
-
     #+cit, +othercit
     cits, refs = obj.citation_list()
     for cit in cits:
