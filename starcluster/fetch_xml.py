@@ -9,47 +9,51 @@ config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__)))
 
 rc = Client(packer="pickle")
 dview = rc[:]
+dview.scatter("ids", rc.ids)
 print rc.ids
 
 
 @dview.remote(block=True)
-def makedir(node):
+def fetch(year):
+    import glob
     import os
-    if not os.path.exists(node):
-        os.makedirs(node)
-
-
-@dview.remote(block=True)
-def fetch(master, node, node_base):
-    import os
-    for f in files:
+    ids = ids[0]
+    for i, f in enumerate(files):
         fname = f.split("/")[-1].split(".")[0]
-        os.chdir(master)
-        if not os.path.exists("{0}/{1}.xml".format(node_base, fname)):
+        os.chdir(node)
+        if not os.path.exists("{1}.xml".format(fname)):
             os.system("wget {0}".format(f))
-            os.system("unzip {1}.zip -d {0}".format(node_base, fname))
+            os.system("unzip {0}.zip".format(fname))
+            os.chdir(master)
+            os.system("python parse_sq.py -p {0} --xmlregex {1} >> tar/{2}.log".format(node, fname, ids))
+            os.system("mysqldump -root uspto -T /var/lib/mysql/uspto")
+            os.chdir("/var/lib/mysql/uspto")
+            os.system("tar -czf {0}.tar.gz *.txt".format(fname))
+            for txts in glob.glob("*.txt"):
+                os.system("cat {0} >> {0}.full".format(txts))
+            os.system("rm *.txt")
+            os.system("scp {0}.tar.gz {1}/tar".format(fname, master))
+
+    os.chdir("/var/lib/mysql/uspto")
+    os.system("tar -czf {0}.tar.gz *.txt.full".format(ids))
+    os.system("mv {0}.tar.gz {1}/tar".format(ids, master))
 
 
 fname = open("{0}/urls.pickle".format(config.get('directory', 'sqlalchemy')), "rb")
 urls = pickle.load(fname)
 
-print "mkdir"
-for year in urls.keys():
-    master = "{0}/{1}".format(config.get('directory', 'xml'), year)
-    node = "{0}/{1}".format(config.get('directory', 'local'), year)
-    if not os.path.exists(master):
-        os.makedirs(master)
-    makedir(node)
+master = config.get('directory', 'home')
+node = config.get('directory', 'local')
+if not os.path.exists("{0}/tar".format(master)):
+    os.makedirs("{0}/tar".format(master))
 
-print "wget"
+dview["master"] = master
+dview["node"] = node
+full = []
 for year in urls.keys():
-    print year, datetime.now()
-    dview.scatter("files", urls[year])
-    master = "{0}/{1}".format(config.get('directory', 'xml'), year)
-    node = "{0}/{1}".format(config.get('directory', 'local'), year)
-    node_base = config.get('directory', 'local')
-    print "  *", master
-    fetch(master, node, node_base)
+    full.extend(urls[year])
+dview.scatter("files", full)
+fetch()
 
 #sudo apt-get install -y python-mysqldb python-pip sqlite3
 #sudo pip install unidecode sqlalchemy

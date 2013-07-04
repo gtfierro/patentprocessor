@@ -63,7 +63,7 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
                 alchemy.commit()
 
         alchemy.commit()
-        print filename, datetime.now() - t
+        print " *", "Finish:", filename, datetime.now() - t
         loaded.append(filename)
         if is_loaded:
             pickle.dump(loaded, open(pickle_file, "wb"))
