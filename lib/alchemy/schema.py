@@ -4,6 +4,7 @@ from sqlalchemy import Unicode, UnicodeText
 from sqlalchemy.orm import deferred, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
+from unidecode import unidecode
 
 
 # Extend the Base >>>>>>
@@ -131,7 +132,7 @@ class Location(Base):
         return ", ".join(addy)
 
     def __repr__(self):
-        return "<Location('{0}')>".format(self.address)
+        return "<Location('{0}')>".format(unidecode(self.address))
 
 
 class DisLocation(Base):
@@ -185,7 +186,7 @@ class Assignee(Base):
             return_string = self.organization
         else:
             return_string = "{0} {1}".format(self.name_first, self.name_last)
-        return "<Assignee('{0}')>".format(return_string)
+        return "<Assignee('{0}')>".format(unidecode(return_string))
 
 
 class Inventor(Base):
@@ -206,7 +207,7 @@ class Inventor(Base):
             last=self.name_last)
 
     def __repr__(self):
-        return "<Inventor('{0}')>".format(self.name_full)
+        return "<Inventor('{0}')>".format(unidecode(self.name_full))
 
 
 class Lawyer(Base):
@@ -232,7 +233,7 @@ class Lawyer(Base):
             data.append("{0} {1}".format(self.name_first, self.name_last))
         if self.organization:
             data.append(self.organization)
-        return "<Lawyer('{0}')>".format(", ".join(data))
+        return "<Lawyer('{0}')>".format(unidecode(", ".join(data)))
 
 
 # DISAMBIGUATED -----------------------
@@ -254,7 +255,7 @@ class DisAssignee(Base):
             return_string = self.organization
         else:
             return_string = "{0} {1}".format(self.name_first, self.name_last)
-        return "<DisAssignee('{0}')>".format(return_string)
+        return "<DisAssignee('{0}')>".format(unidecode(return_string))
 
 
 class DisInventor(Base):
@@ -273,7 +274,7 @@ class DisInventor(Base):
             last=self.name_last)
 
     def __repr__(self):
-        return "<DisInventor('{0}')>".format(self.name_full)
+        return "<DisInventor('{0}')>".format(unidecode(self.name_full))
 
 
 class DisLawyer(Base):
@@ -291,7 +292,7 @@ class DisLawyer(Base):
             data.append("{0} {1}".format(self.name_first, self.name_last))
         if self.organization:
             data.append(self.organization)
-        return "<DisLawyer('{0}')>".format(", ".join(data))
+        return "<DisLawyer('{0}')>".format(unidecode(", ".join(data)))
 
 
 # CLASSIFICATIONS ------------------
@@ -380,7 +381,7 @@ class OtherReference(Base):
     sequence = Column(Integer)
 
     def __repr__(self):
-        return "<OtherReference('{0}')>".format(self.text[:20])
+        return "<OtherReference('{0}')>".format(unidecode(self.text[:20]))
 
 
 class USRelDoc(Base):
