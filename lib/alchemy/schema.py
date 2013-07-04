@@ -26,7 +26,7 @@ class Patent(Base):
     __tablename__ = "patent"
     id = Column(Unicode(20), primary_key=True)
     type = Column(Unicode(20))
-    number = Column(Unicode(20))
+    number = Column(Unicode(64))
     country = Column(Unicode(20))
     date = Column(Date)
     abstract = deferred(Column(UnicodeText))
@@ -59,13 +59,27 @@ class Patent(Base):
         "USRelDoc",
         primaryjoin="Patent.id == USRelDoc.rel_id",
         backref="relpatent")
-
-    kw = ["id", "type", "number", "country", "date",
-          "abstract", "title", "kind", "claims"]
     __table_args__ = (
         Index("pat_idx1", "type", "number", unique=True),
         Index("pat_idx2", "date"),
     )
+
+    def stats(self):
+        return {
+            "classes": len(self.classes),
+            "ipcrs": len(self.ipcrs),
+            "assignees": len(self.assignees),
+            "inventors": len(self.inventors),
+            "lawyers": len(self.lawyers),
+            "otherreferences": len(self.otherreferences),
+            "citations": len(self.citations),
+            "citedby": len(self.citedby),
+            "usreldocs": len(self.usreldocs),
+            "relpatents": len(self.relpatents),
+        }
+
+    def __repr__(self):
+        return "<Patent('{0}, {1}')>".format(self.number, self.date)
 
 
 class Application(Base):
@@ -73,25 +87,25 @@ class Application(Base):
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     type = Column(Unicode(20))
-    number = Column(Unicode(20))
+    number = Column(Unicode(64))
     country = Column(Unicode(20))
     date = Column(Date)
-    kw = ["type", "number", "country", "date"]
     __table_args__ = (
         Index("app_idx1", "type", "number"),
         Index("app_idx2", "date"),
     )
-#Index('pat_idx3', Patent.date__grant)
+
+    def __repr__(self):
+        return "<Application('{0}, {1}')>".format(self.number, self.date)
 
 
 # SUPPORT --------------------------
 
 
 class Location(Base):
-    #TODO: Anyway we can consolidate to 1 PrimaryKey
     __tablename__ = "location"
     id = Column(Unicode(256), primary_key=True)
-    uid = Column(Unicode(64), index=True)
+    disambig = Column(Unicode(256), ForeignKey("dislocation.id"))
     city = Column(Unicode(128))
     state = Column(Unicode(10), index=True)
     country = Column(Unicode(10), index=True)
@@ -99,7 +113,6 @@ class Location(Base):
     longitude = Column(Float)
     inventors = relationship("Inventor", backref="location")
     assignees = relationship("Assignee", backref="location")
-    kw = ["city", "state", "country", "longitude", "latitude"]
     __table_args__ = (
         Index("loc_idx1", "latitude", "longitude"),
         Index("loc_idx2", "city", "state", "country"),
@@ -116,6 +129,38 @@ class Location(Base):
             addy.append(self.country)
         return ", ".join(addy)
 
+    def __repr__(self):
+        return "<Location('{0}')>".format(self.address)
+
+
+class DisLocation(Base):
+    __tablename__ = "dislocation"
+    id = Column(Unicode(256), primary_key=True)
+    city = Column(Unicode(128))
+    state = Column(Unicode(10), index=True)
+    country = Column(Unicode(10), index=True)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    locations = relationship("Location", backref="disambig")
+    __table_args__ = (
+        Index("dloc_idx1", "latitude", "longitude"),
+        Index("dloc_idx2", "city", "state", "country"),
+    )
+
+    @hybrid_property
+    def address(self):
+        addy = []
+        if self.city:
+            addy.append(self.city)
+        if self.state:
+            addy.append(self.state)
+        if self.country:
+            addy.append(self.country)
+        return ", ".join(addy)
+
+    def __repr__(self):
+        return "<DisLocation('{0}')>".format(self.address)
+
 
 # OBJECTS --------------------------
 
@@ -123,7 +168,7 @@ class Location(Base):
 class Assignee(Base):
     __tablename__ = "assignee"
     uuid = Column(Unicode(36), primary_key=True)
-    uid = Column(Unicode(64), index=True)
+    disambig = Column(Unicode(36), ForeignKey("disassignee.id"))
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     type = Column(Unicode(10))
     organization = Column(Unicode(256))
@@ -133,34 +178,25 @@ class Assignee(Base):
     nationality = Column(Unicode(10))
     location_id = Column(Unicode(256), ForeignKey("location.id"))
     sequence = Column(Integer, index=True)
-    kw = ["sequence"]
-    #__table_args__ = (
-    #    ForeignKeyConstraint(
-    #        [location_city, location_state, location_country],
-    #        [Location.city, Location.state, Location.country]
-    #    ),
-    #)
 
-    def asg(self, *args):
-        self.organization = args[0]
-        self.type = args[1]
-
-    def person(self, *args):
-        self.name_last = args[0]
-        self.name_first = args[1]
+    def __repr__(self):
+        if self.organization:
+            return_string = self.organization
+        else:
+            return_string = "{0} {1}".format(self.name_first, self.name_last)
+        return "<Assignee('{0}')>".format(return_string)
 
 
 class Inventor(Base):
     __tablename__ = "inventor"
     uuid = Column(Unicode(36), primary_key=True)
-    uid = Column(Unicode(64), index=True)
+    disambig = Column(Unicode(36), ForeignKey("disinventor.id"))
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
     nationality = Column(Unicode(10))
     location_id = Column(Unicode(256), ForeignKey("location.id"))
     sequence = Column(Integer, index=True)
-    kw = ["sequence", "name_last", "name_first", "nationality"]
 
     @hybrid_property
     def name_full(self):
@@ -168,24 +204,92 @@ class Inventor(Base):
             first=self.name_first,
             last=self.name_last)
 
+    def __repr__(self):
+        return "<Inventor('{0}')>".format(self.name_full)
+
 
 class Lawyer(Base):
     __tablename__ = "lawyer"
     uuid = Column(Unicode(36), primary_key=True)
-    uid = Column(Unicode(64), index=True)
+    disambig = Column(Unicode(36), ForeignKey("dislawyer.id"))
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
     organization = Column(Unicode(64))
     country = Column(Unicode(10))
     sequence = Column(Integer, index=True)
-    kw = ["sequence", "name_last", "name_first", "organization", "country"]
 
     @hybrid_property
     def name_full(self):
         return "{first} {last}".format(
             first=self.name_first,
             last=self.name_last)
+
+    def __repr__(self):
+        data = []
+        if self.name_first:
+            data.append("{0} {1}".format(self.name_first, self.name_last))
+        if self.organization:
+            data.append(self.organization)
+        return "<Lawyer('{0}')>".format(", ".join(data))
+
+
+# DISAMBIGUATED -----------------------
+
+
+class DisAssignee(Base):
+    __tablename__ = "disassignee"
+    id = Column(Unicode(36), primary_key=True)
+    type = Column(Unicode(10))
+    organization = Column(Unicode(256))
+    name_first = Column(Unicode(64))
+    name_last = Column(Unicode(64))
+    residence = Column(Unicode(10))
+    nationality = Column(Unicode(10))
+    assignees = relationship("Assignee", backref="disambig")
+
+    def __repr__(self):
+        if self.organization:
+            return_string = self.organization
+        else:
+            return_string = "{0} {1}".format(self.name_first, self.name_last)
+        return "<DisAssignee('{0}')>".format(return_string)
+
+
+class DisInventor(Base):
+    __tablename__ = "disinventor"
+    id = Column(Unicode(36), primary_key=True)
+    name_last = Column(Unicode(64))
+    name_first = Column(Unicode(64))
+    nationality = Column(Unicode(10))
+    inventors = relationship("Inventor", backref="disambig")
+
+    @hybrid_property
+    def name_full(self):
+        return "{first} {last}".format(
+            first=self.name_first,
+            last=self.name_last)
+
+    def __repr__(self):
+        return "<DisInventor('{0}')>".format(self.name_full)
+
+
+class DisLawyer(Base):
+    __tablename__ = "dislawyer"
+    id = Column(Unicode(36), primary_key=True)
+    name_last = Column(Unicode(64))
+    name_first = Column(Unicode(64))
+    organization = Column(Unicode(64))
+    country = Column(Unicode(10))
+    lawyers = relationship("Lawyer", backref="disambig")
+
+    def __repr__(self):
+        data = []
+        if self.name_first:
+            data.append("{0} {1}".format(self.name_first, self.name_last))
+        if self.organization:
+            data.append(self.organization)
+        return "<DisLawyer('{0}')>".format(", ".join(data))
 
 
 # REFERENCES -----------------------
@@ -202,12 +306,13 @@ class Citation(Base):
     date = Column(Date)
     name = Column(Unicode(64))
     kind = Column(Unicode(10))
-    number = Column(Unicode(20))
+    number = Column(Unicode(64))
     country = Column(Unicode(10))
     category = Column(Unicode(20))
     sequence = Column(Integer, index=True)
-    kw = ["sequence", "date", "number", "name",
-          "kind", "country", "category"]
+
+    def __repr__(self):
+        return "<Citation('{0}, {1}')>".format(self.number, self.date)
 
 
 class OtherReference(Base):
@@ -216,7 +321,9 @@ class OtherReference(Base):
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     text = deferred(Column(UnicodeText))
     sequence = Column(Integer, index=True)
-    kw = ["sequence", "text"]
+
+    def __repr__(self):
+        return "<OtherReference('{0}')>".format(self.text[:20])
 
 
 class USRelDoc(Base):
@@ -227,11 +334,14 @@ class USRelDoc(Base):
     doctype = Column(Unicode(64), index=True)
     status = Column(Unicode(20))
     date = Column(Date, index=True)
-    number = Column(Unicode(20), index=True)
+    number = Column(Unicode(64), index=True)
     kind = Column(Unicode(10))
     country = Column(Unicode(20), index=True)
     relationship = Column(Unicode(64))
     sequence = Column(Integer, index=True)
+
+    def __repr__(self):
+        return "<USRelDoc('{0}, {1}')>".format(self.number, self.date)
 
 
 # CLASSIFICATIONS ------------------
@@ -244,7 +354,9 @@ class USPC(Base):
     mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
     subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
-    kw = ["uuid", "sequence"]
+
+    def __repr__(self):
+        return "<USPC('{1}')>".format(self.subclass_id)
 
 
 class IPCR(Base):
@@ -271,7 +383,9 @@ class MainClass(Base):
     title = Column(Unicode(256))
     text = Column(Unicode(256))
     uspc = relationship("USPC", backref="mainclass")
-    kw = ["id", "title", "text"]
+
+    def __repr__(self):
+        return "<MainClass('{0}')>".format(self.id)
 
 
 class SubClass(Base):
@@ -280,4 +394,6 @@ class SubClass(Base):
     title = Column(Unicode(256))
     text = Column(Unicode(256))
     uspc = relationship("USPC", backref="subclass")
-    kw = ["id", "title", "text"]
+
+    def __repr__(self):
+        return "<SubClass('{0}')>".format(self.id)

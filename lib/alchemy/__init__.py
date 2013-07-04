@@ -13,14 +13,15 @@ def fetch_engine():
     echo = False
     config = ConfigParser.ConfigParser()
     config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
-    if config.get('global', 'database') == "sqlite":
-        engine = create_engine('sqlite:///{0}'.format(config.get('sqlite', 'database')), echo=echo)
+    db = config.get('global', 'database')
+    if db[:6] == "sqlite":
+        engine = create_engine('sqlite:///{0}'.format(config.get(db, 'database')), echo=echo)
     else:
-        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
-            config.get('mysql', 'user'),
-            config.get('mysql', 'password'),
-            config.get('mysql', 'host'),
-            config.get('mysql', 'database')), echo=echo)
+        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=latin1'.format(
+            config.get(db, 'user'),
+            config.get(db, 'password'),
+            config.get(db, 'host'),
+            config.get(db, 'database')), echo=echo)
     return engine
 
 
