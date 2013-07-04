@@ -1,22 +1,30 @@
-#configured to my starcluster environment
-
 cd /mnt/sgeadmin
 for i in `ls *.xml`
     do echo $i
+    cd /var/lib/mysql/uspto
+    echo " - remove txt"
+    rm *.txt
 
-    cd /home/sgeadmin/patentprocessor/
+    cd /home/sgeadmin/patentprocessor
+    echo " - drop database"
+    mysql -root uspto < starcluster/load_drop.sql
+
+    cd /home/sgeadmin/patentprocessor
     echo " - python"
     python parse_sq.py -p /mnt/sgeadmin --xmlregex $i
     echo " - mysqldump"
     mysqldump -root uspto -T /var/lib/mysql/uspto
-    echo " - drop database"
-    mysql -root uspto < starcluster/load_drop.sql
-    echo " - ingest"
-    mysql [options] --local-infile=1 uspto < starcluster/load_easy.sql
+
     echo " - duplicate"
     cd /var/lib/mysql/uspto
     tar -czf $i.tar.gz *.txt
-    rm *.txt
-    mv $i.tar.gz /mnt/sgeadmin
+    cd /home/sgeadmin/patentprocessor/starcluster
+    sh txtcat.sh
+    cd /var/lib/mysql/uspto
+    mv $i.tar.gz /home/sgeadmin/patentprocessor/tar
 
 done
+
+cd /var/lib/mysql/uspto
+tar -czf final.tar.gz *.txt.full
+rm *.txt.full
