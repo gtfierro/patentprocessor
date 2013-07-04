@@ -311,7 +311,7 @@ class Citation(Base):
     number = Column(Unicode(64))
     country = Column(Unicode(10))
     category = Column(Unicode(20))
-    sequence = Column(Integer, index=True)
+    sequence = Column(Integer)
 
     def __repr__(self):
         return "<Citation('{0}, {1}')>".format(self.number, self.date)
@@ -322,7 +322,7 @@ class OtherReference(Base):
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     text = deferred(Column(UnicodeText))
-    sequence = Column(Integer, index=True)
+    sequence = Column(Integer)
 
     def __repr__(self):
         return "<OtherReference('{0}')>".format(self.text[:20])
