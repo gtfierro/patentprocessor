@@ -294,58 +294,6 @@ class DisLawyer(Base):
         return "<DisLawyer('{0}')>".format(", ".join(data))
 
 
-# REFERENCES -----------------------
-
-
-class Citation(Base):
-    """
-    Two types of citations?
-    """
-    __tablename__ = "citation"
-    uuid = Column(Unicode(36), primary_key=True)
-    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    citation_id = Column(Unicode(20), ForeignKey("patent.id"))
-    date = Column(Date)
-    name = Column(Unicode(64))
-    kind = Column(Unicode(10))
-    number = Column(Unicode(64))
-    country = Column(Unicode(10))
-    category = Column(Unicode(20))
-    sequence = Column(Integer)
-
-    def __repr__(self):
-        return "<Citation('{0}, {1}')>".format(self.number, self.date)
-
-
-class OtherReference(Base):
-    __tablename__ = "otherreference"
-    uuid = Column(Unicode(36), primary_key=True)
-    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    text = deferred(Column(UnicodeText))
-    sequence = Column(Integer)
-
-    def __repr__(self):
-        return "<OtherReference('{0}')>".format(self.text[:20])
-
-
-class USRelDoc(Base):
-    __tablename__ = "usreldoc"
-    uuid = Column(Unicode(36), primary_key=True)
-    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    rel_id = Column(Unicode(20), ForeignKey("patent.id"))
-    doctype = Column(Unicode(64), index=True)
-    status = Column(Unicode(20))
-    date = Column(Date, index=True)
-    number = Column(Unicode(64), index=True)
-    kind = Column(Unicode(10))
-    country = Column(Unicode(20), index=True)
-    relationship = Column(Unicode(64))
-    sequence = Column(Integer, index=True)
-
-    def __repr__(self):
-        return "<USRelDoc('{0}, {1}')>".format(self.number, self.date)
-
-
 # CLASSIFICATIONS ------------------
 
 
@@ -399,3 +347,83 @@ class SubClass(Base):
 
     def __repr__(self):
         return "<SubClass('{0}')>".format(self.id)
+
+
+# REFERENCES -----------------------
+
+
+class Citation(Base):
+    """
+    Two types of citations?
+    """
+    __tablename__ = "citation"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    citation_id = Column(Unicode(20), ForeignKey("patent.id"))
+    date = Column(Date)
+    name = Column(Unicode(64))
+    kind = Column(Unicode(10))
+    number = Column(Unicode(64))
+    country = Column(Unicode(10))
+    category = Column(Unicode(20))
+    sequence = Column(Integer)
+
+    def __repr__(self):
+        return "<Citation('{0}, {1}')>".format(self.number, self.date)
+
+
+class OtherReference(Base):
+    __tablename__ = "otherreference"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    text = deferred(Column(UnicodeText))
+    sequence = Column(Integer)
+
+    def __repr__(self):
+        return "<OtherReference('{0}')>".format(self.text[:20])
+
+
+class USRelDoc(Base):
+    __tablename__ = "usreldoc"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    rel_id = Column(Unicode(20), ForeignKey("patent.id"))
+    doctype = Column(Unicode(64), index=True)
+    status = Column(Unicode(20))
+    date = Column(Date, index=True)
+    number = Column(Unicode(64), index=True)
+    kind = Column(Unicode(10))
+    country = Column(Unicode(20), index=True)
+    relationship = Column(Unicode(64))
+    sequence = Column(Integer, index=True)
+
+    def __repr__(self):
+        return "<USRelDoc('{0}, {1}')>".format(self.number, self.date)
+
+
+# TEMP REFERENCES ------------------
+
+
+class TempCitation(Base):
+    """
+    Two types of citations?
+    """
+    __tablename__ = "tempcitation"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20))
+    citation_id = Column(Unicode(20))
+    date = Column(Date)
+    name = Column(Unicode(64))
+    kind = Column(Unicode(10))
+    number = Column(Unicode(64))
+    country = Column(Unicode(10))
+    category = Column(Unicode(20))
+    sequence = Column(Integer)
+
+
+class TempOtherReference(Base):
+    __tablename__ = "tempotherreference"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20))
+    text = deferred(Column(UnicodeText))
+    sequence = Column(Integer)
