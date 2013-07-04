@@ -25,7 +25,7 @@ def fetch_engine():
     return engine
 
 
-def add(obj, override=True):
+def add(obj, override=True, temp=False):
     """
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
@@ -51,7 +51,7 @@ def add(obj, override=True):
             session.delete(pat_query.one())
         else:
             return
-    if not obj.pat["number"]:
+    if len(obj.pat["number"]) < 3:
         return
 
     #add
@@ -102,13 +102,26 @@ def add(obj, override=True):
         ipc = IPCR(**ipc)
         pat.ipcrs.append(ipc)
 
-    cits, refs = obj.citation_list()
-    for cit in cits:
-        cit = Citation(**cit)
-        pat.citations.append(cit)
-    for ref in refs:
-        ref = OtherReference(**ref)
-        pat.otherreferences.append(ref)
+    # citations are huge. this dumps them to
+    # a temporary database which we can use for later
+    if temp:
+        cits, refs = obj.citation_list()
+        for cit in cits:
+            cit["patent_id"] = obj.pat["number"]
+            cit = TempCitation(**cit)
+            session.add(cit)
+        for ref in refs:
+            ref["patent_id"] = obj.pat["number"]
+            ref = TempOtherReference(**ref)
+            session.add(ref)
+    else:
+        cits, refs = obj.citation_list()
+        for cit in cits:
+            cit = Citation(**cit)
+            pat.citations.append(cit)
+        for ref in refs:
+            ref = OtherReference(**ref)
+            pat.otherreferences.append(ref)
 
     session.merge(pat)
 
