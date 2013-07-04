@@ -105,7 +105,7 @@ class Application(Base):
 class Location(Base):
     __tablename__ = "location"
     id = Column(Unicode(256), primary_key=True)
-    disambig = Column(Unicode(256), ForeignKey("dislocation.id"))
+    dislocation_id = Column(Unicode(256), ForeignKey("dislocation.id"))
     city = Column(Unicode(128))
     state = Column(Unicode(10), index=True)
     country = Column(Unicode(10), index=True)
@@ -113,6 +113,7 @@ class Location(Base):
     longitude = Column(Float)
     inventors = relationship("Inventor", backref="location")
     assignees = relationship("Assignee", backref="location")
+    disinventors = relationship("DisInventor", backref="location")
     __table_args__ = (
         Index("loc_idx1", "latitude", "longitude"),
         Index("loc_idx2", "city", "state", "country"),
@@ -168,7 +169,7 @@ class DisLocation(Base):
 class Assignee(Base):
     __tablename__ = "assignee"
     uuid = Column(Unicode(36), primary_key=True)
-    disambig = Column(Unicode(36), ForeignKey("disassignee.id"))
+    disassignee_id = Column(Unicode(36), ForeignKey("disassignee.id"))
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     type = Column(Unicode(10))
     organization = Column(Unicode(256))
@@ -190,7 +191,7 @@ class Assignee(Base):
 class Inventor(Base):
     __tablename__ = "inventor"
     uuid = Column(Unicode(36), primary_key=True)
-    disambig = Column(Unicode(36), ForeignKey("disinventor.id"))
+    disinventor_id = Column(Unicode(36), ForeignKey("disinventor.id"))
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
@@ -211,7 +212,7 @@ class Inventor(Base):
 class Lawyer(Base):
     __tablename__ = "lawyer"
     uuid = Column(Unicode(36), primary_key=True)
-    disambig = Column(Unicode(36), ForeignKey("dislawyer.id"))
+    dislawyer_id = Column(Unicode(36), ForeignKey("dislawyer.id"))
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
@@ -263,6 +264,7 @@ class DisInventor(Base):
     name_first = Column(Unicode(64))
     nationality = Column(Unicode(10))
     inventors = relationship("Inventor", backref="disambig")
+    location_id = Column(Unicode(256), ForeignKey("location.id"))
 
     @hybrid_property
     def name_full(self):
