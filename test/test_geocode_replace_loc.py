@@ -49,7 +49,7 @@ class TestGeocodeReplaceLoc(unittest.TestCase):
         result = self.cursor.execute(query)
         rows = result.fetchall()
         element = rows[6][6]
-        self.assertTrue('LAGUNA HILLS'==element,"{0} should be {1}".format(element,'LAGUNA HILLS'))
+        self.assertTrue('MARION'==element,"{0} should be {1}".format(element,'MARION'))
         pass
 
     def test_domestic_last4_jaro_winkler_sql(self):

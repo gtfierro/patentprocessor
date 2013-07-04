@@ -188,7 +188,7 @@ def create_loc_indexes(cursor):
 def create_usloc_table(cursor):
     cursor.executescript("""
         CREATE TABLE IF NOT EXISTS usloc AS
-            SELECT  Zipcode,
+            SELECT  0 as Zipcode,
                     Latitude,
                     Longitude,
                     UPPER(City)                        AS City,
@@ -197,7 +197,7 @@ def create_usloc_table(cursor):
                     rev_wrd(blk_split(City), 4)        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
-              FROM  loctbl.usloc
+              FROM  loctbl.us_cities
           GROUP BY  City, State;
 
         CREATE INDEX If NOT EXISTS usloc_idxZ  on usloc (Zipcode);
