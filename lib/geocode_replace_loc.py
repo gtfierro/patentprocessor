@@ -195,12 +195,12 @@ def domestic_last4_jaro_winkler_sql():
                 b.longitude
           FROM  loc AS a
     INNER JOIN  usloc AS b
-            ON  UPPER(SUBSTR(blk_split(SEP_WRD(a.City, %d)),-4)) = b.City4R
+            ON  rev_wrd(blk_split(SEP_WRD(a.City, %d)),4) = b.City4R
            AND  a.state = b.state
            AND  a.country = 'US'
          WHERE  jaro > %s
            AND  sep_cnt(a.City) >= %d
-           AND  a.City != ""
+           AND  a.City != ''
       ORDER BY  a.City, a.State, jaro"""
     return stmt;
 
@@ -354,7 +354,7 @@ def foreign_last4_jaro_winkler_sql():
                 b.long
           FROM  loc AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  UPPER(SUBSTR(blk_split(SEP_WRD(a.City, %d)),-4)) = b.sort_name_ro
+            ON  rev_wrd(blk_split(SEP_WRD(a.City, %d)),4) = b.sort_name_ro
            AND  a.country = b.cc1
          WHERE  jaro > %s
            AND  sep_cnt(a.City) >= %d
