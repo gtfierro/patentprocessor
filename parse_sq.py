@@ -58,8 +58,8 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
                 print " *", inst
             if patobj:
                 func(patobj, override=False, temp=False)
-            if i % commit == 0:
-                print " *", datetime.now() - t, "- rec:", i, filename
+            if (i + 1) % commit == 0:
+                print " *", datetime.now() - t, ":", (i+1), filename
                 alchemy.commit()
 
         alchemy.commit()
