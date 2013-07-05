@@ -1,7 +1,6 @@
 # sets up the geocoding databases
 
 import re
-import sep_wrd_geocode
 import fwork
 
 #return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
