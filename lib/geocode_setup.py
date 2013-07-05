@@ -4,20 +4,33 @@ import re
 import sep_wrd_geocode
 import fwork
 
+#return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
+def separate_row(row, i):
+    if i==-1:
+        return row
+    else:
+        #Match the , and | separators and any spaces on either side
+        pattern = re.compile(" *?[,|] *")
+        row_split = pattern.split(row)
+        if len(row_split)> i:
+            return row_split[i]
+        else:
+            return ""
+
 # TODO: Consider replacing the lambdas with functions which can be tested.
 def create_sql_helper_functions(conn):
     conn.create_function("blk_split", 1, lambda x: re.sub(" ", "", x))
     conn.create_function("separator_count",   1, lambda x: len(re.findall("[,|]", x)))
     conn.create_function("jarow",     2, fwork.jarow)
     conn.create_function("cityctry",  3, fwork.cityctry)
-    conn.create_function("sep_wrd",   2, sep_wrd_geocode.sep_wrd)
+    conn.create_function("separate_row",   2, separate_row)
     conn.create_function("rev_wrd",   2, lambda x,y:x.upper()[::-1][:y])
 
 
 def geocode_db_initialize(cursor):
     cursor.executescript("""
         PRAGMA CACHE_SIZE=20000;
-        ATTACH DATABASE 'loctbl'   AS loctbl;
+        ATTACH DATABASE '../loctbl'   AS loctbl;
         """)
 
 

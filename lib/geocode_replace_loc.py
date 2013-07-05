@@ -111,7 +111,7 @@ def domestic_sql():
                b.longitude
          FROM  loc AS a
    INNER JOIN  usloc AS b
-           ON  SEP_WRD(CityA, %d) = b.city
+           ON  SEPARATE_ROW(CityA, %d) = b.city
           AND  StateA = b.state
           AND  CountryA = 'US'
         WHERE  separator_count(CityA) >= %d
@@ -137,7 +137,7 @@ def domestic_block_remove_sql():
                 b.longitude
           FROM  loc AS a
     INNER JOIN  usloc AS b
-            ON  blk_split(SEP_WRD(a.City, %d)) = b.blkcity
+            ON  blk_split(SEPARATE_ROW(a.City, %d)) = b.blkcity
            AND  a.state = b.state
            AND  a.country = 'US'
          WHERE  separator_count(a.City) >= %d
@@ -149,7 +149,7 @@ def domestic_first3_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (10+jarow(blk_split(SEP_WRD(a.City, %d)),
+    stmt = """SELECT  (10+jarow(blk_split(SEPARATE_ROW(a.City, %d)),
                 b.BlkCity)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -164,7 +164,7 @@ def domestic_first3_jaro_winkler_sql():
                 b.longitude
           FROM  loc AS a
     INNER JOIN  usloc AS b
-            ON  SUBSTR(blk_split(SEP_WRD(a.City, %d)),1,3) = b.City3
+            ON  SUBSTR(blk_split(SEPARATE_ROW(a.City, %d)),1,3) = b.City3
            AND  a.state = b.state
            AND  a.country = 'US'
          WHERE  jaro > %s
@@ -178,7 +178,7 @@ def domestic_last4_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (10+jarow(blk_split(SEP_WRD(a.City, %d)),
+    stmt = """SELECT  (10+jarow(blk_split(SEPARATE_ROW(a.City, %d)),
                 b.BlkCity)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -193,7 +193,7 @@ def domestic_last4_jaro_winkler_sql():
                 b.longitude
           FROM  loc AS a
     INNER JOIN  usloc AS b
-            ON  rev_wrd(blk_split(SEP_WRD(a.City, %d)),4) = b.City4R
+            ON  rev_wrd(blk_split(SEPARATE_ROW(a.City, %d)),4) = b.City4R
            AND  a.state = b.state
            AND  a.country = 'US'
          WHERE  jaro > %s
@@ -222,7 +222,7 @@ def foreign_full_name_1_sql():
                 b.long
           FROM  loc AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  SEP_WRD(a.City, %d) = b.full_name_ro
+            ON  SEPARATE_ROW(a.City, %d) = b.full_name_ro
            AND  a.country = b.cc1
          WHERE  separator_count(a.City) >= %d
            AND  a.City!="" """
@@ -247,7 +247,7 @@ def foreign_full_name_2_sql():
                 b.long
           FROM  loc AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  SEP_WRD(a.City, %d) = b.full_name_nd_ro
+            ON  SEPARATE_ROW(a.City, %d) = b.full_name_nd_ro
            AND  a.country = b.cc1
          WHERE  separator_count(a.City) >= %d
            AND  a.City != "" """
@@ -272,7 +272,7 @@ def foreign_short_form_sql():
                 b.long
           FROM  loc           AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  SEP_WRD(a.City, %d) = b.short_form
+            ON  SEPARATE_ROW(a.City, %d) = b.short_form
            AND  a.country = b.cc1
          WHERE  separator_count(a.City) >= %d
            AND  a.City != "" """
@@ -297,7 +297,7 @@ def foreign_block_split_sql():
                 b.long
           FROM  loc AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  blk_split(SEP_WRD(a.City, %d)) = b.sort_name_ro
+            ON  blk_split(SEPARATE_ROW(a.City, %d)) = b.sort_name_ro
            AND  a.country = b.cc1
          WHERE  separator_count(a.City) >= %d
            AND  a.City != "" """
@@ -308,7 +308,7 @@ def foreign_first3_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (20+jarow(blk_split(SEP_WRD(a.City, %d)),
+    stmt = """SELECT  (20+jarow(blk_split(SEPARATE_ROW(a.City, %d)),
                 b.sort_name_ro)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -323,7 +323,7 @@ def foreign_first3_jaro_winkler_sql():
                 b.long
           FROM  loc AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  SUBSTR(blk_split(SEP_WRD(a.City, %d)),1,3) = b.sort_name_ro
+            ON  SUBSTR(blk_split(SEPARATE_ROW(a.City, %d)),1,3) = b.sort_name_ro
            AND  a.country = b.cc1
          WHERE  jaro > %s
            AND  separator_count(a.City) >= %d
@@ -337,7 +337,7 @@ def foreign_last4_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (20+jarow(blk_split(SEP_WRD(a.City, %d)),
+    stmt = """SELECT  (20+jarow(blk_split(SEPARATE_ROW(a.City, %d)),
                 b.sort_name_ro)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -352,7 +352,7 @@ def foreign_last4_jaro_winkler_sql():
                 b.long
           FROM  loc AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  rev_wrd(blk_split(SEP_WRD(a.City, %d)),4) = b.sort_name_ro
+            ON  rev_wrd(blk_split(SEPARATE_ROW(a.City, %d)),4) = b.sort_name_ro
            AND  a.country = b.cc1
          WHERE  jaro > %s
            AND  separator_count(a.City) >= %d
@@ -525,7 +525,7 @@ def domestic_zipcode_sql():
                 b.latitude,
                 b.longitude
           FROM  (SELECT  *,
-                         (SEP_WRD(zipcode,0)+0) as Zip2
+                         (SEPARATE_ROW(zipcode,0)+0) as Zip2
                    FROM  loc
                   WHERE  Zipcode != ''
                     AND  Country = 'US') AS a
@@ -542,7 +542,7 @@ def domestic_zipcode_sql():
 ####                a.cnt, a.city, a.state, a.country, a.zipcode,
 ####                b.city, b.state, 'US', b.zipcode, b.lat, b.long
 ####          FROM  loc AS a INNER JOIN usloc AS b
-####            ON  SEP_WRD(a.City, %d)=b.city AND a.country=b.state
+####            ON  SEPARATE_ROW(a.City, %d)=b.city AND a.country=b.state
 ####         WHERE  separator_count(a.City)>=%d AND a.City!="";
 ####        """ % (sep, scnt))
 
