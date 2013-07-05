@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-import pickle
 sys.path.append('.')
 sys.path.append('./lib/')
 
@@ -41,11 +40,6 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
     is_loaded = eval(config.get('global', 'is_loaded'))
     pickle_file = "{0}/loaded.pickle".format(config.get('global', 'loaded'))
 
-    loaded = []
-    if is_loaded:
-        if os.path.exists(pickle_file):
-            loaded = pickle.load(open(pickle_file, "rb"))
-
     for filename in files:
         if filename in loaded:
             continue
@@ -64,9 +58,6 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
 
         alchemy.commit()
         print " *", "Finish:", filename, datetime.now() - t
-        loaded.append(filename)
-        if is_loaded:
-            pickle.dump(loaded, open(pickle_file, "wb"))
 
 
 if __name__ == '__main__':
