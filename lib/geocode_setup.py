@@ -18,7 +18,7 @@ def separate_row(row, i):
 
 # TODO: Consider replacing the lambdas with functions which can be tested.
 def create_sql_helper_functions(conn):
-    conn.create_function("blk_split", 1, lambda x: re.sub(" ", "", x))
+    conn.create_function("remove_spaces", 1, lambda x: re.sub(" ", "", x))
     conn.create_function("separator_count",   1, lambda x: len(re.findall("[,|]", x)))
     conn.create_function("jarow",     2, fwork.jarow)
     conn.create_function("cityctry",  3, fwork.cityctry)
@@ -29,7 +29,7 @@ def create_sql_helper_functions(conn):
 def geocode_db_initialize(cursor):
     cursor.executescript("""
         PRAGMA CACHE_SIZE=20000;
-        ATTACH DATABASE '../loctbl'   AS loctbl;
+        ATTACH DATABASE 'loctbl'   AS loctbl;
         """)
 
 
@@ -204,9 +204,9 @@ def create_usloc_table(cursor):
                     Latitude,
                     Longitude,
                     UPPER(City)                        AS City,
-                    blk_split(Upper(City))             AS BlkCity,
-                    SUBSTR(UPPER(blk_split(City)),1,3) AS City3,
-                    rev_wrd(blk_split(City), 4)        AS City4R,
+                    remove_spaces(Upper(City))             AS BlkCity,
+                    SUBSTR(UPPER(remove_spaces(City)),1,3) AS City3,
+                    rev_wrd(remove_spaces(City), 4)        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
               FROM  loctbl.us_cities
