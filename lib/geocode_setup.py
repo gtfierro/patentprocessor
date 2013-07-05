@@ -1,16 +1,28 @@
 # sets up the geocoding databases
 
 import re
-import sep_wrd_geocode
 import fwork
+
+#return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
+def get_entry_from_row(row, i):
+    if i==-1:
+        return row
+    else:
+        #Match the , and | separators and any spaces on either side
+        pattern = re.compile(" *?[,|] *")
+        row_split = pattern.split(row)
+        if len(row_split)> i:
+            return row_split[i]
+        else:
+            return ""
 
 # TODO: Consider replacing the lambdas with functions which can be tested.
 def create_sql_helper_functions(conn):
-    conn.create_function("blk_split", 1, lambda x: re.sub(" ", "", x))
+    conn.create_function("remove_spaces", 1, lambda x: re.sub(" ", "", x))
     conn.create_function("separator_count",   1, lambda x: len(re.findall("[,|]", x)))
     conn.create_function("jarow",     2, fwork.jarow)
     conn.create_function("cityctry",  3, fwork.cityctry)
-    conn.create_function("sep_wrd",   2, sep_wrd_geocode.sep_wrd)
+    conn.create_function("get_entry_from_row", 2, get_entry_from_row)
     conn.create_function("rev_wrd",   2, lambda x,y:x.upper()[::-1][:y])
 
 
@@ -192,9 +204,9 @@ def create_usloc_table(cursor):
                     Latitude,
                     Longitude,
                     UPPER(City)                        AS City,
-                    blk_split(Upper(City))             AS BlkCity,
-                    SUBSTR(UPPER(blk_split(City)),1,3) AS City3,
-                    rev_wrd(blk_split(City), 4)        AS City4R,
+                    remove_spaces(Upper(City))             AS BlkCity,
+                    SUBSTR(UPPER(remove_spaces(City)),1,3) AS City3,
+                    rev_wrd(remove_spaces(City), 4)        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
               FROM  loctbl.us_cities
