@@ -37,7 +37,7 @@ class PatentGrant(object):
         self.code_app = self.xml.contents_of('us_application_series_code')[0]
         self.clm_num = self.xml.contents_of('number_of_claims')[0]
         self.classes = self._classes()
-        self.abstract = self.xml.contents_of('abstract','')
+        self.abstract = xh.root.us_patent_grant.abstract.contents_of('p')
         self.invention_title = self._invention_title()
         self.asg_list = self._asg_list()
         self.cit_list = self._cit_list()
