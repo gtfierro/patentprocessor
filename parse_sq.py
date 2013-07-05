@@ -37,12 +37,8 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
 
     config = ConfigParser()
     config.read('{0}/lib/alchemy/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
-    is_loaded = eval(config.get('global', 'is_loaded'))
-    pickle_file = "{0}/loaded.pickle".format(config.get('global', 'loaded'))
 
     for filename in files:
-        if filename in loaded:
-            continue
         t = datetime.now()
         for i, xml_string in enumerate(xml_gen(open(filename, "rb"))):
             patobj = PatentGrant(xml_string)
