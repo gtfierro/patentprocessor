@@ -54,7 +54,7 @@ print "Loc =", c.execute("select count(*) from loctbl.loc").fetchone()[0]
 # TODO: Refactor the range call into it's own function, unit test
 # that function extensively.
 # TODO: Figure out what these hardcoded parameters mean.
-for scnt in range(-1, c.execute("select max(sep_cnt(city)) from loctbl.loc").fetchone()[0]+1):
+for scnt in range(-1, c.execute("select max(separator_count(city)) from loctbl.loc").fetchone()[0]+1):
 
     sep = scnt
     print "------", scnt, "------"

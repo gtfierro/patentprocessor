@@ -7,7 +7,7 @@ import fwork
 # TODO: Consider replacing the lambdas with functions which can be tested.
 def create_sql_helper_functions(conn):
     conn.create_function("blk_split", 1, lambda x: re.sub(" ", "", x))
-    conn.create_function("sep_cnt",   1, lambda x: len(re.findall("[,|]", x)))
+    conn.create_function("separator_count",   1, lambda x: len(re.findall("[,|]", x)))
     conn.create_function("jarow",     2, fwork.jarow)
     conn.create_function("cityctry",  3, fwork.cityctry)
     conn.create_function("sep_wrd",   2, sep_wrd_geocode.sep_wrd)
