@@ -1,8 +1,8 @@
 from ConfigParser import ConfigParser
 
 defaults = {'parse': 'defaultparse',
-            'clean': True,
-            'consolidate': True,
+            'clean': 'True',
+            'consolidate': 'True',
             'datadir': '/data/patentdata/patents/2013',
             'dataregex': 'ipg\d{6}.xml',
             'years': None,
