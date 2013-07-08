@@ -21,6 +21,10 @@ def extract_process_options(handler):
     return result
 
 def extract_parse_options(handler, section):
+    """
+    Extracts the specific parsing options from the parse section
+    as given by the [parse] config option in the [process] section
+    """
     options = {}
     options['datadir'] = handler.get(section,'datadir')
     options['dataregex'] = handler.get(section,'dataregex')
@@ -31,6 +35,11 @@ def extract_parse_options(handler, section):
     return options
 
 def get_config_options(configfile):
+    """
+    Takes in a filepath to a configuration file, returns
+    two dicts representing the process and parse configuration options.
+    See `process.cfg` for explanation of the optiosn
+    """
     handler = ConfigParser(defaults)
     handler.read(configfile)
     process_config = extract_process_options(handler)
