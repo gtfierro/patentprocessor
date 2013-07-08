@@ -31,8 +31,9 @@ class TestParseFile(unittest.TestCase):
         parsed_output = parse.extract_xml_strings(testdir+testfileone)
         self.assertTrue(isinstance(parsed_output, list))
         self.assertTrue(len(parsed_output) == 1)
-        self.assertTrue(isinstance(parsed_output[0], str))
-        self.assertTrue(regex.match(parsed_output[0]))
+        self.assertTrue(isinstance(parsed_output[0], tuple))
+        self.assertTrue(isinstance(parsed_output[0][1], str))
+        self.assertTrue(regex.match(parsed_output[0][1]))
 
     def test_parse_files_one(self):
         filelist = [testdir+testfileone]
@@ -40,18 +41,21 @@ class TestParseFile(unittest.TestCase):
         self.assertTrue(isinstance(parsed_output,Iterable))
         parsed_output = list(parsed_output)
         self.assertTrue(len(parsed_output) == 1)
-        self.assertTrue(isinstance(parsed_output[0], str))
-        self.assertTrue(regex.match(parsed_output[0]))
+        self.assertTrue(isinstance(parsed_output[0], tuple))
+        self.assertTrue(isinstance(parsed_output[0][1], str))
+        self.assertTrue(regex.match(parsed_output[0][1]))
 
     def test_extract_xml_strings_two(self):
         parsed_output = parse.extract_xml_strings(testdir+testfiletwo)
         self.assertTrue(isinstance(parsed_output, Iterable))
         parsed_output = list(parsed_output)
         self.assertTrue(len(parsed_output) == 2)
-        self.assertTrue(isinstance(parsed_output[0], str))
-        self.assertTrue(isinstance(parsed_output[1], str))
-        self.assertTrue(regex.match(parsed_output[0]))
-        self.assertTrue(regex.match(parsed_output[1]))
+        self.assertTrue(isinstance(parsed_output[0], tuple))
+        self.assertTrue(isinstance(parsed_output[0][1], str))
+        self.assertTrue(isinstance(parsed_output[1], tuple))
+        self.assertTrue(isinstance(parsed_output[1][1], str))
+        self.assertTrue(regex.match(parsed_output[0][1]))
+        self.assertTrue(regex.match(parsed_output[1][1]))
 
     def test_parse_files_two(self):
         filelist = [testdir+testfiletwo]
@@ -59,15 +63,17 @@ class TestParseFile(unittest.TestCase):
         self.assertTrue(isinstance(parsed_output,Iterable))
         parsed_output = list(parsed_output)
         self.assertTrue(len(parsed_output) == 2)
-        self.assertTrue(isinstance(parsed_output[0], str))
-        self.assertTrue(isinstance(parsed_output[1], str))
-        self.assertTrue(regex.match(parsed_output[0]))
-        self.assertTrue(regex.match(parsed_output[1]))
+        self.assertTrue(isinstance(parsed_output[0], tuple))
+        self.assertTrue(isinstance(parsed_output[0][1], str))
+        self.assertTrue(isinstance(parsed_output[1], tuple))
+        self.assertTrue(isinstance(parsed_output[1][1], str))
+        self.assertTrue(regex.match(parsed_output[0][1]))
+        self.assertTrue(regex.match(parsed_output[1][1]))
     
     def test_use_parse_files_one(self):
         filelist = [testdir+testfileone]
         parsed_output = list(parse.parse_files(filelist))
-        patobj = PatentGrant(parsed_output[0], True)
+        patobj = PatentGrant(parsed_output[0][1], True)
         parsed_xml = [xmlclass(patobj) for xmlclass in xmlclasses]
         self.assertTrue(len(parsed_xml) == len(xmlclasses))
         self.assertTrue(all(parsed_xml))
@@ -77,8 +83,9 @@ class TestParseFile(unittest.TestCase):
         parsed_output = parse.parse_files(filelist)
         parsed_xml = []
         for us_patent_grant in parsed_output:
-            self.assertTrue(isinstance(us_patent_grant, str))
-            patobj = PatentGrant(us_patent_grant, True)
+            self.assertTrue(isinstance(us_patent_grant, tuple))
+            self.assertTrue(isinstance(us_patent_grant[1], str))
+            patobj = PatentGrant(us_patent_grant[1], True)
             for xmlclass in xmlclasses:
                 parsed_xml.append(xmlclass(patobj))
         self.assertTrue(len(parsed_xml) == 2 * len(xmlclasses))

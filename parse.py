@@ -11,12 +11,14 @@ import sys
 import lib.handlers.grant_handler as grant_handler
 import lib.patSQL as patSQL
 import lib.argconfig_parse as argconfig_parse
+from lib.config_parser import get_xml_handlers
 
 xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
               patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
               patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
+xmlhandlers = get_xml_handlers('process.cfg')
 
 def list_files(patentroot, xmlregex):
     """
@@ -30,10 +32,21 @@ def list_files(patentroot, xmlregex):
         sys.exit(1)
     return files
 
+def _get_year(filename, dateformat='ipg%y%m%d.xml'):
+    """
+    Given a [filename], returns the expanded year.
+    The optional [dateformat] argument allows for different file formats
+    """
+    filename = re.match(r'ipg\d{6}',filename)
+    if not filename: return 'default'
+    filename = filename.group() + '.xml'
+    return datetime.datetime.strptime(filename, dateformat).year
+
 def extract_xml_strings(filename):
     """
-    Given a [filename], opens the file using mmap and returns a list of all XML strings
-    contained in the file.
+    Given a [filename], opens the file using mmap and returns a list of tuples.
+    Each tuple is of format (year, xml doc string). A tuple is returned for
+    every valid XML doc in [filename]
     """
     if not filename: return
     parsed_xmls = []
@@ -41,7 +54,7 @@ def extract_xml_strings(filename):
     logging.debug("Parsing file: {0}".format(filename))
     with open(filename,'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), size, access=mmap.ACCESS_READ)) as m:
-            res = [x[0] for x in regex.findall(m)]
+            res = [(_get_year(filename), x[0]) for x in regex.findall(m)]
             parsed_xmls.extend(res)
     return parsed_xmls
 
@@ -54,27 +67,29 @@ def parse_files(filelist):
     parsed = itertools.imap(extract_xml_strings, filelist)
     return itertools.chain.from_iterable(parsed)
 
-def apply_xmlclass(xmlstring):
+def apply_xmlclass(xmltuple):
     """
-    Parses an xml string given as [xmlstring] with the appropriate parser
-    and returns the patSQL.*XML formulations of it. Expect this to change
+    Parses an xml string given as [xmltuple] with the appropriate parser (given
+    by the first part of the tuple) and returns the patSQL.*XML formulations of
+    it. Expect this to change when we integrate Ron's SQLAlchemy stuff
     """
     parsed_grants = []
     try:
-        patobj = grant_handler.PatentGrant(xmlstring, True)
+        year, xml = xmltuple # extract out the parts of the tuple
+        patobj = xmlhandlers[year].PatentGrant(xml, True)
         for xmlclass in xmlclasses:
             parsed_grants.append(xmlclass(patobj))
     except Exception as inst:
         logging.error(type(inst))
-        logging.error("  - Error parsing patent: %s" % (xmlstring[:400]))
+        logging.error("  - Error parsing patent: %s" % (xml[0][:400]))
     return parsed_grants
 
-def parse_patents(xmlstrings):
+def parse_patents(xmltuples):
     """
-    Given a list of xml strings as [xmlstrings], parses them
+    Given a list of xml strings as [xmltuples], parses them
     all and returns a flat iterator of patSQL.*XML instances
     """
-    parsed_grants = itertools.imap(apply_xmlclass, xmlstrings)
+    parsed_grants = itertools.imap(apply_xmlclass, xmltuples)
     # errored patents return None; we want to get rid of these
     parsed_grants = itertools.ifilter(lambda x: x, parsed_grants)
     return itertools.chain.from_iterable(parsed_grants)
