@@ -32,15 +32,25 @@ def list_files(patentroot, xmlregex):
         sys.exit(1)
     return files
 
-def _get_year(filename, dateformat='ipg%y%m%d.xml'):
+def _get_date(filename, dateformat='ipg%y%m%d.xml'):
     """
     Given a [filename], returns the expanded year.
     The optional [dateformat] argument allows for different file formats
     """
-    filename = re.match(r'ipg\d{6}',filename)
+    filename = re.search(r'ipg\d{6}',filename)
     if not filename: return 'default'
     filename = filename.group() + '.xml'
-    return datetime.datetime.strptime(filename, dateformat).year
+    dateobj = datetime.datetime.strptime(filename, dateformat)
+    return int(dateobj.strftime('%Y%m%d')) # returns YYYYMMDD
+
+def _get_parser(date):
+    """
+    Given a [date], returns the class of parser needed
+    to parse it
+    """
+    for daterange in xmlhandlers.iterkeys():
+        if daterange[0] <= date <= daterange[1]:
+            return xmlhandlers[daterange]
 
 def extract_xml_strings(filename):
     """
@@ -54,7 +64,7 @@ def extract_xml_strings(filename):
     logging.debug("Parsing file: {0}".format(filename))
     with open(filename,'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), size, access=mmap.ACCESS_READ)) as m:
-            res = [(_get_year(filename), x[0]) for x in regex.findall(m)]
+            res = [(_get_date(filename), x[0]) for x in regex.findall(m)]
             parsed_xmls.extend(res)
     return parsed_xmls
 
@@ -75,8 +85,8 @@ def apply_xmlclass(xmltuple):
     """
     parsed_grants = []
     try:
-        year, xml = xmltuple # extract out the parts of the tuple
-        patobj = xmlhandlers[year].PatentGrant(xml, True)
+        date, xml = xmltuple # extract out the parts of the tuple
+        patobj = _get_parser(date).PatentGrant(xml, True)
         for xmlclass in xmlclasses:
             parsed_grants.append(xmlclass(patobj))
     except Exception as inst:
