@@ -56,6 +56,7 @@ def generate_download_list(years):
     Given the year string from the configuration file, return
     a list of urls to be downloaded
     """
+    if not years: return []
     urls = []
     url = requests.get('https://www.google.com/googlebooks/uspto-patents-grants-text.html')
     soup = bs(url.content)
@@ -159,7 +160,7 @@ if __name__=='__main__':
     dview.scatter('urls', urls)
     # check download directory
     downloaddir = parse_config['downloaddir']
-    if not os.path.exists(downloaddir):
+    if downloaddir and not os.path.exists(downloaddir):
         os.makedirs(downloaddir)
     dview['downloaddir'] = parse_config['downloaddir']
     dview.apply(download_files)
