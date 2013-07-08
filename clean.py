@@ -41,7 +41,7 @@ def normalize_doc_numbers():
     citation_table = SQLite.SQLite('citation.sqlite3')
     citation_table.conn.create_function('normalize_document_identifier', 1, normalize_document_identifier)
     citation_table.attach('citation.sqlite3')
-    citation_table.c.execute('update citation set Citation=normalize_document_identifier(Citation);')
+    citation_table.conn.execute('update citation set Citation=normalize_document_identifier(Citation);')
     citation_table.commit()
     citation_table.close()
 

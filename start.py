@@ -12,23 +12,24 @@ import cStringIO as StringIO
 from BeautifulSoup import BeautifulSoup as bs
 
 sys.path.append('lib')
-from patSQL import *
+import lib.patSQL as patSQL
 from config_parser import get_config_options
 
 # table bookkeeping for the parse script
 
-assignee_table = AssigneeSQL()
-citation_table = CitationSQL()
-class_table = ClassSQL()
-inventor_table = InventorSQL()
-patent_table = PatentSQL()
-patdesc_table = PatdescSQL()
-lawyer_table = LawyerSQL()
-sciref_table = ScirefSQL()
-usreldoc_table = UsreldocSQL()
+assignee_table = patSQL.AssigneeSQL()
+citation_table = patSQL.CitationSQL()
+class_table = patSQL.ClassSQL()
+inventor_table = patSQL.InventorSQL()
+patent_table = patSQL.PatentSQL()
+patdesc_table = patSQL.PatdescSQL()
+lawyer_table = patSQL.LawyerSQL()
+sciref_table = patSQL.ScirefSQL()
+usreldoc_table = patSQL.UsreldocSQL()
 
-xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \
-              PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
+xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
+              patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
+              patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
 
 def get_year_list(yearstring):
     """
@@ -55,6 +56,7 @@ def generate_download_list(years):
     Given the year string from the configuration file, return
     a list of urls to be downloaded
     """
+    if not years: return []
     urls = []
     url = requests.get('https://www.google.com/googlebooks/uspto-patents-grants-text.html')
     soup = bs(url.content)
@@ -126,8 +128,8 @@ def run_parse():
     import time
     import sys
     import itertools
-    parsed_xmls = parse.parallel_parse(files)
-    parsed_grants = parse.parse_patent(parsed_xmls)
+    parsed_xmls = parse.parse_files(files)
+    parsed_grants = parse.parse_patents(parsed_xmls)
     parse.build_tables(parsed_grants)
     return parse.get_inserts()
 
@@ -135,12 +137,12 @@ def run_parse():
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
-        execfile('clean.py')
+        import clean
 
 def run_consolidate(process_config):
     if process_config['consolidate']:
         print 'Running consolidate...'
-        execfile('consolidate.py')
+        import consolidate
 
 if __name__=='__main__':
     s = datetime.datetime.now()
@@ -158,7 +160,7 @@ if __name__=='__main__':
     dview.scatter('urls', urls)
     # check download directory
     downloaddir = parse_config['downloaddir']
-    if not os.path.exists(downloaddir):
+    if downloaddir and not os.path.exists(downloaddir):
         os.makedirs(downloaddir)
     dview['downloaddir'] = parse_config['downloaddir']
     dview.apply(download_files)
