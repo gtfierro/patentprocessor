@@ -137,12 +137,12 @@ def run_parse():
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
-        execfile('clean.py')
+        import clean
 
 def run_consolidate(process_config):
     if process_config['consolidate']:
         print 'Running consolidate...'
-        execfile('consolidate.py')
+        import consolidate
 
 if __name__=='__main__':
     s = datetime.datetime.now()
