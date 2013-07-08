@@ -54,7 +54,7 @@ def get_year_list(yearstring):
     year1-year2
     year1,year2,year3
     year1-year2,year3-year4
-    Expands into a list of year integers, and returns
+    Creates tuples of dates
     """
     years = []
     for subset in yearstring.split(','):
@@ -62,9 +62,11 @@ def get_year_list(yearstring):
             years.append('default')
             continue
         sublist = subset.split('-')
-        start = int(sublist[0])
-        end = int(sublist[1])+1 if len(sublist) > 1 else start+1
-        years.extend(range(start,end))
+        # left-justify the strings with 0s to add support
+        # for days and weeks in the date
+        start = int(sublist[0].ljust(8,'0'))
+        end = int(sublist[1].ljust(8,'0')) if len(sublist) > 1 else float('inf')
+        years.append((start,end))
     return years
 
 
