@@ -1,3 +1,4 @@
+import importlib
 from ConfigParser import ConfigParser
 
 defaults = {'parse': 'defaultparse',
@@ -70,12 +71,16 @@ def get_year_list(yearstring):
 def get_xml_handlers(configfile):
     """
     Called by parse.py to generate a lookup dictionary for which parser should
-    be used for a given file. Imports will be handled in `parse.py`
+    be used for a given file
     """
     handler = ConfigParser()
     handler.read(configfile)
     xmlhandlers = {}
     for yearrange, handler in handler.items('xml-handlers'):
         for year in get_year_list(yearrange):
-            xmlhandlers[year] = handler
+            try:
+                xmlhandlers[year] = importlib.import_module(handler)
+            except:
+                importlib.sys.path.append('..')
+                xmlhandlers[year] = importlib.import_module(handler)
     return xmlhandlers
