@@ -10,7 +10,7 @@ import lib.senAdd as senAdd
 import lib.fwork as fwork
 import lib.locFunc as locFunc
 import lib.orgClean as orgClean
-from lib.xml_util import normalize_document_identifier
+from lib.handlers.xml_util import normalize_document_identifier
 
 debug = False
 #debug = True
