@@ -110,7 +110,7 @@ class PatentGrant(object):
 
     def _cit_list(self):
         res = []
-        citations = self.xml.references_cited.citation
+        citations = self.xml.us_references_cited.us_citation
         for citation in citations:
             cit_data = citation.contents_of('category')
             if citation.patcit:
@@ -180,7 +180,7 @@ class PatentGrant(object):
         return res
 
     def _inv_list(self):
-        inventors = self.xml.parties.applicant
+        inventors = self.xml.inventors.inventor
         if not inventors: return []
         res = []
         for inventor in inventors:
@@ -196,7 +196,8 @@ class PatentGrant(object):
         return res
 
     def _law_list(self):
-        lawyers = self.xml.parties.agents.agent
+        lawyers = self.xml.agents.agent
+        print len(lawyers)
         if not lawyers: return []
         res = []
         for lawyer in lawyers:
@@ -259,7 +260,7 @@ class PatentGrant(object):
           text
           sequence
         """
-        citations = self.xml.references_cited.citation
+        citations = self.xml.us_references_cited.us_citation
         if not citations: return []
         regular_cits = []
         other_cits = []
@@ -293,7 +294,7 @@ class PatentGrant(object):
           state
           country
         """
-        inventors = self.xml.parties.applicant
+        inventors = self.xml.inventors.inventor
         if not inventors: return []
         res = []
         for i,inventor in enumerate(inventors):
@@ -310,7 +311,7 @@ class PatentGrant(object):
         return res
 
     def lawyer_list(self):
-        lawyers = self.xml.parties.agents.agent
+        lawyers = self.xml.agents.agent
         if not lawyers: return []
         res = []
         for i,lawyer in enumerate(lawyers):
