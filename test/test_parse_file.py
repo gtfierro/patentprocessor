@@ -10,8 +10,9 @@ from collections import Iterable
 sys.path.append('..')
 sys.path.append('../lib')
 import parse
-from grant_handler import PatentGrant
 from patSQL import *
+sys.path.append('./handlers')
+from grant_handler import PatentGrant
 
 basedir = os.path.dirname(__file__)
 testdir = os.path.join(basedir, './fixtures/xml/')

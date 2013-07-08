@@ -6,7 +6,7 @@ import re
 import unittest
 from cgi import escape as html_escape
 
-sys.path.append('../lib/')
+sys.path.append('../lib/handlers/')
 import xml_util
 
 text_fixtures = os.path.join(os.curdir, 'fixtures/text/')
