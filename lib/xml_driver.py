@@ -7,7 +7,6 @@ provides useful helper methods to handle the parsed data.
 """
 
 from collections import deque
-# Althogh make_parser is never referenced, the program inexplicably breaks when it is not imported.
 from xml.sax import make_parser, handler
 import xml_util
 
