@@ -32,7 +32,7 @@ There are two ways to get started:
 
 To run the `clean.py` script, the
 [NBER](https://s3-us-west-1.amazonaws.com/fidownloads/NBER_asg) and
-[location](https://s3-us-west-1.amazonaws.com/fidownloads/loctbl.sqlite3)
+[location](https://s3-us-west-1.amazonaws.com/fidownloads/loctbl)
 tables must exist in the patentprocessor directory.
 
 See "Configuring the Preprocessing Environment" below.
