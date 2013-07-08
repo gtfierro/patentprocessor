@@ -30,7 +30,11 @@ def list_files(patentroot, xmlregex):
         sys.exit(1)
     return files
 
-def parse_file(filename):
+def extract_xml_strings(filename):
+    """
+    Given a [filename], opens the file using mmap and returns a list of all XML strings
+    contained in the file.
+    """
     if not filename: return
     parsed_xmls = []
     size = os.stat(filename).st_size
@@ -41,24 +45,36 @@ def parse_file(filename):
             parsed_xmls.extend(res)
     return parsed_xmls
 
-def parallel_parse(filelist):
+def parse_files(filelist):
+    """
+    Given a list of files, extracts the XML strings from each and returns a
+    flat iterable of all of them.
+    """
     if not filelist: return
-    parsed = itertools.imap(parse_file, filelist)
+    parsed = itertools.imap(extract_xml_strings, filelist)
     return itertools.chain.from_iterable(parsed)
 
-def apply_xmlclass(us_patent_grant):
+def apply_xmlclass(xmlstring):
+    """
+    Parses an xml string given as [xmlstring] with the appropriate parser
+    and returns the patSQL.*XML formulations of it. Expect this to change
+    """
     parsed_grants = []
     try:
-        patobj = grant_handler.PatentGrant(us_patent_grant, True)
+        patobj = grant_handler.PatentGrant(xmlstring, True)
         for xmlclass in xmlclasses:
             parsed_grants.append(xmlclass(patobj))
     except Exception as inst:
         logging.error(type(inst))
-        logging.error("  - Error parsing patent: %s" % (us_patent_grant[:400]))
+        logging.error("  - Error parsing patent: %s" % (xmlstring[:400]))
     return parsed_grants
 
-def parse_patent(grant_list):
-    parsed_grants = itertools.imap(apply_xmlclass, grant_list)
+def parse_patents(xmlstrings):
+    """
+    Given a list of xml strings as [xmlstrings], parses them
+    all and returns a flat iterator of patSQL.*XML instances
+    """
+    parsed_grants = itertools.imap(apply_xmlclass, xmlstrings)
     # errored patents return None; we want to get rid of these
     parsed_grants = itertools.ifilter(lambda x: x, parsed_grants)
     return itertools.chain.from_iterable(parsed_grants)
@@ -97,9 +113,9 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
     logging.info("Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),patentroot))
     files = list_files(patentroot, xmlregex)
     logging.info("Found all files matching {0} in directory {1}".format(xmlregex, patentroot))
-    parsed_xmls = parallel_parse(files)
+    parsed_xmls = parse_files(files)
     logging.info("Extracted all individual XML files")
-    parsed_grants = parse_patent(parsed_xmls)
+    parsed_grants = parse_patents(parsed_xmls)
     logging.info("Parsed all individual XML files")
     build_tables(parsed_grants)
     inserts = get_inserts()

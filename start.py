@@ -126,8 +126,8 @@ def run_parse():
     import time
     import sys
     import itertools
-    parsed_xmls = parse.parallel_parse(files)
-    parsed_grants = parse.parse_patent(parsed_xmls)
+    parsed_xmls = parse.parse_files(files)
+    parsed_grants = parse.parse_patents(parsed_xmls)
     parse.build_tables(parsed_grants)
     return parse.get_inserts()
 
