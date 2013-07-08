@@ -45,3 +45,37 @@ def get_config_options(configfile):
     process_config = extract_process_options(handler)
     parse_config = extract_parse_options(handler, process_config['parse'])
     return process_config, parse_config
+
+def get_year_list(yearstring):
+    """
+    Given a [yearstring] of forms
+    year1
+    year1-year2
+    year1,year2,year3
+    year1-year2,year3-year4
+    Expands into a list of year integers, and returns
+    """
+    years = []
+    for subset in yearstring.split(','):
+        if subset == 'default':
+            years.append('default')
+            continue
+        sublist = subset.split('-')
+        start = int(sublist[0])
+        end = int(sublist[1])+1 if len(sublist) > 1 else start+1
+        years.extend(range(start,end))
+    return years
+
+
+def get_xml_handlers(configfile):
+    """
+    Called by parse.py to generate a lookup dictionary for which parser should
+    be used for a given file. Imports will be handled in `parse.py`
+    """
+    handler = ConfigParser()
+    handler.read(configfile)
+    xmlhandlers = {}
+    for yearrange, handler in handler.items('xml-handlers'):
+        for year in get_year_list(yearrange):
+            xmlhandlers[year] = handler
+    return xmlhandlers
