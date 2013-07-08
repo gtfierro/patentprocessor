@@ -8,7 +8,7 @@ import mmap
 import contextlib
 import itertools
 import sys
-import lib.grant_handler as grant_handler 
+import lib.handlers.grant_handler as grant_handler
 import lib.patSQL as patSQL
 import lib.argconfig_parse as argconfig_parse
 
