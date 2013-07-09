@@ -61,7 +61,7 @@ class TestGeocodeSetup(unittest.TestCase):
         element = rows[0][0]
         self.assertTrue(0 == element, "{0} should be {1}".format(element,0))
         element = rows[3][3]
-        self.assertTrue('A AND F TRAILER COURT' == element,"{0} should be {1}".format(element, 'A AND F TRAILER COURT'))
+        self.assertTrue('ABEL' == element,"{0} should be {1}".format(element, 'ABEL'))
 
     def tearDown(self):
         pass
