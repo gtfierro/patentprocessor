@@ -3,13 +3,12 @@
 
 import unittest
 import sys
-
-sys.path.append( '.' )
-sys.path.append( '../lib/' )
-
 import sqlite3
 import make_test_databases
-import geocode_setup
+
+sys.path.append( '../' )
+
+import lib.geocode_setup as geocode_setup
 
 
 class TestGeocodeSetup(unittest.TestCase):
