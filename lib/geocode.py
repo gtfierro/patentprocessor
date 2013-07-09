@@ -60,7 +60,7 @@ for scnt in range(-1, c.execute("select max(separator_count(city)) from loctbl.l
     print "------", scnt, "------"
     replace_loc(geocode_replace_loc.domestic_sql()                     % (sep, scnt))
     replace_loc(geocode_replace_loc.domestic_block_remove_sql()        % (sep, scnt))
-    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, "10.92", scnt))
+    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, "0.9", scnt))
     replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, "10.90", scnt))
     replace_loc(geocode_replace_loc.foreign_full_name_1_sql()          % (sep, scnt))
     replace_loc(geocode_replace_loc.foreign_full_name_2_sql()          % (sep, scnt))
