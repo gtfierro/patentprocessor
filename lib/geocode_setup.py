@@ -205,11 +205,7 @@ def create_usloc_table(cursor):
                     SUBSTR(remove_spaces(City), -4)        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
-<<<<<<< HEAD
               FROM  loctbl.us_cities;
-=======
-              FROM  loctbl.usloc;
->>>>>>> 294114b3c359a6eb0afd55efe907274bd47957ee
 
         CREATE INDEX If NOT EXISTS usloc_idxZ  on usloc (Zipcode);
         CREATE INDEX If NOT EXISTS usloc_idxCS on usloc (City, State);
