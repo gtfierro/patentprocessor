@@ -47,8 +47,7 @@ def update_table_locmerge(cursor):
 
         INSERT OR REPLACE INTO locMerge
             SELECT  b.cnt,
-                    a.*,
-                    SUBSTR(a.CityA,1,3)
+                    a.*
               FROM  temp1 AS a
         INNER JOIN  temp2 AS b
                 ON  a.CityA = b.CityA
@@ -149,7 +148,7 @@ def domestic_first3_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (10+jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
+    stmt = """SELECT  (jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
                 b.BlkCity)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -164,8 +163,7 @@ def domestic_first3_jaro_winkler_sql():
                 b.longitude
           FROM  loc AS a
     INNER JOIN  usloc AS b
-            ON  SUBSTR(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),1,3) = b.City3
-           AND  a.state = b.state
+            ON  a.state = b.state
            AND  a.country = 'US'
          WHERE  jaro > %s
            AND  separator_count(a.City) >= %d
@@ -193,7 +191,7 @@ def domestic_last4_jaro_winkler_sql():
                 b.longitude
           FROM  loc AS a
     INNER JOIN  usloc AS b
-            ON  rev_wrd(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),4) = b.City4R
+            ON  SUBSTR(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),-4) = b.City4R
            AND  a.state = b.state
            AND  a.country = 'US'
          WHERE  jaro > %s
@@ -352,7 +350,7 @@ def foreign_last4_jaro_winkler_sql():
                 b.long
           FROM  loc AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  rev_wrd(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),4) = b.sort_name_ro
+            ON  SUBSTR(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),-4) = b.sort_name_ro
            AND  a.country = b.cc1
          WHERE  jaro > %s
            AND  separator_count(a.City) >= %d
@@ -405,7 +403,7 @@ def domestic_first3_2nd_jaro_winkler_sql():
                 b.longitude
           FROM  (SELECT  * FROM  loc WHERE  NCity IS NOT NULL) AS a
     INNER JOIN  usloc AS b
-            ON  SUBSTR(remove_spaces(a.NCity),1,3) = b.City3
+            ON  remove_spaces(a.NCity) = b.BlkCity
            AND  a.Nstate = b.state
            AND  a.Ncountry ='US'
          WHERE  jaro > %s
