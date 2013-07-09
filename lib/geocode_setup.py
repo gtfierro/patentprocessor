@@ -3,6 +3,15 @@
 import re
 import fwork
 
+FIRST3_JARO_REQUIRED="0.92"
+LAST4_JARO_REQUIRED="10.90"
+
+def get_first3_jaro_required():
+    return FIRST3_JARO_REQUIRED
+
+def get_last4_jaro_required():
+    return LAST4_JARO_REQUIRED
+
 #return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
 def get_entry_from_row(row, i):
     if i==-1:
@@ -45,6 +54,7 @@ def loc_create_table(cursor):
             State    VARCHAR(2),
             Country  VARCHAR(2),
             Zipcode  VARCHAR(5),
+            City3    VARCHAR,
             NCity    VARCHAR(10),
             NState   VARCHAR(2),
             NCountry VARCHAR(2),
@@ -85,6 +95,7 @@ def update_table_loc_from_typos(cursor):
     cursor.executescript("""
         INSERT OR REPLACE INTO loc
             SELECT  a.*,
+                    SUBSTR(CityY,1,3),
                     b.NewCity,
                     b.NewState,
                     b.NewCountry
@@ -184,6 +195,7 @@ def fix_state_zip(cursor):
 # the schemas change.
 def create_loc_indexes(cursor):
     cursor.executescript("""
+        CREATE INDEX IF NOT EXISTS loc_idCC3 ON loc (City3,State,Country);
         CREATE INDEX IF NOT EXISTS loc_idxCC ON loc (City,Country);
         CREATE INDEX IF NOT EXISTS loc_idx   ON loc (City,State,Country,Zipcode);
         CREATE INDEX IF NOT EXISTS loc_idxCS ON loc (City,State);
@@ -202,6 +214,7 @@ def create_usloc_table(cursor):
                     Longitude,
                     UPPER(City)                        AS City,
                     remove_spaces(Upper(City))             AS BlkCity,
+                    SUBSTR(UPPER(remove_spaces(City)),1,3) AS City3,
                     SUBSTR(remove_spaces(City), -4)        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
@@ -210,6 +223,7 @@ def create_usloc_table(cursor):
         CREATE INDEX If NOT EXISTS usloc_idxZ  on usloc (Zipcode);
         CREATE INDEX If NOT EXISTS usloc_idxCS on usloc (City, State);
         CREATE INDEX If NOT EXISTS usloc_idBCS on usloc (BlkCity, State);
+        CREATE INDEX If NOT EXISTS usloc_idC3S on usloc (City3, State);
         CREATE INDEX If NOT EXISTS usloc_idC4R on usloc (City4R, State);
 
 
@@ -240,10 +254,11 @@ def create_locMerge_table(cursor):
             NZipcode VARCHAR,
             NLat     FLOAT,
             NLong    FLOAT,
+            City3    VARCHAR,
             UNIQUE(City, State, Country, Zipcode));
 
         CREATE INDEX IF NOT EXISTS okM_idxCC ON locMerge (City,Country);
         CREATE INDEX IF NOT EXISTS okM_idx   ON locMerge (City,State,Country,Zipcode);
         CREATE INDEX IF NOT EXISTS okM_idxCS ON locMerge (City,State);
-        CREATE INDEX IF NOT EXISTS okM_idx3  ON locMerge (City,State,Country);
+        CREATE INDEX IF NOT EXISTS okM_idx3  ON locMerge (City3,State,Country);
         """)

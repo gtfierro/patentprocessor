@@ -47,7 +47,9 @@ def update_table_locmerge(cursor):
 
         INSERT OR REPLACE INTO locMerge
             SELECT  b.cnt,
-                    a.*
+                    a.*,
+                    SUBSTR(a.CityA,1,3)
+
               FROM  temp1 AS a
         INNER JOIN  temp2 AS b
                 ON  a.CityA = b.CityA
@@ -163,7 +165,8 @@ def domestic_first3_jaro_winkler_sql():
                 b.longitude
           FROM  loc AS a
     INNER JOIN  usloc AS b
-            ON  a.state = b.state
+            ON  SUBSTR(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),1,3) = b.City3
+           AND  a.state = b.state
            AND  a.country = 'US'
          WHERE  jaro > %s
            AND  separator_count(a.City) >= %d
@@ -403,7 +406,7 @@ def domestic_first3_2nd_jaro_winkler_sql():
                 b.longitude
           FROM  (SELECT  * FROM  loc WHERE  NCity IS NOT NULL) AS a
     INNER JOIN  usloc AS b
-            ON  remove_spaces(a.NCity) = b.BlkCity
+            ON  SUBSTR(remove_spaces(a.NCity),1,3) = b.City3
            AND  a.Nstate = b.state
            AND  a.Ncountry ='US'
          WHERE  jaro > %s
