@@ -82,7 +82,7 @@ replace_loc(geocode_replace_loc.foreign_full_name_2nd_layer_sql())
 replace_loc(geocode_replace_loc.foreign_full_nd_2nd_layer_sql())
 replace_loc(geocode_replace_loc.foreign_no_space_2nd_layer_sql())
 replace_loc(geocode_replace_loc.foreign_first3_2nd_jaro_winkler_sql()  % (geocode_setup.get_jaro_required('foreign_first3_2nd')))
-replace_loc(geocode_replace_loc.domestic_zipcode_sql())
+#replace_loc(geocode_replace_loc.domestic_zipcode_sql())
 
 conn.commit()
 c.close()

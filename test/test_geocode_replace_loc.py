@@ -142,12 +142,12 @@ class TestGeocodeReplaceLoc(unittest.TestCase):
         self.assertEquals(-1, num_rows,"{0} should be {1}".format(num_rows,-1))
         pass
 
-    def test_domestic_zipcode_sql(self):
-        query = geocode_replace_loc.domestic_zipcode_sql()
-        result = self.cursor.execute(query)
-        num_rows = result.rowcount
-        self.assertEquals(-1, num_rows,"{0} should be {1}".format(num_rows,-1))
-        pass
+#     def test_domestic_zipcode_sql(self):
+#         query = geocode_replace_loc.domestic_zipcode_sql()
+#         result = self.cursor.execute(query)
+#         num_rows = result.rowcount
+#         self.assertEquals(-1, num_rows,"{0} should be {1}".format(num_rows,-1))
+#         pass
 
 
 if __name__ == '__main__':

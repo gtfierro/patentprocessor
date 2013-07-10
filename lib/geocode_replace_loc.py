@@ -509,30 +509,30 @@ def foreign_first3_2nd_jaro_winkler_sql():
     return stmt;
 
 
-def domestic_zipcode_sql():
-
-    print sys._getframe().f_code.co_name
-
-    stmt = """SELECT  31,
-                a.cnt     AS cnt,
-                a.city    AS CityA,
-                a.state   AS StateA,
-                a.country AS CountryA,
-                a.zipcode AS ZipcodeA,
-                b.City,
-                b.State,
-                'US',
-                b.zipcode,
-                b.latitude,
-                b.longitude
-          FROM  (SELECT  *,
-                         (GET_ENTRY_FROM_ROW(zipcode,0)+0) as Zip2
-                   FROM  loc
-                  WHERE  Zipcode != ''
-                    AND  Country = 'US') AS a
-    INNER JOIN  usloc AS b
-            ON  a.Zip2 = b.Zipcode"""
-    return stmt;
+# def domestic_zipcode_sql():
+# 
+#     print sys._getframe().f_code.co_name
+# 
+#     stmt = """SELECT  31,
+#                 a.cnt     AS cnt,
+#                 a.city    AS CityA,
+#                 a.state   AS StateA,
+#                 a.country AS CountryA,
+#                 a.zipcode AS ZipcodeA,
+#                 b.City,
+#                 b.State,
+#                 'US',
+#                 b.zipcode,
+#                 b.latitude,
+#                 b.longitude
+#           FROM  (SELECT  *,
+#                          (GET_ENTRY_FROM_ROW(zipcode,0)+0) as Zip2
+#                    FROM  loc
+#                   WHERE  Zipcode != ''
+#                     AND  Country = 'US') AS a
+#     INNER JOIN  usloc AS b
+#             ON  a.Zip2 = b.Zipcode"""
+#     return stmt;
 
 
 # TODO: Add this block to its own function, add a commented out call to
