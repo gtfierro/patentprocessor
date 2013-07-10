@@ -87,7 +87,7 @@ def create_loc_and_locmerge_tables(cursor):
         CREATE TABLE loc AS SELECT * FROM temp3;
 
         CREATE INDEX IF NOT EXISTS loc_idxCC ON loc (City, Country);
-        CREATE INDEX IF NOT EXISTS loc_idx   ON loc (City, State, Country, Zipcode);
+        CREATE INDEX IF NOT EXISTS loc_idx   ON loc (City, State, Country);
         CREATE INDEX IF NOT EXISTS loc_idxCS ON loc (City, State);
 
         DROP TABLE IF EXISTS temp2;
