@@ -126,3 +126,17 @@ def clean(string, upper=False):
     else:
         return string
     # <<<<<<
+
+def augment_class(string):
+    """
+    Given a [string] representing the contents of a <main-classification> tag
+    (see USPTO XML Documentation 4.2 or later), realize the semantic meaning
+    of the string and return a string of form recognized by USPTO:
+    <main-class>/<sub-class>.<more-sub-class>
+    """
+    mainclass = string[:3]
+    subclass1 = string[3:6]
+    subclass2 = string[6:]
+    if subclass2:
+        return "{0}/{1}.{2}".format(mainclass, subclass1, subclass2)
+    return "{0}/{1}".format(mainclass, subclass1)
