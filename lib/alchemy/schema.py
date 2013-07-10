@@ -6,6 +6,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 from unidecode import unidecode
 
+from sqlalchemy import Table
 
 # Extend the Base >>>>>>
 Base = declarative_base()
@@ -23,6 +24,13 @@ Base.__init__ = init
 
 # PATENT ---------------------------
 
+
+patentinventor = Table('patent_inventor', Base.metadata,
+    Column('patent_id', Unicode(20), ForeignKey('patent.id')),
+    Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
+)
+
+
 class Patent(Base):
     __tablename__ = "patent"
     id = Column(Unicode(20), primary_key=True)
@@ -39,9 +47,9 @@ class Patent(Base):
     classes = relationship("USPC", backref="patent", cascade=cascade)
     ipcrs = relationship("IPCR", backref="patent", cascade=cascade)
 
-    assignees = relationship("Assignee", backref="patent", cascade=cascade)
-    inventors = relationship("Inventor", backref="patent", cascade=cascade)
-    lawyers = relationship("Lawyer", backref="patent", cascade=cascade)
+    rawassignees = relationship("RawAssignee", backref="patent", cascade=cascade)
+    rawinventors = relationship("RawInventor", backref="patent", cascade=cascade)
+    rawlawyers = relationship("RawLawyer", backref="patent", cascade=cascade)
 
     otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
     citations = relationship(
@@ -60,6 +68,9 @@ class Patent(Base):
         "USRelDoc",
         primaryjoin="Patent.id == USRelDoc.rel_id",
         backref="relpatent")
+    assignees = relationship("PatentAssignee", backref="patents")
+    inventors = relationship("Inventor", secondary=patentinventor, backref="patents")
+
     __table_args__ = (
         Index("pat_idx1", "type", "number", unique=True),
         Index("pat_idx2", "date"),
@@ -69,9 +80,9 @@ class Patent(Base):
         return {
             "classes": len(self.classes),
             "ipcrs": len(self.ipcrs),
-            "assignees": len(self.assignees),
-            "inventors": len(self.inventors),
-            "lawyers": len(self.lawyers),
+            "rawassignees": len(self.rawassignees),
+            "rawinventors": len(self.rawinventors),
+            "rawlawyers": len(self.rawlawyers),
             "otherreferences": len(self.otherreferences),
             "citations": len(self.citations),
             "citedby": len(self.citedby),
@@ -103,18 +114,17 @@ class Application(Base):
 # SUPPORT --------------------------
 
 
-class Location(Base):
-    __tablename__ = "location"
+class RawLocation(Base):
+    __tablename__ = "rawlocation"
     id = Column(Unicode(256), primary_key=True)
-    dislocation_id = Column(Unicode(256), ForeignKey("dislocation.id"))
+    location_id = Column(Unicode(256), ForeignKey("location.id"))
     city = Column(Unicode(128))
     state = Column(Unicode(10), index=True)
     country = Column(Unicode(10), index=True)
     latitude = Column(Float)
     longitude = Column(Float)
-    inventors = relationship("Inventor", backref="location")
-    assignees = relationship("Assignee", backref="location")
-    disinventors = relationship("DisInventor", backref="location")
+    rawinventors = relationship("RawInventor", backref="rawlocation")
+    rawassignees = relationship("RawAssignee", backref="rawlocation")
     __table_args__ = (
         Index("loc_idx1", "latitude", "longitude"),
         Index("loc_idx2", "city", "state", "country"),
@@ -132,18 +142,18 @@ class Location(Base):
         return ", ".join(addy)
 
     def __repr__(self):
-        return "<Location('{0}')>".format(unidecode(self.address))
+        return "<RawLocation('{0}')>".format(unidecode(self.address))
 
 
-class DisLocation(Base):
-    __tablename__ = "dislocation"
+class Location(Base):
+    __tablename__ = "location"
     id = Column(Unicode(256), primary_key=True)
     city = Column(Unicode(128))
     state = Column(Unicode(10), index=True)
     country = Column(Unicode(10), index=True)
     latitude = Column(Float)
     longitude = Column(Float)
-    locations = relationship("Location", backref="disambig")
+    rawlocations = relationship("RawLocation", backref="location")
     __table_args__ = (
         Index("dloc_idx1", "latitude", "longitude"),
         Index("dloc_idx2", "city", "state", "country"),
@@ -161,25 +171,105 @@ class DisLocation(Base):
         return ", ".join(addy)
 
     def __repr__(self):
-        return "<DisLocation('{0}')>".format(self.address)
+        return "<Location('{0}')>".format(self.address)
 
 
 # OBJECTS --------------------------
 
 
-class Assignee(Base):
-    __tablename__ = "assignee"
+class RawAssignee(Base):
+    __tablename__ = "rawassignee"
     uuid = Column(Unicode(36), primary_key=True)
-    disassignee_id = Column(Unicode(36), ForeignKey("disassignee.id"))
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    assignee_id = Column(Unicode(36), ForeignKey("assignee.id"))
+    rawlocation_id = Column(Unicode(256), ForeignKey("rawlocation.id"))
     type = Column(Unicode(10))
     organization = Column(Unicode(256))
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     residence = Column(Unicode(10))
     nationality = Column(Unicode(10))
-    location_id = Column(Unicode(256), ForeignKey("location.id"))
     sequence = Column(Integer, index=True)
+
+    def __repr__(self):
+        if self.organization:
+            return_string = self.organization
+        else:
+            return_string = "{0} {1}".format(self.name_first, self.name_last)
+        return "<RawAssignee('{0}')>".format(unidecode(return_string))
+
+
+class RawInventor(Base):
+    __tablename__ = "rawinventor"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    inventor_id = Column(Unicode(36), ForeignKey("inventor.id"))
+    rawlocation_id = Column(Unicode(256), ForeignKey("rawlocation.id"))
+    name_last = Column(Unicode(64))
+    name_first = Column(Unicode(64))
+    nationality = Column(Unicode(10))
+    sequence = Column(Integer, index=True)
+
+    @hybrid_property
+    def name_full(self):
+        return "{first} {last}".format(
+            first=self.name_first,
+            last=self.name_last)
+
+    def __repr__(self):
+        return "<RawInventor('{0}')>".format(unidecode(self.name_full))
+
+
+class RawLawyer(Base):
+    __tablename__ = "rawlawyer"
+    uuid = Column(Unicode(36), primary_key=True)
+    lawyer_id = Column(Unicode(36), ForeignKey("lawyer.id"))
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    name_last = Column(Unicode(64))
+    name_first = Column(Unicode(64))
+    organization = Column(Unicode(64))
+    country = Column(Unicode(10))
+    sequence = Column(Integer, index=True)
+
+    @hybrid_property
+    def name_full(self):
+        return "{first} {last}".format(
+            first=self.name_first,
+            last=self.name_last)
+
+    def __repr__(self):
+        data = []
+        if self.name_first:
+            data.append("{0} {1}".format(self.name_first, self.name_last))
+        if self.organization:
+            data.append(self.organization)
+        return "<RawLawyer('{0}')>".format(unidecode(", ".join(data)))
+
+
+# ASSOCIATIONS -----------------------
+
+
+class PatentAssignee(Base):
+    __tablename__ = 'patent_assignee'
+    patent_id = Column(Unicode(20), ForeignKey('patent.id'), primary_key=True)
+    assignee_id = Column(Unicode(36), ForeignKey('assignee.id'), primary_key=True)
+    sequence = Column(Integer)
+    assignee = relationship("Assignee", backref="patents")
+
+
+# DISAMBIGUATED -----------------------
+
+
+class Assignee(Base):
+    __tablename__ = "assignee"
+    id = Column(Unicode(36), primary_key=True)
+    type = Column(Unicode(10))
+    organization = Column(Unicode(256))
+    name_first = Column(Unicode(64))
+    name_last = Column(Unicode(64))
+    residence = Column(Unicode(10))
+    nationality = Column(Unicode(10))
+    rawassignees = relationship("RawAssignee", backref="assignee")
 
     def __repr__(self):
         if self.organization:
@@ -191,14 +281,11 @@ class Assignee(Base):
 
 class Inventor(Base):
     __tablename__ = "inventor"
-    uuid = Column(Unicode(36), primary_key=True)
-    disinventor_id = Column(Unicode(36), ForeignKey("disinventor.id"))
-    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    id = Column(Unicode(36), primary_key=True)
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
     nationality = Column(Unicode(10))
-    location_id = Column(Unicode(256), ForeignKey("location.id"))
-    sequence = Column(Integer, index=True)
+    rawinventors = relationship("RawInventor", backref="inventor")
 
     @hybrid_property
     def name_full(self):
@@ -212,20 +299,12 @@ class Inventor(Base):
 
 class Lawyer(Base):
     __tablename__ = "lawyer"
-    uuid = Column(Unicode(36), primary_key=True)
-    dislawyer_id = Column(Unicode(36), ForeignKey("dislawyer.id"))
-    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    id = Column(Unicode(36), primary_key=True)
     name_last = Column(Unicode(64))
     name_first = Column(Unicode(64))
     organization = Column(Unicode(64))
     country = Column(Unicode(10))
-    sequence = Column(Integer, index=True)
-
-    @hybrid_property
-    def name_full(self):
-        return "{first} {last}".format(
-            first=self.name_first,
-            last=self.name_last)
+    rawlawyers = relationship("RawLawyer", backref="lawyer")
 
     def __repr__(self):
         data = []
@@ -234,65 +313,6 @@ class Lawyer(Base):
         if self.organization:
             data.append(self.organization)
         return "<Lawyer('{0}')>".format(unidecode(", ".join(data)))
-
-
-# DISAMBIGUATED -----------------------
-
-
-class DisAssignee(Base):
-    __tablename__ = "disassignee"
-    id = Column(Unicode(36), primary_key=True)
-    type = Column(Unicode(10))
-    organization = Column(Unicode(256))
-    name_first = Column(Unicode(64))
-    name_last = Column(Unicode(64))
-    residence = Column(Unicode(10))
-    nationality = Column(Unicode(10))
-    assignees = relationship("Assignee", backref="disambig")
-
-    def __repr__(self):
-        if self.organization:
-            return_string = self.organization
-        else:
-            return_string = "{0} {1}".format(self.name_first, self.name_last)
-        return "<DisAssignee('{0}')>".format(unidecode(return_string))
-
-
-class DisInventor(Base):
-    __tablename__ = "disinventor"
-    id = Column(Unicode(36), primary_key=True)
-    name_last = Column(Unicode(64))
-    name_first = Column(Unicode(64))
-    nationality = Column(Unicode(10))
-    inventors = relationship("Inventor", backref="disambig")
-    location_id = Column(Unicode(256), ForeignKey("location.id"))
-
-    @hybrid_property
-    def name_full(self):
-        return "{first} {last}".format(
-            first=self.name_first,
-            last=self.name_last)
-
-    def __repr__(self):
-        return "<DisInventor('{0}')>".format(unidecode(self.name_full))
-
-
-class DisLawyer(Base):
-    __tablename__ = "dislawyer"
-    id = Column(Unicode(36), primary_key=True)
-    name_last = Column(Unicode(64))
-    name_first = Column(Unicode(64))
-    organization = Column(Unicode(64))
-    country = Column(Unicode(10))
-    lawyers = relationship("Lawyer", backref="disambig")
-
-    def __repr__(self):
-        data = []
-        if self.name_first:
-            data.append("{0} {1}".format(self.name_first, self.name_last))
-        if self.organization:
-            data.append(self.organization)
-        return "<DisLawyer('{0}')>".format(unidecode(", ".join(data)))
 
 
 # CLASSIFICATIONS ------------------
