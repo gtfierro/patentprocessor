@@ -36,7 +36,7 @@ ip.c.execute("""INSERT INTO invpat (
                        NCity,
                        NState,
                        NCountry,
-                       NZipcode,
+                       0,
                        NLat,
                        NLong,
                        Patent,

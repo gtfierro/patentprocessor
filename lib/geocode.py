@@ -36,7 +36,9 @@ def table_temp1_has_rows(cursor):
 def replace_loc(script):
 
     c.execute("DROP TABLE IF EXISTS temp1")
-    c.execute("CREATE TEMPORARY TABLE temp1 AS %s" % script)
+    c.execute("CREATE TEMPORARY TABLE temp1 (jaro_match_value FLOAT, count INTEGER, \
+        cityA TEXT, stateA TEXT, countryA TEXT, ncity, nstate, ncountry, nlat, nlong);")
+    c.execute("INSERT OR REPLACE INTO temp1 %s" % script)
     # Apparently, this tmp1_idx is either superfluous or redundant.
     #c.execute("CREATE INDEX IF NOT EXISTS tmp1_idx ON temp1 (CityA, StateA, CountryA, ZipcodeA)")
 

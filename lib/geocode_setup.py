@@ -261,18 +261,16 @@ def create_locMerge_table(cursor):
             City     VARCHAR,
             State    VARCHAR,
             Country  VARCHAR,
-            Zipcode  VARCHAR,
             NCity    VARCHAR,
             NState   VARCHAR,
             NCountry VARCHAR,
-            NZipcode VARCHAR,
             NLat     FLOAT,
             NLong    FLOAT,
             City3    VARCHAR,
-            UNIQUE(City, State, Country, Zipcode));
+            UNIQUE(City, State, Country));
 
         CREATE INDEX IF NOT EXISTS okM_idxCC ON locMerge (City,Country);
-        CREATE INDEX IF NOT EXISTS okM_idx   ON locMerge (City,State,Country,Zipcode);
+        CREATE INDEX IF NOT EXISTS okM_idx   ON locMerge (City,State,Country);
         CREATE INDEX IF NOT EXISTS okM_idxCS ON locMerge (City,State);
         CREATE INDEX IF NOT EXISTS okM_idx3  ON locMerge (City3,State,Country);
         """)
