@@ -23,7 +23,10 @@ class PatentGrant(object):
         parser.setFeature(xml_driver.handler.feature_external_ges, False)
         l = xml.sax.xmlreader.Locator()
         xh.setDocumentLocator(l)
-        parser.parse(StringIO(xml_string))
+        if is_string:
+            parser.parse(StringIO(xml_string))
+        else:
+            parser.parse(filename)
         self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
 
         self.country = self.xml.publication_reference.contents_of('country')[0]
@@ -40,15 +43,15 @@ class PatentGrant(object):
         self.code_app = self.xml.contents_of('us_application_series_code')[0]
         self.clm_num = self.xml.contents_of('number_of_claims')[0]
         self.classes = self._classes()
-        self.abstract = xh.root.us_patent_grant.abstract.contents_of('p', '')
+        self.abstract = "\n".join(xh.root.us_patent_grant.abstract.contents_of('p', ''))
         self.invention_title = self._invention_title()
 
         # To depreciate >>>>>>
-        #self.asg_list = self._asg_list()
-        #self.cit_list = self._cit_list()
-        #self.rel_list = self._rel_list()
-        #self.inv_list = self._inv_list()
-        #self.law_list = self._law_list()
+        self.asg_list = self._asg_list()
+        self.cit_list = self._cit_list()
+        self.rel_list = self._rel_list()
+        self.inv_list = self._inv_list()
+        self.law_list = self._law_list()
         # <<<<<<
 
         # To consolidate with above? >>>>>>
@@ -128,6 +131,7 @@ class PatentGrant(object):
             print inst, datestring
             return None
 
+    # To depreciate >>>>>>
     def _asg_list(self):
         doc = self.xml.assignees.assignee
         data = []
@@ -252,6 +256,7 @@ class PatentGrant(object):
             data.append(lawyer.contents_of('orgname', as_string=True))
             res.append(data)
         return res
+    # <<<<<<
 
     def assignee_list(self):
         """
@@ -276,9 +281,8 @@ class PatentGrant(object):
         for i, assignee in enumerate(assignees):
             # add assignee data
             asg = {}
+            asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('orgname', as_string=True)
-            if not asg['organization']:
-                asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['role'] = assignee.contents_of('role', as_string=True)
             asg['nationality'] = assignee.nationality.contents_of('country')[0]
             asg['residence'] = assignee.nationality.contents_of('country')[0]

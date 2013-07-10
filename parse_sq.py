@@ -10,8 +10,11 @@ import alchemy
 from argconfig_parse import ArgHandler
 from ConfigParser import ConfigParser
 from datetime import datetime
-from grant_handler import PatentGrant
-
+from lib.handlers.grant_handler import PatentGrant
+#2012 should look OK
+#from lib.handlers.grant_handler_v42 import PatentGrant
+#2013 should look OK
+#from lib.handlers.grant_handler_v44 import PatentGrant
 
 def xml_gen(obj):
     """
@@ -47,7 +50,7 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
             except Exception as inst:
                 print " *", inst
             if patobj:
-                func(patobj, override=False, temp=False)
+                alchemy.add(patobj, override=False, temp=False)
             if (i + 1) % commit == 0:
                 print " *", datetime.now() - t, ":", (i+1), filename
                 alchemy.commit()
