@@ -7,7 +7,7 @@ import unittest
 from xml.sax import make_parser, handler
 from cgi import escape as html_escape
 
-sys.path.append('../lib/')
+sys.path.append('../lib/handlers/')
 from xml_driver import XMLElement, XMLHandler
 
 # Directory of test files

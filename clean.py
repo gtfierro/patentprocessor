@@ -10,7 +10,7 @@ import lib.senAdd as senAdd
 import lib.fwork as fwork
 import lib.locFunc as locFunc
 import lib.orgClean as orgClean
-from lib.xml_util import normalize_document_identifier
+from lib.handlers.xml_util import normalize_document_identifier
 
 debug = False
 #debug = True
@@ -40,8 +40,8 @@ s.conn.create_function("cc", 3, locFunc.cityctry)
 def normalize_doc_numbers():
     citation_table = SQLite.SQLite('citation.sqlite3')
     citation_table.conn.create_function('normalize_document_identifier', 1, normalize_document_identifier)
-    citation_table.attach('citation')
-    citation_table.c.execute('update citation set Citation=normalize_document_identifier(Citation);')
+    citation_table.attach('citation.sqlite3')
+    citation_table.conn.execute('update citation set Citation=normalize_document_identifier(Citation);')
     citation_table.commit()
     citation_table.close()
 
