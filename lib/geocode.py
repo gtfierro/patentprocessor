@@ -28,7 +28,11 @@ print "Finish setup for geocoding: ", datetime.datetime.now()
 #exit()
 
 
+
 # TODO: Unit test extensively.
+def table_temp1_has_rows(cursor):
+    return cursor.execute("SELECT count(*) FROM temp1").fetchone()[0] > 0
+
 def replace_loc(script):
 
     c.execute("DROP TABLE IF EXISTS temp1")
@@ -39,7 +43,7 @@ def replace_loc(script):
     #print_table_info(c)
 
     # TODO: Which tables will pass this conditional?
-    if geocode_replace_loc.table_temp1_has_rows(c):
+    if table_temp1_has_rows(c):
         geocode_replace_loc.create_loc_and_locmerge_tables(c)
         geocode_replace_loc.print_loc_and_merge(c)
 
@@ -52,14 +56,14 @@ print "Loc =", c.execute("select count(*) from loctbl.loc").fetchone()[0]
 # TODO: Refactor the range call into it's own function, unit test
 # that function extensively.
 # TODO: Figure out what these hardcoded parameters mean.
-for scnt in range(-1, c.execute("select max(sep_cnt(city)) from loctbl.loc").fetchone()[0]+1):
+for scnt in range(-1, c.execute("select max(separator_count(city)) from loctbl.loc").fetchone()[0]+1):
 
     sep = scnt
     print "------", scnt, "------"
     replace_loc(geocode_replace_loc.domestic_sql()                     % (sep, scnt))
     replace_loc(geocode_replace_loc.domestic_block_remove_sql()        % (sep, scnt))
-    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, "10.92", scnt))
-    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, "10.90", scnt))
+    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, geocode_setup.FIRST3_JARO_REQUIRED, scnt))
+    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, geocode_setup.LAST4_JARO_REQUIRED, scnt))
     replace_loc(geocode_replace_loc.foreign_full_name_1_sql()          % (sep, scnt))
     replace_loc(geocode_replace_loc.foreign_full_name_2_sql()          % (sep, scnt))
     replace_loc(geocode_replace_loc.foreign_short_form_sql()           % (sep, scnt))

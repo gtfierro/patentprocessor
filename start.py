@@ -1,27 +1,111 @@
 import re
+import os
 import sys
 import parse
 import time
 import itertools
 import datetime
 from IPython.parallel import Client
+import requests
+import zipfile
+import cStringIO as StringIO
+from BeautifulSoup import BeautifulSoup as bs
 
 sys.path.append('lib')
-from patSQL import *
+import lib.patSQL as patSQL
 from config_parser import get_config_options
 
-assignee_table = AssigneeSQL()
-citation_table = CitationSQL()
-class_table = ClassSQL()
-inventor_table = InventorSQL()
-patent_table = PatentSQL()
-patdesc_table = PatdescSQL()
-lawyer_table = LawyerSQL()
-sciref_table = ScirefSQL()
-usreldoc_table = UsreldocSQL()
+# table bookkeeping for the parse script
 
-xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \
-              PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
+assignee_table = patSQL.AssigneeSQL()
+citation_table = patSQL.CitationSQL()
+class_table = patSQL.ClassSQL()
+inventor_table = patSQL.InventorSQL()
+patent_table = patSQL.PatentSQL()
+patdesc_table = patSQL.PatdescSQL()
+lawyer_table = patSQL.LawyerSQL()
+sciref_table = patSQL.ScirefSQL()
+usreldoc_table = patSQL.UsreldocSQL()
+
+xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
+              patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
+              patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
+
+def get_year_list(yearstring):
+    """
+    Given a [yearstring] of forms
+    year1
+    year1-year2
+    year1,year2,year3
+    year1-year2,year3-year4
+    Expands into a list of year integers, and returns
+    """
+    years = []
+    for subset in yearstring.split(','):
+        if subset == 'latest':
+            years.append('latest')
+            continue
+        sublist = subset.split('-')
+        start = int(sublist[0])
+        end = int(sublist[1])+1 if len(sublist) > 1 else start+1
+        years.extend(range(start,end))
+    return years
+
+def generate_download_list(years):
+    """
+    Given the year string from the configuration file, return
+    a list of urls to be downloaded
+    """
+    if not years: return []
+    urls = []
+    url = requests.get('https://www.google.com/googlebooks/uspto-patents-grants-text.html')
+    soup = bs(url.content)
+    years = get_year_list(years)
+
+    # latest file link
+    if 'latest' in years:
+        a = soup.h3.findNext('h3').findPrevious('a')
+        urls.append(a['href'])
+        years.remove('latest')
+    # get year links
+    for year in years:
+        header = soup.find('h3', {'id': str(year)})
+        a = header.findNext()
+        while a.name != 'h3':
+            urls.append(a['href'])
+            a = a.findNext()
+    return urls
+
+def download_files():
+    """
+    [downloaddir]: string representing base download directory. Will download
+    files to this directory in folders named for each year
+    Returns: False if files were not downloaded or if there was some error,
+    True otherwise
+    """
+    import os
+    import requests
+    import zipfile
+    import cStringIO as StringIO
+    if not (downloaddir and urls): return False
+    complete = True
+    print 'downloading to',downloaddir
+    for url in urls:
+        filename = url.split('/')[-1].replace('zip','xml')
+        if filename in os.listdir(downloaddir):
+            print 'already have',filename
+            continue
+        print 'downloading',url
+        try:
+            r = requests.get(url)
+            z = zipfile.ZipFile(StringIO.StringIO(r.content))
+            print 'unzipping',filename
+            z.extractall(downloaddir)
+        except:
+            print 'ERROR: downloading or unzipping',filename
+            complete = False
+            continue
+    return complete
 
 def connect_client():
     """
@@ -35,7 +119,7 @@ def connect_client():
             dview = c[:]
             break
         except:
-            time.sleep(5)
+            time.sleep(2)
             continue
     return dview
 
@@ -44,37 +128,60 @@ def run_parse():
     import time
     import sys
     import itertools
-    parsed_xmls = parse.parallel_parse(files)
-    parsed_grants = parse.parse_patent(parsed_xmls)
+    parsed_xmls = parse.parse_files(files)
+    parsed_grants = parse.parse_patents(parsed_xmls)
     parse.build_tables(parsed_grants)
     return parse.get_inserts()
 
+# TODO: these don't work
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
-        execfile('clean.py')
+        import clean
 
 def run_consolidate(process_config):
     if process_config['consolidate']:
         print 'Running consolidate...'
-        execfile('consolidate.py')
+        import consolidate
 
-s = datetime.datetime.now()
-# accepts path to configuration file as command line option
-process_config, parse_config = get_config_options(sys.argv[1])
-print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
-files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
-print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
-dview = connect_client()
-dview.block=True
-dview.scatter('files',files)
-dview['process_config'] = process_config
-dview['parse_config'] = parse_config
-print 'Running parse...'
-inserts = list(itertools.chain.from_iterable(dview.apply(run_parse)))
-parse.commit_tables(inserts)
-f = datetime.datetime.now()
-print 'Finished parsing in {0}'.format(str(f-s))
-run_clean(process_config)
-run_consolidate(process_config)
-parse.move_tables(process_config['outputdir'])
+if __name__=='__main__':
+    s = datetime.datetime.now()
+    # accepts path to configuration file as command line option
+    process_config, parse_config = get_config_options(sys.argv[1])
+
+    # connect to ipcluster and get config options
+    dview = connect_client()
+    dview.block=True
+    dview['process_config'] = process_config
+    dview['parse_config'] = parse_config
+
+    # download the files to be parsed
+    urls = generate_download_list(parse_config['years'])
+    dview.scatter('urls', urls)
+    # check download directory
+    downloaddir = parse_config['downloaddir']
+    if downloaddir and not os.path.exists(downloaddir):
+        os.makedirs(downloaddir)
+    dview['downloaddir'] = parse_config['downloaddir']
+    dview.apply(download_files)
+    print 'Downloaded files:',parse_config['years']
+    f = datetime.datetime.now()
+    print 'Finished downloading in {0}'.format(str(f-s))
+
+    # find files
+    print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
+    files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
+    dview.scatter('files',files)
+    print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
+
+    # run parse and commit SQL
+    print 'Running parse...'
+    inserts = list(itertools.chain.from_iterable(dview.apply(run_parse)))
+    parse.commit_tables(inserts)
+    f = datetime.datetime.now()
+    print 'Finished parsing in {0}'.format(str(f-s))
+
+    # run extra phases if needed, then move output files
+    run_clean(process_config)
+    run_consolidate(process_config)
+    parse.move_tables(process_config['outputdir'])
