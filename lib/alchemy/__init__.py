@@ -6,14 +6,15 @@ from sqlalchemy.orm import sessionmaker
 from schema import *
 
 
-def fetch_engine():
+def fetch_session(db=None):
     """
     Read from config.ini file and load appropriate database
     """
     echo = False
     config = ConfigParser.ConfigParser()
     config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
-    db = config.get('global', 'database')
+    if not db:
+        db = config.get('global', 'database')
     if db[:6] == "sqlite":
         engine = create_engine('sqlite:///{0}'.format(config.get(db, 'database')), echo=echo)
     else:
@@ -22,7 +23,10 @@ def fetch_engine():
             config.get(db, 'password'),
             config.get(db, 'host'),
             config.get(db, 'database')), echo=echo)
-    return engine
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    return session
 
 
 def add(obj, override=True, temp=False):
@@ -62,24 +66,24 @@ def add(obj, override=True, temp=False):
 
     #+asg
     for asg, loc in obj.assignee_list():
-        asg = Assignee(**asg)
-        loc = Location(**loc)
+        asg = RawAssignee(**asg)
+        loc = RawLocation(**loc)
         session.merge(loc)
-        asg.location = loc
-        pat.assignees.append(asg)
+        asg.rawlocation = loc
+        pat.rawassignees.append(asg)
 
     #+inv
     for inv, loc in obj.inventor_list():
-        inv = Inventor(**inv)
-        loc = Location(**loc)
+        inv = RawInventor(**inv)
+        loc = RawLocation(**loc)
         session.merge(loc)
-        inv.location = loc
-        pat.inventors.append(inv)
+        inv.rawlocation = loc
+        pat.rawinventors.append(inv)
 
     #+law
     for law in obj.lawyer_list():
-        law = Lawyer(**law)
-        pat.lawyers.append(law)
+        law = RawLawyer(**law)
+        pat.rawlawyers.append(law)
 
     #+usreldoc
     for usr in obj.us_relation_list():
@@ -164,7 +168,4 @@ def commit():
         print str(e)
 
 
-engine = fetch_engine()
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
-session = Session()
+session = fetch_session()
