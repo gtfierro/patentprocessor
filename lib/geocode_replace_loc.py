@@ -179,7 +179,7 @@ def domestic_last4_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (10+jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
+    stmt = """SELECT  (jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
                 b.BlkCity)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,

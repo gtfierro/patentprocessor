@@ -4,7 +4,7 @@ import re
 import fwork
 
 FIRST3_JARO_REQUIRED="0.92"
-LAST4_JARO_REQUIRED="10.90"
+LAST4_JARO_REQUIRED="0.90"
 
 def get_first3_jaro_required():
     return FIRST3_JARO_REQUIRED
