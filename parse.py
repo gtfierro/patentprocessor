@@ -51,6 +51,7 @@ def _get_parser(date):
     for daterange in xmlhandlers.iterkeys():
         if daterange[0] <= date <= daterange[1]:
             return xmlhandlers[daterange]
+    return xmlhandlers['default']
 
 def extract_xml_strings(filename):
     """
