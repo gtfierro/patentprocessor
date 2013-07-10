@@ -6,6 +6,20 @@ import fwork
 FIRST3_JARO_REQUIRED="0.92"
 LAST4_JARO_REQUIRED="0.90"
 
+def get_jaro_required(replacement_operation):
+    if replacement_operation=='domestic_first3':
+        return "0.92"
+    elif replacement_operation=='domestic_last4':
+        return "0.90"
+    elif replacement_operation=='foreign_first3':
+        return "0.92"
+    elif replacement_operation=='foreign_last4':
+        return "0.90"
+    elif replacement_operation=='domestic_first3_2nd':
+        return "0.95"
+    elif replacement_operation=='foreign_first3_2nd':
+        return "0.95"
+
 def get_first3_jaro_required():
     return FIRST3_JARO_REQUIRED
 

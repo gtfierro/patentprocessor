@@ -309,7 +309,7 @@ def foreign_first3_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (20+jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
+    stmt = """SELECT  (jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
                 b.sort_name_ro)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -338,7 +338,7 @@ def foreign_last4_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (20+jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
+    stmt = """SELECT  (jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
                 b.sort_name_ro)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -391,7 +391,7 @@ def domestic_first3_2nd_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  14+jarow(remove_spaces(a.NCity),
+    stmt = """SELECT  jarow(remove_spaces(a.NCity),
                 b.BlkCity) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
@@ -487,7 +487,7 @@ def foreign_first3_2nd_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  24+jarow(remove_spaces(a.NCity),
+    stmt = """SELECT  jarow(remove_spaces(a.NCity),
                 b.sort_name_ro) AS Jaro,
                 a.cnt     AS cnt,
                 a.city    AS CityA,

@@ -62,14 +62,14 @@ for scnt in range(-1, c.execute("select max(separator_count(city)) from loctbl.l
     print "------", scnt, "------"
     replace_loc(geocode_replace_loc.domestic_sql()                     % (sep, scnt))
     replace_loc(geocode_replace_loc.domestic_block_remove_sql()        % (sep, scnt))
-    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, geocode_setup.FIRST3_JARO_REQUIRED, scnt))
-    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, geocode_setup.LAST4_JARO_REQUIRED, scnt))
+    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, geocode_setup.get_jaro_required('domestic_first3'), scnt))
+    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('domestic_last4'), scnt))
     replace_loc(geocode_replace_loc.foreign_full_name_1_sql()          % (sep, scnt))
     replace_loc(geocode_replace_loc.foreign_full_name_2_sql()          % (sep, scnt))
     replace_loc(geocode_replace_loc.foreign_short_form_sql()           % (sep, scnt))
     replace_loc(geocode_replace_loc.foreign_block_split_sql()          % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_first3_jaro_winkler_sql()  % (sep, sep, "20.92", scnt))
-    replace_loc(geocode_replace_loc.foreign_last4_jaro_winkler_sql()   % (sep, sep, "20.90", scnt))
+    replace_loc(geocode_replace_loc.foreign_first3_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('foreign_first3'), scnt))
+    replace_loc(geocode_replace_loc.foreign_last4_jaro_winkler_sql()   % (sep, sep, geocode_setup.get_jaro_required('foreign_last4'), scnt))
 
 ### End of for loop
 
@@ -77,11 +77,11 @@ print "------ F ------"
 
 # TODO: Put these calls into a function.
 replace_loc(geocode_replace_loc.domestic_2nd_layer_sql())
-replace_loc(geocode_replace_loc.domestic_first3_2nd_jaro_winkler_sql() % ("14.95"))
+replace_loc(geocode_replace_loc.domestic_first3_2nd_jaro_winkler_sql() % (geocode_setup.get_jaro_required('domestic_first3_2nd')))
 replace_loc(geocode_replace_loc.foreign_full_name_2nd_layer_sql())
 replace_loc(geocode_replace_loc.foreign_full_nd_2nd_layer_sql())
 replace_loc(geocode_replace_loc.foreign_no_space_2nd_layer_sql())
-replace_loc(geocode_replace_loc.foreign_first3_2nd_jaro_winkler_sql()  % ("24.95"))
+replace_loc(geocode_replace_loc.foreign_first3_2nd_jaro_winkler_sql()  % (geocode_setup.get_jaro_required('foreign_first3_2nd')))
 replace_loc(geocode_replace_loc.domestic_zipcode_sql())
 
 conn.commit()
