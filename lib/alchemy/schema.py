@@ -22,13 +22,34 @@ Base.__init__ = init
 # <<<<<<
 
 
-# PATENT ---------------------------
+# ASSOCIATION ----------------------
 
+patentassignee = Table('patent_assignee', Base.metadata,
+    Column('patent_id', Unicode(20), ForeignKey('patent.id')),
+    Column('assignee_id', Unicode(36), ForeignKey('assignee.id'))
+)
 
 patentinventor = Table('patent_inventor', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
     Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
 )
+
+patentlawyer = Table('patent_lawyer', Base.metadata,
+    Column('patent_id', Unicode(20), ForeignKey('patent.id')),
+    Column('lawyer_id', Unicode(36), ForeignKey('lawyer.id'))
+)
+
+locationassignee = Table('location_assignee', Base.metadata,
+    Column('location_id', Unicode(256), ForeignKey('location.id')),
+    Column('assignee_id', Unicode(36), ForeignKey('assignee.id'))
+)
+
+locationinventor = Table('location_inventor', Base.metadata,
+    Column('location_id', Unicode(256), ForeignKey('location.id')),
+    Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
+)
+
+# PATENT ---------------------------
 
 
 class Patent(Base):
@@ -68,8 +89,9 @@ class Patent(Base):
         "USRelDoc",
         primaryjoin="Patent.id == USRelDoc.rel_id",
         backref="relpatent")
-    assignees = relationship("PatentAssignee", backref="patents")
+    assignees = relationship("Assignee", secondary=patentassignee, backref="patents")
     inventors = relationship("Inventor", secondary=patentinventor, backref="patents")
+    lawyers = relationship("Lawyer", secondary=patentlawyer, backref="patents")
 
     __table_args__ = (
         Index("pat_idx1", "type", "number", unique=True),
@@ -121,13 +143,10 @@ class RawLocation(Base):
     city = Column(Unicode(128))
     state = Column(Unicode(10), index=True)
     country = Column(Unicode(10), index=True)
-    latitude = Column(Float)
-    longitude = Column(Float)
     rawinventors = relationship("RawInventor", backref="rawlocation")
     rawassignees = relationship("RawAssignee", backref="rawlocation")
     __table_args__ = (
-        Index("loc_idx1", "latitude", "longitude"),
-        Index("loc_idx2", "city", "state", "country"),
+        Index("loc_idx1", "city", "state", "country"),
     )
 
     @hybrid_property
@@ -244,17 +263,6 @@ class RawLawyer(Base):
         if self.organization:
             data.append(self.organization)
         return "<RawLawyer('{0}')>".format(unidecode(", ".join(data)))
-
-
-# ASSOCIATIONS -----------------------
-
-
-class PatentAssignee(Base):
-    __tablename__ = 'patent_assignee'
-    patent_id = Column(Unicode(20), ForeignKey('patent.id'), primary_key=True)
-    assignee_id = Column(Unicode(36), ForeignKey('assignee.id'), primary_key=True)
-    sequence = Column(Integer)
-    assignee = relationship("Assignee", backref="patents")
 
 
 # DISAMBIGUATED -----------------------
