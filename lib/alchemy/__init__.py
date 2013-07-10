@@ -61,6 +61,9 @@ def add(obj, override=True, temp=False):
     #add
     # lots of abstracts seem to be missing. why?
 
+    print obj.pat["abstract"]
+    print "---------"
+
     pat = Patent(**obj.pat)
     pat.application = Application(**obj.app)
 
