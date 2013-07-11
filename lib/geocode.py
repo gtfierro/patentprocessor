@@ -27,10 +27,6 @@ print "Finish setup for geocoding: ", datetime.datetime.now()
 # executed as `python lib/geocode.py`
 #exit()
 
-# TODO: Unit test extensively.
-def table_temp1_has_rows(cursor):
-    return cursor.execute("SELECT count(*) FROM temp1").fetchone()[0] > 0
-
 def replace_loc(script):
 
     c.execute("DROP TABLE IF EXISTS temp1")
@@ -47,13 +43,18 @@ def replace_loc(script):
 
     conn.commit()
 
+# TODO: Unit test extensively.
+def table_temp1_has_rows(cursor):
+    return cursor.execute("SELECT count(*) FROM temp1").fetchone()[0] > 0
+
 
 print "Loc =", c.execute("select count(*) from loc").fetchone()[0]
 
 # TODO: Refactor the range call into it's own function, unit test
 # that function extensively.
 
-# Go through all of the components of each 
+# Each city is split using , and | as separators. This for loop goes through
+# each segment of each city and attempts to match it to a location.  
 for separator_count in range(-1, c.execute("select max(separator_count(city)) from loc").fetchone()[0]+1):
 
     sep = separator_count
