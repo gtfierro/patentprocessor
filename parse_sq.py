@@ -45,10 +45,14 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
     for filename in files:
         t = datetime.now()
         for i, xml_string in enumerate(xml_gen(open(filename, "rb"))):
-            date = filename.split("/")[1].split(".")[0][3:]
+            date = filename.split("/")[-1].split(".")[0][3:]
             if date < "130115":
+                if i == 0:
+                    print " <2013"
                 patobj = PatentGrant1(xml_string, is_string=True)
             else:
+                if i == 0:
+                    print ">=130115"
                 patobj = PatentGrant2(xml_string, is_string=True)
             alchemy.add(patobj, override=False, temp=False)
             if (i + 1) % commit == 0:

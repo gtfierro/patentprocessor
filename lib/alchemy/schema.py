@@ -454,26 +454,26 @@ class USRelDoc(Base):
 # TEMP REFERENCES ------------------
 
 
-class TempCitation(Base):
-    """
-    Two types of citations?
-    """
-    __tablename__ = "tempcitation"
-    uuid = Column(Unicode(36), primary_key=True)
-    patent_id = Column(Unicode(20))
-    citation_id = Column(Unicode(20))
-    date = Column(Date)
-    name = Column(Unicode(64))
-    kind = Column(Unicode(10))
-    number = Column(Unicode(64))
-    country = Column(Unicode(10))
-    category = Column(Unicode(20))
-    sequence = Column(Integer)
+# class TempCitation(Base):
+#     """
+#     Two types of citations?
+#     """
+#     __tablename__ = "tempcitation"
+#     uuid = Column(Unicode(36), primary_key=True)
+#     patent_id = Column(Unicode(20))
+#     citation_id = Column(Unicode(20))
+#     date = Column(Date)
+#     name = Column(Unicode(64))
+#     kind = Column(Unicode(10))
+#     number = Column(Unicode(64))
+#     country = Column(Unicode(10))
+#     category = Column(Unicode(20))
+#     sequence = Column(Integer)
 
 
-class TempOtherReference(Base):
-    __tablename__ = "tempotherreference"
-    uuid = Column(Unicode(36), primary_key=True)
-    patent_id = Column(Unicode(20))
-    text = deferred(Column(UnicodeText))
-    sequence = Column(Integer)
+# class TempOtherReference(Base):
+#     __tablename__ = "tempotherreference"
+#     uuid = Column(Unicode(36), primary_key=True)
+#     patent_id = Column(Unicode(20))
+#     text = deferred(Column(UnicodeText))
+#     sequence = Column(Integer)

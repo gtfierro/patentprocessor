@@ -1,6 +1,6 @@
 import os
+import glob
 import pickle
-from datetime import datetime
 from ConfigParser import ConfigParser
 from IPython.parallel import Client
 
@@ -16,24 +16,13 @@ print rc.ids
 def fetch():
     import os
     os.chdir(node)
+    os.system("rm *.xml")
+    os.system("rm *.zip")
+
     for i, f in enumerate(files):
         fname = f.split("/")[-1].split(".")[0]
-        if not os.path.exists("{0}.xml".format(fname)):
-            os.system("wget {0}".format(f))
-            os.system("unzip {0}.zip".format(fname))
-    #         os.chdir(master)
-    #         os.system("python parse_sq.py -p {0} --xmlregex {1} >> tar/{2}.log".format(node, fname, ids))
-    #         os.system("mysqldump -root uspto -T /var/lib/mysql/uspto")
-    #         os.chdir("/var/lib/mysql/uspto")
-    #         os.system("tar -czf {0}.tar.gz *.txt".format(fname))
-    #         for txts in glob.glob("*.txt"):
-    #             os.system("cat {0} >> {0}.full".format(txts))
-    #         os.system("rm *.txt")
-    #         os.system("scp {0}.tar.gz {1}/tar".format(fname, master))
-
-    # os.chdir("/var/lib/mysql/uspto")
-    # os.system("tar -czf {0}.tar.gz *.txt.full".format(ids))
-    # os.system("mv {0}.tar.gz {1}/tar".format(ids, master))
+        os.system("wget {0}".format(f))
+        os.system("unzip {0}.zip".format(fname))
 
 
 fname = open("{0}/urls.pickle".format(config.get('directory', 'sqlalchemy')), "rb")
@@ -49,7 +38,16 @@ dview["node"] = node
 full = []
 for year in urls.keys():
     full.extend(urls[year])
-dview.scatter("files", full)
+
+files = glob.glob("/home/sgeadmin/patentprocessor/tar/*.tar.gz")
+files = [x.split("/")[-1].split(".")[0] for x in files]
+
+fullc = []
+for url in full:
+    if url.split("/")[-1].split(".")[0] in files:
+        fullc.append(url)
+
+dview.scatter("files", fullc)
 fetch()
 
 #sudo apt-get install -y python-mysqldb python-pip sqlite3

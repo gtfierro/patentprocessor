@@ -23,7 +23,7 @@ class ChainList(list):
         for item in self:
             res.extend(item.contents_of(tag, upper=upper))
         if as_string:
-            res = [r for r in res if r]
+            res = [r for r in res if type(r).__name__ not in ('tuple', 'list')]
             return ' '.join(res) if res else ''
         return ChainList(res) if res else default
 
