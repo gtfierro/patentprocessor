@@ -58,7 +58,7 @@ class TestGeocodeSetup(unittest.TestCase):
         geocode_setup.create_usloc_table(self.c)
         rows = self.c.execute('select * from usloc').fetchall()
         element = rows[0][0]
-        self.assertTrue(0 == element, "{0} should be {1}".format(element,0))
+        self.assertTrue('' == element, "{0} should be {1}".format(element,''))
         element = rows[3][3]
         self.assertTrue('ABEL' == element,"{0} should be {1}".format(element, 'ABEL'))
 

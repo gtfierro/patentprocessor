@@ -46,7 +46,7 @@ class TestGeocodeReplaceLoc(unittest.TestCase):
         query = geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (-1, -1, geocode_setup.get_jaro_required('domestic_first3'), -1)
         result = self.cursor.execute(query)
         rows = result.fetchall()
-        element = rows[6][6]
+        element = rows[6][5]
         self.assertTrue('LOGAN'==element,"{0} should be {1}".format(element,'LOGAN'))
         pass
 
