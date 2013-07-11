@@ -482,6 +482,18 @@ def foreign_first3_2nd_jaro_winkler_sql():
       ORDER BY  a.NCity, a.NCountry, jaro"""
     return stmt;
 
+#Used if the state was miscoded as the country
+def foreign_recode_to_domestic_sql():
+    print sys._getframe().f_code.co_name
+    stmt = """SELECT  31,
+                a.cnt, a.city, a.state, a.country, a.zipcode,
+                b.city, b.state, 'US', b.zipcode, b.lat, b.long
+          FROM  loc AS a INNER JOIN usloc AS b
+            ON  GET_ENTRY_FROM_ROW(a.City, %d)=b.city AND a.country=b.state
+         WHERE  separator_count(a.City)>=%d AND a.City!=''"""
+    return stmt;
+         
+
 
 # def domestic_zipcode_sql():
 # 
@@ -509,17 +521,6 @@ def foreign_first3_2nd_jaro_winkler_sql():
 #     return stmt;
 
 
-# TODO: Add this block to its own function, add a commented out call to
-# to that function here.
-####    ##DOMESTIC (State miscode to Country)
-####    replace_loc("""
-####        SELECT  31,
-####                a.cnt, a.city, a.state, a.country, a.zipcode,
-####                b.city, b.state, 'US', b.zipcode, b.lat, b.long
-####          FROM  loc AS a INNER JOIN usloc AS b
-####            ON  GET_ENTRY_FROM_ROW(a.City, %d)=b.city AND a.country=b.state
-####         WHERE  separator_count(a.City)>=%d AND a.City!="";
-####        """ % (sep, scnt))
 
 
 ##MISSING JARO (FIRST 3)
