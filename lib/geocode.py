@@ -27,8 +27,6 @@ print "Finish setup for geocoding: ", datetime.datetime.now()
 # executed as `python lib/geocode.py`
 #exit()
 
-
-
 # TODO: Unit test extensively.
 def table_temp1_has_rows(cursor):
     return cursor.execute("SELECT count(*) FROM temp1").fetchone()[0] > 0
