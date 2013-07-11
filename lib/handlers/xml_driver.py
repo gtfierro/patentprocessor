@@ -6,6 +6,7 @@ Python's xml.sax module.  Works in conjunction with lib/xml_util.py, which
 provides useful helper methods to handle the parsed data.
 """
 
+import functools
 from collections import deque
 from xml.sax import make_parser, handler
 import xml_util
@@ -17,10 +18,10 @@ class ChainList(list):
     a list in order to traverse the tree.
     """
 
-    def contents_of(self, tag, default=[''], as_string=False):
+    def contents_of(self, tag, default=[''], as_string=False, upper=True):
         res = []
         for item in self:
-            res.extend( item.contents_of(tag) )
+            res.extend(item.contents_of(tag, upper=upper))
         if as_string:
             return ' '.join(res) if res else ''
         return ChainList(res) if res else default
@@ -89,11 +90,11 @@ class XMLElement(object):
                 return ' '.join(res)
         return res
 
-    def get_content(self):
+    def get_content(self, upper=True):
         if len(self.content) == 1:
-            return xml_util.clean(self.content[0])
+            return xml_util.clean(self.content[0], upper=upper)
         else:
-            return map(xml_util.clean, self.content)
+            return map(functools.partial(xml_util.clean, upper=upper), self.content)
 
     def put_content(self, content, lastlinenumber, linenumber):
         if not self.content or lastlinenumber != linenumber:
@@ -104,8 +105,8 @@ class XMLElement(object):
     def add_child(self, child):
         self.children.append(child)
 
-    def get_attribute(self, key):
-        return xml_util.clean(self._attributes.get(key, None))
+    def get_attribute(self, key, upper=True):
+        return xml_util.clean(self._attributes.get(key, None), upper=upper)
 
     def get_xmlelements(self, name):
         return filter(lambda x: x._name == name, self.children) \
