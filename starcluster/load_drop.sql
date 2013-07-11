@@ -5,7 +5,6 @@ drop table patent_lawyer;
 drop table location_assignee;
 drop table location_inventor;
 drop table rawassignee;
-drop table rawcitation;
 drop table rawinventor;
 drop table rawlawyer;
 drop table rawlocation;
