@@ -23,6 +23,7 @@ class ChainList(list):
         for item in self:
             res.extend(item.contents_of(tag, upper=upper))
         if as_string:
+            res = [r for r in res if r]
             return ' '.join(res) if res else ''
         return ChainList(res) if res else default
 
@@ -80,7 +81,7 @@ class XMLElement(object):
     def contents_of(self, key, default=ChainList(''), as_string=False, upper=True):
         candidates = self.__getattr__(key)
         if candidates:
-            res = [x.get_content() for x in candidates]
+            res = [x.get_content(upper=upper) for x in candidates]
         else:
             res = default
         if as_string:
