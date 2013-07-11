@@ -38,7 +38,7 @@ def replace_loc(script):
     c.execute("DROP TABLE IF EXISTS temp1")
     c.execute("CREATE TEMPORARY TABLE temp1 (jaro_match_value FLOAT, count INTEGER, \
         cityA TEXT, stateA TEXT, countryA TEXT, ncity TEXT, nstate TEXT, ncountry TEXT, nlat FLOAT, nlong FLOAT);")
-    c.execute("INSERT OR REPLACE INTO temp1 %s" % script)
+    c.execute("INSERT OR REPLACE INTO temp1 %s;" % script)
 
     #print_table_info(c)
 
@@ -50,13 +50,13 @@ def replace_loc(script):
     conn.commit()
 
 
-# Prefixed tablename (loc) with with dbname (also loc)
-print "Loc =", c.execute("select count(*) from loctbl.loc").fetchone()[0]
+print "Loc =", c.execute("select count(*) from loc").fetchone()[0]
 
 # TODO: Refactor the range call into it's own function, unit test
 # that function extensively.
 
-for separator_count in range(-1, c.execute("select max(separator_count(city)) from loctbl.loc").fetchone()[0]+1):
+# Go through all of the components of each 
+for separator_count in range(-1, c.execute("select max(separator_count(city)) from loc").fetchone()[0]+1):
 
     sep = separator_count
     print "------", separator_count, "------"
