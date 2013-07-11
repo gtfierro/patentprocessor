@@ -43,7 +43,7 @@ class TestGeocodeReplaceLoc(unittest.TestCase):
         pass
 
     def test_domestic_first3_jaro_winkler_sql(self):
-        query = geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (-1, -1, geocode_setup.get_first3_jaro_required(), -1)
+        query = geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (-1, -1, geocode_setup.get_jaro_required('domestic_first3'), -1)
         result = self.cursor.execute(query)
         rows = result.fetchall()
         element = rows[6][6]
@@ -51,7 +51,7 @@ class TestGeocodeReplaceLoc(unittest.TestCase):
         pass
 
     def test_domestic_last4_jaro_winkler_sql(self):
-        query = geocode_replace_loc.domestic_last4_jaro_winkler_sql() % (-1, -1, geocode_setup.get_last4_jaro_required(), -1)
+        query = geocode_replace_loc.domestic_last4_jaro_winkler_sql() % (-1, -1, geocode_setup.get_jaro_required('domestic_last4'), -1)
         result = self.cursor.execute(query)
         rows = result.fetchall()
         element = rows[8][4]

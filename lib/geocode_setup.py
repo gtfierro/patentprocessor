@@ -3,9 +3,6 @@
 import re
 import fwork
 
-FIRST3_JARO_REQUIRED="0.92"
-LAST4_JARO_REQUIRED="0.90"
-
 def get_jaro_required(replacement_operation):
     if replacement_operation=='domestic_first3':
         return "0.92"
@@ -19,12 +16,6 @@ def get_jaro_required(replacement_operation):
         return "0.95"
     elif replacement_operation=='foreign_first3_2nd':
         return "0.95"
-
-def get_first3_jaro_required():
-    return FIRST3_JARO_REQUIRED
-
-def get_last4_jaro_required():
-    return LAST4_JARO_REQUIRED
 
 #return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
 def get_entry_from_row(row, i):
