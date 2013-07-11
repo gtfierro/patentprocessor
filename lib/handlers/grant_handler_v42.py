@@ -43,7 +43,7 @@ class PatentGrant(object):
         self.code_app = self.xml.contents_of('us_application_series_code')[0]
         self.clm_num = self.xml.contents_of('number_of_claims')[0]
         self.classes = self._classes()
-        self.abstract = xh.root.us_patent_grant.abstract.contents_of('p', as_string=True, upper=False)
+        self.abstract = xh.root.us_patent_grant.abstract.contents_of('p', '', as_string=True, upper=False)
         self.invention_title = self._invention_title()
 
         # To depreciate >>>>>>
