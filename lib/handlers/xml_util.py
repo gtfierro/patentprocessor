@@ -9,6 +9,7 @@ from itertools import izip
 from unicodedata import normalize
 from cgi import escape
 
+
 def flatten(ls_of_ls):
     """
     Takes in a list of lists, returns a new list of lists
@@ -108,7 +109,7 @@ def associate_prefix(firstname, lastname):
     last = prefix+space+lastname
     return name, last
 
-def clean(string, upper=False):
+def clean(string, upper=True):
     """
     Applies a subset of the above functions in the correct order
     and returns the string in all uppercase.
