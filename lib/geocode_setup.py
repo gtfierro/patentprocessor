@@ -223,7 +223,7 @@ def create_loc_indexes(cursor):
 def create_usloc_table(cursor):
     cursor.executescript("""
         CREATE TABLE IF NOT EXISTS usloc AS
-            SELECT  0 as Zipcode,
+            SELECT  '' as Zipcode,
                     Latitude,
                     Longitude,
                     UPPER(City)                        AS City,
@@ -261,9 +261,11 @@ def create_locMerge_table(cursor):
             City     VARCHAR,
             State    VARCHAR,
             Country  VARCHAR,
+            Zipcode  VARCHAR,
             NCity    VARCHAR,
             NState   VARCHAR,
             NCountry VARCHAR,
+            NZipcode VARCHAR,
             NLat     FLOAT,
             NLong    FLOAT,
             City3    VARCHAR,

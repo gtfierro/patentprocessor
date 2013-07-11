@@ -37,10 +37,8 @@ def replace_loc(script):
 
     c.execute("DROP TABLE IF EXISTS temp1")
     c.execute("CREATE TEMPORARY TABLE temp1 (jaro_match_value FLOAT, count INTEGER, \
-        cityA TEXT, stateA TEXT, countryA TEXT, ncity, nstate, ncountry, nlat, nlong);")
+        cityA TEXT, stateA TEXT, countryA TEXT, ncity TEXT, nstate TEXT, ncountry TEXT, nlat FLOAT, nlong FLOAT);")
     c.execute("INSERT OR REPLACE INTO temp1 %s" % script)
-    # Apparently, this tmp1_idx is either superfluous or redundant.
-    #c.execute("CREATE INDEX IF NOT EXISTS tmp1_idx ON temp1 (CityA, StateA, CountryA, ZipcodeA)")
 
     #print_table_info(c)
 
@@ -84,7 +82,6 @@ replace_loc(geocode_replace_loc.foreign_full_name_2nd_layer_sql())
 replace_loc(geocode_replace_loc.foreign_full_nd_2nd_layer_sql())
 replace_loc(geocode_replace_loc.foreign_no_space_2nd_layer_sql())
 replace_loc(geocode_replace_loc.foreign_first3_2nd_jaro_winkler_sql()  % (geocode_setup.get_jaro_required('foreign_first3_2nd')))
-#replace_loc(geocode_replace_loc.domestic_zipcode_sql())
 
 conn.commit()
 c.close()

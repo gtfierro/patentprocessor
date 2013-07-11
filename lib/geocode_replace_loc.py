@@ -45,8 +45,19 @@ def update_table_locmerge(cursor):
 
         INSERT OR REPLACE INTO locMerge
             SELECT  b.cnt,
-                    a.*,
-                    SUBSTR(a.CityA,1,3)
+                    a.jaro_match_value,
+                    a.count,
+                    a.cityA,
+                    a.stateA,
+                    a.countryA,
+                    '',
+                    a.ncity,
+                    a.nstate,
+                    a.ncountry,
+                    '',
+                    a.nlat,
+                    a.nlong,
+                    SUBSTR(a.cityA,1,3)
 
               FROM  temp1 AS a
         INNER JOIN  temp2 AS b

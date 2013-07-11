@@ -90,7 +90,7 @@ def run_org_clean():
     print "DONE: Replaced Asgnum!", "\n   -", datetime.datetime.now()-t1
     s.c.execute("""update assignee_1 set City = cc(city, country, 'city'), Country = cc(city, country, 'ctry');""")
     s.attach('hashTbl.sqlite3')
-    s.merge(key=['NCity', 'NState', 'NCountry', 'NLat', 'NLong'],
+    s.merge(key=['NCity', 'NState', 'NCountry', 'NZipcode', 'NLat', 'NLong'],
             on=['City', 'State', 'Country'],
             tableFrom='locMerge', db='db')
     s.commit()
@@ -134,7 +134,7 @@ def handle_inventor():
     print 'inventor_1 created'
 
     i.attach('hashTbl.sqlite3')
-    i.merge(key=['NCity', 'NState', 'NCountry', 'NLat', 'NLong'],
+    i.merge(key=['NCity', 'NState', 'NCountry', 'NZipcode', 'NLat', 'NLong'],
             on=['City', 'State', 'Country'],
             tableFrom='locMerge',
             db='db')
