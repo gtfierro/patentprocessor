@@ -1,3 +1,5 @@
+#cd /home/sgeadmin/patentprocessor/starcluster; sh load_pre.sh > ../tar/2.log
+
 cd /mnt/sgeadmin
 for i in `ls *.xml`
     do echo $i
