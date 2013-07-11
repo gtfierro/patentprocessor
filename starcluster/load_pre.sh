@@ -18,13 +18,6 @@ for i in `ls *.xml`
     echo " - duplicate"
     cd /var/lib/mysql/uspto
     tar -czf $i.tar.gz *.txt
-    cd /home/sgeadmin/patentprocessor/starcluster
-    sh txtcat.sh
-    cd /var/lib/mysql/uspto
     mv $i.tar.gz /home/sgeadmin/patentprocessor/tar
 
 done
-
-cd /var/lib/mysql/uspto
-tar -czf final.tar.gz *.txt.full
-rm *.txt.full

@@ -9,21 +9,21 @@ config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__)))
 
 rc = Client(packer="pickle")
 dview = rc[:]
-dview.scatter("ids", rc.ids)
+dview.scatter("ids", xrange(len(rc.ids)))
 print rc.ids
 
 
 @dview.remote(block=True)
-def fetch(year):
-    import glob
+def fetch():
     import os
-    ids = ids[0]
     os.chdir(node)
+    ids = ids[0]
     for i, f in enumerate(files):
         fname = f.split("/")[-1].split(".")[0]
         if not os.path.exists("{0}.xml".format(fname)):
             os.system("wget {0}".format(f))
             os.system("unzip {0}.zip".format(fname))
+    os.system("cd /home/sgeadmin/patentprocessor; sh starcluster/load_pre.sh >> tar/{0}.log".format(ids))
     #         os.chdir(master)
     #         os.system("python parse_sq.py -p {0} --xmlregex {1} >> tar/{2}.log".format(node, fname, ids))
     #         os.system("mysqldump -root uspto -T /var/lib/mysql/uspto")
