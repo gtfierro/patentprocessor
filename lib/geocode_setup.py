@@ -238,6 +238,8 @@ def get_jaro_required(replacement_operation):
         return "0.95"
     elif replacement_operation=='foreign_first3_2nd':
         return "0.95"
+    else:
+        assert(False)
 
 #return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
 def get_entry_from_row(row, i):
