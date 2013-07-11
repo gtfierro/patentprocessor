@@ -77,7 +77,7 @@ class XMLElement(object):
         else:
             return ChainList('')
 
-    def contents_of(self, key, default=ChainList(''), as_string=False):
+    def contents_of(self, key, default=ChainList(''), as_string=False, upper=True):
         candidates = self.__getattr__(key)
         if candidates:
             res = [x.get_content() for x in candidates]
