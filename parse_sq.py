@@ -10,11 +10,12 @@ import alchemy
 from argconfig_parse import ArgHandler
 from ConfigParser import ConfigParser
 from datetime import datetime
-from lib.handlers.grant_handler import PatentGrant
-#2012 should look OK
-#from lib.handlers.grant_handler_v42 import PatentGrant
-#2013 should look OK
-#from lib.handlers.grant_handler_v44 import PatentGrant
+
+#<2013/01/15
+from lib.handlers.grant_handler_v42 import PatentGrant as PatentGrant1
+# 2013/01/15+
+from lib.handlers.grant_handler_v44 import PatentGrant as PatentGrant2
+
 
 def xml_gen(obj):
     """
@@ -44,13 +45,12 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
     for filename in files:
         t = datetime.now()
         for i, xml_string in enumerate(xml_gen(open(filename, "rb"))):
-            patobj = PatentGrant(xml_string)
-            try:
-                pass
-            except Exception as inst:
-                print " *", inst
-            if patobj:
-                alchemy.add(patobj, override=False, temp=False)
+            date = filename.split("/")[1].split(".")[0][3:]
+            if date < "130115":
+                patobj = PatentGrant1(xml_string, is_string=True)
+            else:
+                patobj = PatentGrant2(xml_string, is_string=True)
+            alchemy.add(patobj, override=False, temp=False)
             if (i + 1) % commit == 0:
                 print " *", datetime.now() - t, ":", (i+1), filename
                 alchemy.commit()

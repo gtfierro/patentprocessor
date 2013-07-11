@@ -19,6 +19,7 @@ class PatentGrant(object):
     def __init__(self, xml_string, is_string=False):
         xh = xml_driver.XMLHandler()
         parser = xml_driver.make_parser()
+
         parser.setContentHandler(xh)
         parser.setFeature(xml_driver.handler.feature_external_ges, False)
         l = xml.sax.xmlreader.Locator()
@@ -29,12 +30,12 @@ class PatentGrant(object):
             parser.parse(xml_string)
         self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
 
-        self.country = self.xml.publication_reference.contents_of('country')[0]
+        self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
         self.patent = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
         self.date_grant = self.xml.publication_reference.contents_of('date')[0]
         if self.xml.application_reference:
-            self.pat_type = self.xml.application_reference[0].get_attribute('appl-type')
+            self.pat_type = self.xml.application_reference[0].get_attribute('appl-type', upper=False)
         else:
             self.pat_type = None
         self.date_app = self.xml.application_reference.contents_of('date')[0]
@@ -43,7 +44,7 @@ class PatentGrant(object):
         self.code_app = self.xml.contents_of('us_application_series_code')[0]
         self.clm_num = self.xml.contents_of('number_of_claims')[0]
         self.classes = self._classes()
-        self.abstract = "\n".join(xh.root.us_patent_grant.abstract.contents_of('p', ''))
+        self.abstract = xh.root.us_patent_grant.abstract.contents_of('p', '', as_string=True, upper=False)
         self.invention_title = self._invention_title()
 
         # To depreciate >>>>>>
@@ -76,7 +77,7 @@ class PatentGrant(object):
         # <<<<<<
 
     def _invention_title(self):
-        original = self.xml.contents_of('invention_title')[0]
+        original = self.xml.contents_of('invention_title', upper=False)[0]
         if isinstance(original, list):
             original = ''.join(original)
         return original
@@ -97,8 +98,8 @@ class PatentGrant(object):
         Returns dictionary of firstname, lastname with prefix associated
         with lastname
         """
-        firstname = tag_root.contents_of('first_name', as_string=True)
-        lastname = tag_root.contents_of('last_name', as_string=True)
+        firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
+        lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
         return xml_util.associate_prefix(firstname, lastname)
 
     def _name_helper_dict(self, tag_root):
@@ -106,10 +107,10 @@ class PatentGrant(object):
         Returns dictionary of firstname, lastname with prefix associated
         with lastname
         """
-        firstname = tag_root.contents_of('first_name', as_string=True)
-        lastname = tag_root.contents_of('last_name', as_string=True)
+        firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
+        lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
         firstname, lastname = xml_util.associate_prefix(firstname, lastname)
-        return {'name_first': firstname, 'name_last': lastname}
+        return {'name_first': firstname, 'name_last': lastname, 'name_first_upper': firstname.upper(), 'name_last_upper': lastname.upper()}
 
     def _fix_date(self, datestring):
         """
@@ -282,14 +283,16 @@ class PatentGrant(object):
             # add assignee data
             asg = {}
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
-            asg['organization'] = assignee.contents_of('orgname', as_string=True)
+            asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
+            asg['organization_upper'] = asg['organization'].upper()
             asg['role'] = assignee.contents_of('role', as_string=True)
             asg['nationality'] = assignee.nationality.contents_of('country')[0]
             asg['residence'] = assignee.nationality.contents_of('country')[0]
             # add location data for assignee
             loc = {}
             for tag in ['city', 'state', 'country']:
-                loc[tag] = assignee.contents_of(tag, as_string=True)
+                loc[tag] = assignee.contents_of(tag, as_string=True, upper=False)
+                loc[tag+"_upper"] = loc[tag].upper()
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(asg.values()) or any(loc.values()):
@@ -325,7 +328,7 @@ class PatentGrant(object):
         for citation in citations:
             data = {}
             if citation.othercit:
-                data['text'] = citation.contents_of('othercit', as_string=True)
+                data['text'] = citation.contents_of('othercit', as_string=True, upper=False)
                 if any(data.values()):
                     data['sequence'] = ocnt
                     data['uuid'] = str(uuid.uuid1())
@@ -333,7 +336,7 @@ class PatentGrant(object):
                     ocnt += 1
             else:
                 for tag in ['name', 'kind', 'category']:
-                    data[tag] = citation.contents_of(tag, as_string=True)
+                    data[tag] = citation.contents_of(tag, as_string=True, upper=False)
                 data['date'] = self._fix_date(citation.contents_of('date', as_string=True))
                 data['country'] = citation.contents_of('country', default=[''])[0]
                 doc_number = citation.contents_of('doc_number', as_string=True)
@@ -371,7 +374,8 @@ class PatentGrant(object):
             # add location data for inventor
             loc = {}
             for tag in ['city', 'state', 'country']:
-                loc[tag] = inventor.addressbook.contents_of(tag, as_string=True)
+                loc[tag] = inventor.addressbook.contents_of(tag, as_string=True, upper=False)
+                loc[tag+"_upper"] = loc[tag].upper()
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(inv.values()) or any(loc.values()):
@@ -398,7 +402,8 @@ class PatentGrant(object):
             law = {}
             law.update(self._name_helper_dict(lawyer))
             law['country'] = lawyer.contents_of('country', as_string=True)
-            law['organization'] = lawyer.contents_of('orgname', as_string=True)
+            law['organization'] = lawyer.contents_of('orgname', as_string=True, upper=False)
+            law['organization_upper'] = law['organization'].upper()
             if any(law.values()):
                 law['uuid'] = str(uuid.uuid1())
                 res.append(law)
