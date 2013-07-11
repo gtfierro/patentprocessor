@@ -55,21 +55,21 @@ print "Loc =", c.execute("select count(*) from loctbl.loc").fetchone()[0]
 
 # TODO: Refactor the range call into it's own function, unit test
 # that function extensively.
-# TODO: Figure out what these hardcoded parameters mean.
-for scnt in range(-1, c.execute("select max(separator_count(city)) from loctbl.loc").fetchone()[0]+1):
 
-    sep = scnt
-    print "------", scnt, "------"
-    replace_loc(geocode_replace_loc.domestic_sql()                     % (sep, scnt))
-    replace_loc(geocode_replace_loc.domestic_block_remove_sql()        % (sep, scnt))
-    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, geocode_setup.get_jaro_required('domestic_first3'), scnt))
-    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('domestic_last4'), scnt))
-    replace_loc(geocode_replace_loc.foreign_full_name_1_sql()          % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_full_name_2_sql()          % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_short_form_sql()           % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_block_split_sql()          % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_first3_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('foreign_first3'), scnt))
-    replace_loc(geocode_replace_loc.foreign_last4_jaro_winkler_sql()   % (sep, sep, geocode_setup.get_jaro_required('foreign_last4'), scnt))
+for separator_count in range(-1, c.execute("select max(separator_count(city)) from loctbl.loc").fetchone()[0]+1):
+
+    sep = separator_count
+    print "------", separator_count, "------"
+    replace_loc(geocode_replace_loc.domestic_sql()                     % (sep, separator_count))
+    replace_loc(geocode_replace_loc.domestic_block_remove_sql()        % (sep, separator_count))
+    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, geocode_setup.get_jaro_required('domestic_first3'), separator_count))
+    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('domestic_last4'), separator_count))
+    replace_loc(geocode_replace_loc.foreign_full_name_1_sql()          % (sep, separator_count))
+    replace_loc(geocode_replace_loc.foreign_full_name_2_sql()          % (sep, separator_count))
+    replace_loc(geocode_replace_loc.foreign_short_form_sql()           % (sep, separator_count))
+    replace_loc(geocode_replace_loc.foreign_block_split_sql()          % (sep, separator_count))
+    replace_loc(geocode_replace_loc.foreign_first3_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('foreign_first3'), separator_count))
+    replace_loc(geocode_replace_loc.foreign_last4_jaro_winkler_sql()   % (sep, sep, geocode_setup.get_jaro_required('foreign_last4'), separator_count))
 
 ### End of for loop
 
