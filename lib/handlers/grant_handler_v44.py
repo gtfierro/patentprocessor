@@ -489,16 +489,17 @@ class PatentGrant(object):
                 {'id': data['class'].upper()},
                 {'id': "{class}/{subclass}".format(**data).upper()}])
             i = i + 1
-        further = self.xml.classification_national.contents_of('further_classification')
-        for classification in further:
-            data = {'class': classification[:3].replace(' ', ''),
-                    'subclass': classification[3:].replace(' ', '')}
-            if any(data.values()):
-                classes.append([
-                    {'uuid': str(uuid.uuid1()), 'sequence': i},
-                    {'id': data['class'].upper()},
-                    {'id': "{class}/{subclass}".format(**data).upper()}])
-                i = i + 1
+        if self.xml.classification_national.further_classification:
+            further = self.xml.classification_national.contents_of('further_classification')
+            for classification in further:
+                data = {'class': classification[:3].replace(' ', ''),
+                        'subclass': classification[3:].replace(' ', '')}
+                if any(data.values()):
+                    classes.append([
+                        {'uuid': str(uuid.uuid1()), 'sequence': i},
+                        {'id': data['class'].upper()},
+                        {'id': "{class}/{subclass}".format(**data).upper()}])
+                    i = i + 1
         return classes
 
     def ipcr_classifications(self):
