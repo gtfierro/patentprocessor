@@ -11,7 +11,9 @@ import sys
 import lib.handlers.grant_handler as grant_handler
 import lib.patSQL as patSQL
 import lib.argconfig_parse as argconfig_parse
+import lib.alchemy as alchemy
 from lib.config_parser import get_xml_handlers
+from ConfigParser import ConfigParser
 
 xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
               patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
@@ -19,6 +21,8 @@ xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 xmlhandlers = get_xml_handlers('process.cfg')
+config = ConfigParser()
+config.read('{0}/lib/alchemy/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
 
 def list_files(patentroot, xmlregex):
     """
@@ -78,32 +82,27 @@ def parse_files(filelist):
     parsed = itertools.imap(extract_xml_strings, filelist)
     return itertools.chain.from_iterable(parsed)
 
-def apply_xmlclass(xmltuple):
+def parse_patent(xmltuple):
     """
     Parses an xml string given as [xmltuple] with the appropriate parser (given
-    by the first part of the tuple) and returns the patSQL.*XML formulations of
-    it. Expect this to change when we integrate Ron's SQLAlchemy stuff
+    by the first part of the tuple). Hands off the parsed result to SQLAlchemy
+    to be inserted into the database
     """
-    parsed_grants = []
     try:
         date, xml = xmltuple # extract out the parts of the tuple
         patobj = _get_parser(date).PatentGrant(xml, True)
-        for xmlclass in xmlclasses:
-            parsed_grants.append(xmlclass(patobj))
+        alchemy.add(patobj, temp=False)
     except Exception as inst:
         logging.error(type(inst))
-        logging.error("  - Error parsing patent: %s" % (xml[0][:400]))
-    return parsed_grants
+        logging.error("  - Error parsing patent: %s" % (xml[:400]))
+    alchemy.commit()
 
 def parse_patents(xmltuples):
     """
     Given a list of xml strings as [xmltuples], parses them
     all and returns a flat iterator of patSQL.*XML instances
     """
-    parsed_grants = itertools.imap(apply_xmlclass, xmltuples)
-    # errored patents return None; we want to get rid of these
-    parsed_grants = itertools.ifilter(lambda x: x, parsed_grants)
-    return itertools.chain.from_iterable(parsed_grants)
+    parsed_grants = map(parse_patent, xmltuples)
 
 
 def build_tables(parsed_grants):
@@ -144,6 +143,7 @@ def move_tables(output_directory):
 
 
 def main(patentroot, xmlregex, verbosity, output_directory='.'):
+    logfile = "./" + 'xml-parsing.log'
     logging.basicConfig(filename=logfile, level=verbosity)
 
     logging.info("Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()), patentroot))
@@ -153,20 +153,12 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
     parsed_xmls = parse_files(files)
     logging.info("Extracted all individual XML files")
     parsed_grants = parse_patents(parsed_xmls)
-    logging.info("Parsed all individual XML files")
-    build_tables(parsed_grants)
-    inserts = get_inserts()
-
-    logging.info("SQL inserts queued up")
-    commit_tables(inserts)
-
-    logging.info("SQL tables committed")
     move_tables(output_directory)
 
     logging.info("SQL tables moved to {0}".format(output_directory))
     logging.info("Parse completed at {0}".format(str(datetime.datetime.today())))
 
-
+if __name__ == '__main__':
     args = argconfig_parse.ArgHandler(sys.argv[1:])
 
     XMLREGEX = args.get_xmlregex()
@@ -174,5 +166,4 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
     VERBOSITY = args.get_verbosity()
     PATENTOUTPUTDIR = args.get_output_directory()
 
-    logfile = "./" + 'xml-parsing.log'
     main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR)
