@@ -59,7 +59,7 @@ def loc_create_table(cursor):
 def fix_city_country(cursor):
     create_table_temp_assignees_db(cursor)
     create_table_temp2_assignees(cursor)
-    update_table_loc_from_typos(cursor)
+    update_table_loc(cursor)
     drop_temp_tables(cursor)
     
 def create_table_temp_assignees_db(cursor):
@@ -92,19 +92,15 @@ def create_table_temp2_assignees(cursor):
           GROUP BY  CityY, StateY, CtryY;
         """)
     
-def update_table_loc_from_typos(cursor):
+def update_table_loc(cursor):
     cursor.executescript("""
         INSERT OR REPLACE INTO loc
-            SELECT  a.*,
+            SELECT  *,
                     SUBSTR(CityY,1,3),
-                    b.NewCity,
-                    b.NewState,
-                    b.NewCountry
-              FROM  temp2 AS a
-         LEFT JOIN  loctbl.typos AS b
-                ON  a.CityY  = b.City
-               AND  a.StateY = b.State
-               AND  a.CtryY  = b.Country;
+                    CityY,
+                    StateY,
+                    CtryY
+              FROM  temp2;
         """)
     
 # This feels a little overboard, but this DRYs up
@@ -120,7 +116,7 @@ def drop_temp_tables(cursor):
 def fix_state_zip(cursor):
     create_table_temp_inventors_db(cursor)
     create_table_temp2_inventors(cursor)
-    update_table_loc_from_typos(cursor)
+    update_table_loc(cursor)
     drop_temp_tables(cursor)
     
 def create_table_temp_inventors_db(cursor):
@@ -181,7 +177,7 @@ def create_usloc_table(cursor):
                     SUBSTR(remove_spaces(City), -4)        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
-              FROM  loctbl.us_cities_merged;
+              FROM  loctbl.us_cities;
 
         CREATE INDEX If NOT EXISTS usloc_idxZ  on usloc (Zipcode);
         CREATE INDEX If NOT EXISTS usloc_idxCS on usloc (City, State);
