@@ -389,12 +389,13 @@ class PatentGrant(object):
         main = self.xml.classification_national.contents_of('main_classification')
         mainclass = [{'class': main[0][:3].replace(' ',''),
                      'subclass': main[0][3:].replace(' ','')}]
-        further = self.xml.classification_national.contents_of('further_classification')
         furtherclasses = []
-        for classification in further:
-            fc = {'class': classification[:3].replace(' ',''),
-                  'subclass': classification[3:].replace(' ','')}
-            furtherclasses.append(fc)
+        if self.xml.classification_national.further_classification:
+            further = self.xml.classification_national.contents_of('further_classification')
+            for classification in further:
+                fc = {'class': classification[:3].replace(' ',''),
+                      'subclass': classification[3:].replace(' ','')}
+                furtherclasses.append(fc)
         return [mainclass, furtherclasses]
 
     def ipcr_classifications(self):
