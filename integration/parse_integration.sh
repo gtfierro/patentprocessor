@@ -38,12 +38,15 @@ make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.18
 ./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml -o .
 
-for table in assignee citation class inventor lawyer patdesc patent sciref usreldoc
+for table in application citation ipcr mainclass otherreference patent rawassignee rawinventor rawlawyer rawlocation subclass uspc usreldoc
 do
-  sqlite3 -csv ${table}.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  echo $table 'diffs...'
+  sqlite3 -csv alchemy.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  # remove UUIDs from database dump because these change each time
+  perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/ipg120327.18/${table}.csv
   diff test/integration/parse/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
 done
 
-## clean up after we're done
+# clean up after we're done
 
 make spotless > /dev/null
