@@ -282,7 +282,6 @@ class PatentGrant(object):
           relationship
           sequence
         """
-        # TODO: look at PatentGrantXMLv42, page 30 and onward and figure out the best way to parse this
         root = self.xml.us_related_documents
         if not root:
             return []
