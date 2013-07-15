@@ -21,8 +21,6 @@ xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 xmlhandlers = get_xml_handlers('process.cfg')
-config = ConfigParser()
-config.read('{0}/lib/alchemy/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
 
 def list_files(patentroot, xmlregex):
     """
@@ -104,27 +102,7 @@ def parse_patents(xmltuples):
     """
     parsed_grants = map(parse_patent, xmltuples)
 
-
-def build_tables(parsed_grants):
-    for parsed_grant in parsed_grants:
-        parsed_grant.insert_table()
-
-
-def get_tables():
-    return (patSQL.assignee_table, patSQL.citation_table, patSQL.class_table, patSQL.inventor_table,\
-           patSQL.patent_table, patSQL.patdesc_table, patSQL.lawyer_table, patSQL.sciref_table,\
-           patSQL.usreldoc_table)
-
-def get_inserts():
-    return [(x, x.inserts) for x in get_tables()]
-
-
-def commit_tables(collection):
-    #for inserts in collection:
-    for insert in collection:
-        insert[0].commit(insert[1])
-
-
+# TODO: this should only move alchemy.sqlite3
 def move_tables(output_directory):
     """
     Moves the output sqlite3 files to the output directory
