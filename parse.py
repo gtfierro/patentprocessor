@@ -8,16 +8,9 @@ import mmap
 import contextlib
 import itertools
 import sys
-import lib.handlers.grant_handler as grant_handler
-import lib.patSQL as patSQL
 import lib.argconfig_parse as argconfig_parse
 import lib.alchemy as alchemy
 from lib.config_parser import get_xml_handlers
-from ConfigParser import ConfigParser
-
-xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
-              patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
-              patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 xmlhandlers = get_xml_handlers('process.cfg')
