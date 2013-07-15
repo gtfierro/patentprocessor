@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# First crack at building integration test framework for
-# ensuring the preprocessing works correctly as we move
-# forward fixing bugs, etc.
-
 cd ..
 
 echo 'Testing test/fixtures/xml/ipg120327.one.xml'
