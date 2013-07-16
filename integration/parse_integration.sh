@@ -10,7 +10,7 @@ mkdir -p tmp/integration/ipg120327.one
 for table in application citation ipcr mainclass otherreference patent rawassignee rawinventor rawlawyer rawlocation subclass uspc usreldoc
 do
   echo $table 'diffs...'
-  sqlite3 -csv alchemy.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.one/${table}.csv
+  sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.one/${table}.csv
   # remove UUIDs from database dump because these change each time
   perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/ipg120327.one/${table}.csv
   diff test/integration/parse/ipg120327.one/${table}.csv tmp/integration/ipg120327.one/${table}.csv
@@ -24,7 +24,7 @@ mkdir -p tmp/integration/ipg120327.two
 for table in application citation ipcr mainclass otherreference patent rawassignee rawinventor rawlawyer rawlocation subclass uspc usreldoc
 do
   echo $table 'diffs...'
-  sqlite3 -csv alchemy.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
+  sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
   # remove UUIDs from database dump because these change each time
   perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/ipg120327.two/${table}.csv
   diff test/integration/parse/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
@@ -37,7 +37,7 @@ mkdir -p tmp/integration/ipg120327.18
 for table in application citation ipcr mainclass otherreference patent rawassignee rawinventor rawlawyer rawlocation subclass uspc usreldoc
 do
   echo $table 'diffs...'
-  sqlite3 -csv alchemy.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
   # remove UUIDs from database dump because these change each time
   perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/ipg120327.18/${table}.csv
   diff test/integration/parse/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
