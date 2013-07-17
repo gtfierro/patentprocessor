@@ -12,16 +12,8 @@ import lib.geocode
 print"DONE: geocode"
 print "   -", datetime.datetime.now()-t1
 
-#TODO: assignee disambig
-
-def run_assignee_disambiguation():
-    assignees = assignee_disambiguation.assignees
-    assignee_disambiguation.create_assignee_blocks(assignees)
-    assignee_disambiguation.disambiguate_by_frequency()
-    assignee_disambiguation.create_assignee_table(assignees)
-
-run_assignee_disambiguation()
-
+# run assignee disambiguation and populate the Assignee table
+assignee_disambiguation.run_disambiguation()
 
 def run_org_clean():
     org = orgClean.orgClean(db = 'assignee.sqlite3', fld = 'assigneeAsc', table = 'assignee_1', other = "")
