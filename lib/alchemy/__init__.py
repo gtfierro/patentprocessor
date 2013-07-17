@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from schema import *
 
 
-def fetch_session(db=None):
+def fetch_session(db=None, path_to_sqlite='.'):
     """
     Read from config.ini file and load appropriate database
     """
@@ -16,7 +16,8 @@ def fetch_session(db=None):
     if not db:
         db = config.get('global', 'database')
     if db[:6] == "sqlite":
-        engine = create_engine('sqlite:///{0}'.format(config.get(db, 'database')), echo=echo)
+        sqlite_db_path = os.path.join(path_to_sqlite, config.get(db, 'database'))
+        engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
     else:
         engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
             config.get(db, 'user'),
