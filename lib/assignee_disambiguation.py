@@ -34,12 +34,13 @@ def get_assignee_id(obj):
     except:
         return ''
 
-def create_assignee_blocks(assignees):
+def create_assignee_blocks(list_of_assignees):
     """
     Iterates through all assignees. If the strings match within the THRESHOLD confidence,
     we put them into the same block, else put the current assignee in its own block. Blocks
     are stored as redis lists, named by the first ID we encounter for that block
     """
+    assignees = list_of_assignees[:]
     for current in assignees:
         for assignee in assignees:
             if current == assignee: continue
@@ -47,12 +48,10 @@ def create_assignee_blocks(assignees):
             assignee_id = get_assignee_id(assignee)
             if jaro_winkler(current_id, assignee_id) >= THRESHOLD:
                 # block name is the first id we encountered
-                r.lpush(current_id, assignee_id, current_id)
+                r.lpush(current_id, assignee_id)
                 assignees.remove(assignee)
-                assignees.remove(current)
-            else:
-                r.lpush(current_id, current_id)
-                #assignees.remove(current)
+        r.lpush(current_id, current_id)
+        #if current in assignees: assignees.remove(current)
 
 def disambiguate_by_frequency():
     """
@@ -87,16 +86,18 @@ def create_assignee_table(assignees):
         assignee_obj = Assignee(**record)
         assignee_obj.rawassignees.append(assignee)
         s.merge(assignee_obj)
-    try:
-        s.commit()
-    except Exception, e:
-        s.rollback()
+        try:
+            s.commit()
+        except Exception, e:
+            s.rollback()
 
 
 def examine():
     assignees = s.query(Assignee).all()
+    print len(assignees)
+    print len(s.query(RawAssignee).all())
     for a in assignees:
-        print a.id, a.rawassignees
+        print get_assignee_id(a), a.rawassignees
 
 
 if __name__=='__main__':
