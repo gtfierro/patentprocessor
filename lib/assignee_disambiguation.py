@@ -60,14 +60,25 @@ def create_assignee_blocks(list_of_assignees):
 
 def disambiguate_by_frequency(block_number):
     """
-    For block, find the most frequent assignee name and create a hash from each
-    assignee organization/name to the most frequent name. Delete the old block
-    during this process. This ensures that the only keys left in our database
-    are the disambiguations.
+    For block, find the most frequent assignee attributes, and return a dict
+    of those values.
     """
     assignees = r.lrange(block_number, 0, -1)
+    # get name/organization
     most_common_id = Counter(assignees).most_common()[0][0]
-    return most_common_id
+    rawassignees = []
+    for rawassignee in assignees:
+        rawassignees.extend([assignee_dict[raw_id] for raw_id in r.lrange(rawassignee, 0, -1)])
+    most_common_type = Counter(map(lambda x: x.type,
+                                   rawassignees)).most_common()[0][0]
+    most_common_residence = Counter(map(lambda x: x.residence,
+                                        rawassignees)).most_common()[0][0]
+    most_common_nationality = Counter(map(lambda x: x.nationality,
+                                        rawassignees)).most_common()[0][0]
+    return {'most_common_id': most_common_id,
+            'type': most_common_type,
+            'residence': most_common_residence,
+            'nationality': most_common_nationality}
 
 def create_assignee_table():
     """
@@ -75,10 +86,12 @@ def create_assignee_table():
     populates the Assignee table in the database
     """
     for i in xrange(int(r.get('num_blocks'))):
-        disambiguated_name = disambiguate_by_frequency(i)
+        disambiguated_dict = disambiguate_by_frequency(i)
+        disambiguated_name = disambiguated_dict.pop('most_common_id')
         disambiguated_name = normalize_utf8(disambiguated_name)
 
         record = {'id': str(uuid.uuid1())} # dict for insertion
+        record.update(disambiguated_dict)
         if '|' in disambiguated_name:
             record['name_first'] = disambiguated_name.split('|')[0]
             record['name_last'] = disambiguated_name.split('|')[1]
@@ -103,8 +116,9 @@ def examine():
     print s.query(Assignee).filter_by(organization = 'Cisco Technology, Inc.').first().rawassignees
     print s.query(RawAssignee).first().assignee
 
-
-if __name__=='__main__':
+def run_disambiguation():
     create_assignee_blocks(assignees)
     create_assignee_table()
-    examine()
+
+if __name__=='__main__':
+    run_disambiguation()
