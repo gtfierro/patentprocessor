@@ -1,84 +1,28 @@
+#!/usr/bin/env Python
+from lib import alchemy
+from lib import assignee_disambiguation
 import datetime
 
-import lib.SQLite as SQLite
-
-
-# ascit was refactored from senAdd in favor of ascit in fwork.
-# They differ by 1 line. Leave this comment until covered
-# by unit test.
-import lib.senAdd as senAdd
-import lib.fwork as fwork
-import lib.locFunc as locFunc
-import lib.orgClean as orgClean
-from lib.handlers.xml_util import normalize_document_identifier
-
-debug = False
-#debug = True
-
 t1 = datetime.datetime.now()
-#print "Start", t1
 
-# TODO: Move the location handling code into a different script,
-# or call it from the driver file.
-##### Run B2_LocationMatch.py
-#import B2_LocationMatch
- # Geocode needs to run by itself.
+# run geocoding
 print "START: geocode", t1
 import lib.geocode
 #print "   - Loc Merge", "\n   -", datetime.datetime.now()-t1
 print"DONE: geocode"
 print "   -", datetime.datetime.now()-t1
 
+#TODO: assignee disambig
 
-# TODO: Refactor assignee statements
-### Create copy of assignee table, add column for assigneeAsc
-s = SQLite.SQLite(db = 'assignee.sqlite3', tbl = 'assignee_1')
-s.conn.create_function("ascit", 1, fwork.ascit)
-s.conn.create_function("clean_assignee", 1, fwork.clean_assignee)
-s.conn.create_function("cc", 3, locFunc.cityctry)
+def run_assignee_disambiguation():
+    assignees = assignee_disambiguation.assignees
+    assignee_disambiguation.create_assignee_blocks(assignees)
+    assignee_disambiguation.disambiguate_by_frequency()
+    assignee_disambiguation.create_assignee_table(assignees)
 
-def normalize_doc_numbers():
-    citation_table = SQLite.SQLite('citation.sqlite3')
-    citation_table.conn.create_function('normalize_document_identifier', 1, normalize_document_identifier)
-    citation_table.attach('citation.sqlite3')
-    citation_table.conn.execute('update citation set Citation=normalize_document_identifier(Citation);')
-    citation_table.commit()
-    citation_table.close()
+run_assignee_disambiguation()
 
-normalize_doc_numbers()
 
-#TODO: read up on nber matchdoc.pdf
-def handle_assignee():
-
-    #s.attach(database='NBER_asg',name='NBER')
-    s.attach(db='NBER_asg',name='NBER')
-
-    s.c.execute("DROP TABLE IF EXISTS assignee_1")
-    s.replicate(tableTo = 'assignee_1', table = 'assignee')
-    #s.addSQL(data='assignee', insert="IGNORE")
-    s.c.execute("INSERT INTO assignee_1 SELECT * FROM assignee %s" % (debug and "LIMIT 2500" or ""))
-    s.add('assigneeAsc', 'VARCHAR(30)')
-    s.c.execute("UPDATE assignee_1 SET assigneeAsc = clean_assignee(assignee);")
-    s.commit()
-    #print "DONE: assignee_1 table created in assignee.sqlite3 with new column assigneeAsc", "\n   -", datetime.datetime.now()-t1
-
-    #s.merge(key=[['AsgNum', 'pdpass']], on=[['assigneeAsc', 'assignee']], keyType=['INTEGER'], tableFrom='main', db='db')
-    #s.attach(database = 'NBER_asg')
-    #print "Tables call from script ", s.tables()
-
-    s.merge(key=[['AsgNum', 'pdpass']], on=[['assigneeAsc', 'assignee']],
-            keyType=['INTEGER'], tableFrom='assignee', db='NBER')
-    #s.merge(key=[['AsgNum', 'pdpass']], on=['assigneeAsc', 'assignee'], keyType=['INTEGER'], tableFrom='assignee', db='NBER')
-
-    s.c.execute("UPDATE assignee_1 SET AsgNum=NULL WHERE AsgNum<0")
-    print"DONE: NBER pdpass added to assignee_1 in column AsgNum", "\n   -", datetime.datetime.now()-t1
-    s.commit()
-
-handle_assignee()
-
-# TODO: Refactor to function
-### Run orgClean.py and generate grp
-# TODO: get rid of in refactor
 def run_org_clean():
     org = orgClean.orgClean(db = 'assignee.sqlite3', fld = 'assigneeAsc', table = 'assignee_1', other = "")
     org.disambig()
