@@ -10,26 +10,12 @@ import requests
 import zipfile
 import cStringIO as StringIO
 from BeautifulSoup import BeautifulSoup as bs
+import lib.alchemy as alchemy
 
 sys.path.append('lib')
-import lib.patSQL as patSQL
 from config_parser import get_config_options
 
 # table bookkeeping for the parse script
-
-assignee_table = patSQL.AssigneeSQL()
-citation_table = patSQL.CitationSQL()
-class_table = patSQL.ClassSQL()
-inventor_table = patSQL.InventorSQL()
-patent_table = patSQL.PatentSQL()
-patdesc_table = patSQL.PatdescSQL()
-lawyer_table = patSQL.LawyerSQL()
-sciref_table = patSQL.ScirefSQL()
-usreldoc_table = patSQL.UsreldocSQL()
-
-xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
-              patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
-              patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
 
 def get_year_list(yearstring):
     """
