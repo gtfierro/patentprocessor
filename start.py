@@ -109,15 +109,20 @@ def connect_client():
             continue
     return dview
 
+def run_extract():
+    import parse
+    import time
+    import sys
+    import itertools
+    return list(parse.parse_files(files))
+
 def run_parse():
     import parse
     import time
     import sys
     import itertools
-    parsed_xmls = parse.parse_files(files)
-    parsed_grants = parse.parse_patents(parsed_xmls)
-    parse.build_tables(parsed_grants)
-    return parse.get_inserts()
+    import lib.alchemy as alchemy
+    parse.parse_patents(xmls)
 
 # TODO: these don't work
 def run_clean(process_config):
@@ -162,8 +167,10 @@ if __name__=='__main__':
 
     # run parse and commit SQL
     print 'Running parse...'
-    inserts = list(itertools.chain.from_iterable(dview.apply(run_parse)))
-    parse.commit_tables(inserts)
+    extracted_xmls = list(itertools.chain.from_iterable(dview.apply(run_extract)))
+    dview.scatter('xmls', extracted_xmls)
+    dview.apply(run_parse)
+    alchemy.commit()
     f = datetime.datetime.now()
     print 'Finished parsing in {0}'.format(str(f-s))
 
