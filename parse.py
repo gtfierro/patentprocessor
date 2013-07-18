@@ -14,6 +14,8 @@ from lib.config_parser import get_xml_handlers
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 xmlhandlers = get_xml_handlers('process.cfg')
+logfile = "./" + 'xml-parsing.log'
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 def list_files(patentroot, xmlregex):
     """
@@ -69,7 +71,7 @@ def parse_files(filelist):
     Given a list of files, extracts the XML strings from each and returns a
     flat iterable of all of them.
     """
-    if not filelist: return
+    if not filelist: return []
     parsed = itertools.imap(extract_xml_strings, filelist)
     return itertools.chain.from_iterable(parsed)
 
@@ -79,21 +81,22 @@ def parse_patent(xmltuple):
     by the first part of the tuple). Hands off the parsed result to SQLAlchemy
     to be inserted into the database
     """
+    if not xmltuple: return
     try:
         date, xml = xmltuple # extract out the parts of the tuple
         patobj = _get_parser(date).PatentGrant(xml, True)
         alchemy.add(patobj, temp=False)
     except Exception as inst:
-        logging.error(type(inst))
+        logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
-    alchemy.commit()
 
 def parse_patents(xmltuples):
     """
     Given a list of xml strings as [xmltuples], parses them
     all and returns a flat iterator of patSQL.*XML instances
     """
-    parsed_grants = map(parse_patent, xmltuples)
+    if not xmltuples: return
+    map(parse_patent, xmltuples)
 
 # TODO: this should only move alchemy.sqlite3
 def move_tables(output_directory):
@@ -123,7 +126,8 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
     logging.info("Found all files matching {0} in directory {1}".format(xmlregex, patentroot))
     parsed_xmls = parse_files(files)
     logging.info("Extracted all individual XML files")
-    parsed_grants = parse_patents(parsed_xmls)
+    parse_patents(parsed_xmls)
+    alchemy.commit()
     move_tables(output_directory)
 
     logging.info("SQL tables moved to {0}".format(output_directory))
