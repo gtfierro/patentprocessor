@@ -29,6 +29,8 @@ def fetch_session(db=None, path_to_sqlite='.'):
     session = Session()
     return session
 
+session = fetch_session()
+
 
 def add(obj, override=True, temp=False):
     """
