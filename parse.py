@@ -101,7 +101,6 @@ def parse_patent(xmltuple):
     patobj.__dict__['us_classifications'] = patent.us_classifications()
     patobj.__dict__['ipcr_classifications'] = patent.ipcr_classifications()
     patobj.__dict__['citation_list'] = patent.citation_list()
-    print patobj
     return patobj
 
 def parse_patents(xmltuples):
@@ -110,7 +109,7 @@ def parse_patents(xmltuples):
     all and returns a flat iterator of patSQL.*XML instances
     """
     if not xmltuples: return []
-    return itertools.imap(parse_patent, xmltuples)
+    return map(parse_patent, xmltuples)
 
 def database_commit(patobjects):
     """
