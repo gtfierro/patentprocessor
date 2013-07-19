@@ -17,6 +17,8 @@ xmlhandlers = get_xml_handlers('process.cfg')
 logfile = "./" + 'xml-parsing.log'
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
+class Patobj(object): pass
+
 def list_files(patentroot, xmlregex):
     """
     Returns listing of all files within patentroot
@@ -78,25 +80,47 @@ def parse_files(filelist):
 def parse_patent(xmltuple):
     """
     Parses an xml string given as [xmltuple] with the appropriate parser (given
-    by the first part of the tuple). Hands off the parsed result to SQLAlchemy
-    to be inserted into the database
+    by the first part of the tuple). Returns list of objects
+    to be inserted into the database using SQLAlchemy
     """
     if not xmltuple: return
     try:
         date, xml = xmltuple # extract out the parts of the tuple
-        patobj = _get_parser(date).PatentGrant(xml, True)
-        alchemy.add(patobj, temp=False)
+        patent = _get_parser(date).PatentGrant(xml, True)
     except Exception as inst:
         logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
+    patobj = Patobj()
+    patobj.__dict__['pat'] = patent.pat
+    patobj.__dict__['patent'] = patent.patent
+    patobj.__dict__['app'] = patent.app
+    patobj.__dict__['assignee_list'] = patent.assignee_list()
+    patobj.__dict__['inventor_list'] = patent.inventor_list()
+    patobj.__dict__['lawyer_list'] = patent.lawyer_list()
+    patobj.__dict__['us_relation_list'] = patent.us_relation_list()
+    patobj.__dict__['us_classifications'] = patent.us_classifications()
+    patobj.__dict__['ipcr_classifications'] = patent.ipcr_classifications()
+    patobj.__dict__['citation_list'] = patent.citation_list()
+    print patobj
+    return patobj
 
 def parse_patents(xmltuples):
     """
     Given a list of xml strings as [xmltuples], parses them
     all and returns a flat iterator of patSQL.*XML instances
     """
-    if not xmltuples: return
-    map(parse_patent, xmltuples)
+    if not xmltuples: return []
+    return itertools.imap(parse_patent, xmltuples)
+
+def database_commit(patobjects):
+    """
+    takes in a list of Patent objects (from parse_patents above)
+    and commits them to the database. This method is designed
+    to be use sequentially to account for db concurrency
+    """
+    for patobj in patobjects:
+        alchemy.add(patobj, temp=False)
+    alchemy.commit()
 
 # TODO: this should only move alchemy.sqlite3
 def move_tables(output_directory):
@@ -126,8 +150,8 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
     logging.info("Found all files matching {0} in directory {1}".format(xmlregex, patentroot))
     parsed_xmls = parse_files(files)
     logging.info("Extracted all individual XML files")
-    parse_patents(parsed_xmls)
-    alchemy.commit()
+    patobjects = parse_patents(parsed_xmls)
+    database_commit(patobjects)
     move_tables(output_directory)
 
     logging.info("SQL tables moved to {0}".format(output_directory))

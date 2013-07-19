@@ -5,6 +5,7 @@ import parse
 import time
 import itertools
 import datetime
+import logging
 from IPython.parallel import Client
 import requests
 import zipfile
@@ -14,6 +15,9 @@ import lib.alchemy as alchemy
 
 sys.path.append('lib')
 from config_parser import get_config_options
+
+logfile = "./" + 'xml-parsing.log'
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 # table bookkeeping for the parse script
 
@@ -122,7 +126,7 @@ def run_parse():
     import sys
     import itertools
     import lib.alchemy as alchemy
-    parse.parse_patents(xmls)
+    return parse.parse_patents(xmls)
 
 # TODO: these don't work
 def run_clean(process_config):
@@ -169,8 +173,8 @@ if __name__=='__main__':
     print 'Running parse...'
     extracted_xmls = list(itertools.chain.from_iterable(dview.apply(run_extract)))
     dview.scatter('xmls', extracted_xmls)
-    dview.apply(run_parse)
-    alchemy.commit()
+    patobjects = list(itertools.chain.from_iterable(dview.apply(run_parse)))
+    parse.database_commit(patobjects)
     f = datetime.datetime.now()
     print 'Finished parsing in {0}'.format(str(f-s))
 
