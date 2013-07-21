@@ -110,7 +110,7 @@ class PatentGrant(object):
         firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
         lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
         firstname, lastname = xml_util.associate_prefix(firstname, lastname)
-        return {'name_first': firstname, 'name_last': lastname, 'name_first_upper': firstname.upper(), 'name_last_upper': lastname.upper()}
+        return {'name_first': firstname, 'name_last': lastname}
 
     def _fix_date(self, datestring):
         """
@@ -284,7 +284,6 @@ class PatentGrant(object):
             asg = {}
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
-            asg['organization_upper'] = asg['organization'].upper()
             asg['role'] = assignee.contents_of('role', as_string=True)
             asg['nationality'] = assignee.nationality.contents_of('country')[0]
             asg['residence'] = assignee.nationality.contents_of('country')[0]
@@ -292,7 +291,6 @@ class PatentGrant(object):
             loc = {}
             for tag in ['city', 'state', 'country']:
                 loc[tag] = assignee.contents_of(tag, as_string=True, upper=False)
-                loc[tag+"_upper"] = loc[tag].upper()
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(asg.values()) or any(loc.values()):
@@ -375,7 +373,6 @@ class PatentGrant(object):
             loc = {}
             for tag in ['city', 'state', 'country']:
                 loc[tag] = inventor.addressbook.contents_of(tag, as_string=True, upper=False)
-                loc[tag+"_upper"] = loc[tag].upper()
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(inv.values()) or any(loc.values()):
