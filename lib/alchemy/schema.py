@@ -24,30 +24,30 @@ Base.__init__ = init
 
 # ASSOCIATION ----------------------
 
-patentassignee = Table('patent_assignee', Base.metadata,
+patentassignee = Table(
+    'patent_assignee', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('assignee_id', Unicode(36), ForeignKey('assignee.id'))
-)
+    Column('assignee_id', Unicode(36), ForeignKey('assignee.id')))
 
-patentinventor = Table('patent_inventor', Base.metadata,
+patentinventor = Table(
+    'patent_inventor', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
-)
+    Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
-patentlawyer = Table('patent_lawyer', Base.metadata,
+patentlawyer = Table(
+    'patent_lawyer', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('lawyer_id', Unicode(36), ForeignKey('lawyer.id'))
-)
+    Column('lawyer_id', Unicode(36), ForeignKey('lawyer.id')))
 
-locationassignee = Table('location_assignee', Base.metadata,
+locationassignee = Table(
+    'location_assignee', Base.metadata,
     Column('location_id', Unicode(256), ForeignKey('location.id')),
-    Column('assignee_id', Unicode(36), ForeignKey('assignee.id'))
-)
+    Column('assignee_id', Unicode(36), ForeignKey('assignee.id')))
 
-locationinventor = Table('location_inventor', Base.metadata,
+locationinventor = Table(
+    'location_inventor', Base.metadata,
     Column('location_id', Unicode(256), ForeignKey('location.id')),
-    Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
-)
+    Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
 # PATENT ---------------------------
 
@@ -143,9 +143,6 @@ class RawLocation(Base):
     city = Column(Unicode(128))
     state = Column(Unicode(10), index=True)
     country = Column(Unicode(10), index=True)
-    city_upper = Column(Unicode(128))
-    state_upper = Column(Unicode(10))
-    country_upper = Column(Unicode(10))
     rawinventors = relationship("RawInventor", backref="rawlocation")
     rawassignees = relationship("RawAssignee", backref="rawlocation")
     __table_args__ = (
@@ -173,9 +170,6 @@ class Location(Base):
     city = Column(Unicode(128))
     state = Column(Unicode(10), index=True)
     country = Column(Unicode(10), index=True)
-    city_upper = Column(Unicode(128))
-    state_upper = Column(Unicode(10))
-    country_upper = Column(Unicode(10))
     latitude = Column(Float)
     longitude = Column(Float)
     rawlocations = relationship("RawLocation", backref="location")
@@ -212,9 +206,6 @@ class RawAssignee(Base):
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     organization = Column(Unicode(256))
-    name_first_upper = Column(Unicode(64))
-    name_last_upper = Column(Unicode(64))
-    organization_upper = Column(Unicode(256))
     residence = Column(Unicode(10))
     nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
@@ -235,8 +226,6 @@ class RawInventor(Base):
     rawlocation_id = Column(Unicode(256), ForeignKey("rawlocation.id"))
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
-    name_first_upper = Column(Unicode(64))
-    name_last_upper = Column(Unicode(64))
     nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
 
@@ -258,9 +247,6 @@ class RawLawyer(Base):
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     organization = Column(Unicode(64))
-    name_first_upper = Column(Unicode(64))
-    name_last_upper = Column(Unicode(64))
-    organization_upper = Column(Unicode(256))
     country = Column(Unicode(10))
     sequence = Column(Integer, index=True)
 
@@ -289,9 +275,6 @@ class Assignee(Base):
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     organization = Column(Unicode(256))
-    name_first_upper = Column(Unicode(64))
-    name_last_upper = Column(Unicode(64))
-    organization_upper = Column(Unicode(256))
     residence = Column(Unicode(10))
     nationality = Column(Unicode(10))
     rawassignees = relationship("RawAssignee", backref="assignee")
@@ -309,8 +292,6 @@ class Inventor(Base):
     id = Column(Unicode(36), primary_key=True)
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
-    name_first_upper = Column(Unicode(64))
-    name_last_upper = Column(Unicode(64))
     nationality = Column(Unicode(10))
     rawinventors = relationship("RawInventor", backref="inventor")
 
@@ -329,8 +310,6 @@ class Lawyer(Base):
     id = Column(Unicode(36), primary_key=True)
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
-    name_first_upper = Column(Unicode(64))
-    name_last_upper = Column(Unicode(64))
     organization = Column(Unicode(64))
     country = Column(Unicode(10))
     rawlawyers = relationship("RawLawyer", backref="lawyer")
