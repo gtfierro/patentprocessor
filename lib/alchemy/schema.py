@@ -24,30 +24,30 @@ Base.__init__ = init
 
 # ASSOCIATION ----------------------
 
-patentassignee = Table('patent_assignee', Base.metadata,
+patentassignee = Table(
+    'patent_assignee', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('assignee_id', Unicode(36), ForeignKey('assignee.id'))
-)
+    Column('assignee_id', Unicode(36), ForeignKey('assignee.id')))
 
-patentinventor = Table('patent_inventor', Base.metadata,
+patentinventor = Table(
+    'patent_inventor', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
-)
+    Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
-patentlawyer = Table('patent_lawyer', Base.metadata,
+patentlawyer = Table(
+    'patent_lawyer', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('lawyer_id', Unicode(36), ForeignKey('lawyer.id'))
-)
+    Column('lawyer_id', Unicode(36), ForeignKey('lawyer.id')))
 
-locationassignee = Table('location_assignee', Base.metadata,
+locationassignee = Table(
+    'location_assignee', Base.metadata,
     Column('location_id', Unicode(256), ForeignKey('location.id')),
-    Column('assignee_id', Unicode(36), ForeignKey('assignee.id'))
-)
+    Column('assignee_id', Unicode(36), ForeignKey('assignee.id')))
 
-locationinventor = Table('location_inventor', Base.metadata,
+locationinventor = Table(
+    'location_inventor', Base.metadata,
     Column('location_id', Unicode(256), ForeignKey('location.id')),
-    Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
-)
+    Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
 # PATENT ---------------------------
 
