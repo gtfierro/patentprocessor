@@ -113,19 +113,13 @@ def connect_client():
             continue
     return dview
 
-def run_extract():
-    import parse
-    import time
-    import sys
-    import itertools
-    return list(parse.parse_files(files))
-
 def run_parse():
     import parse
     import time
     import sys
     import itertools
     import lib.alchemy as alchemy
+    xmls = parse.parse_files(files)
     return parse.parse_patents(xmls)
 
 # TODO: these don't work
@@ -171,8 +165,6 @@ if __name__=='__main__':
 
     # run parse and commit SQL
     print 'Running parse...'
-    extracted_xmls = list(itertools.chain.from_iterable(dview.apply(run_extract)))
-    dview.scatter('xmls', extracted_xmls)
     patobjects = list(itertools.chain.from_iterable(dview.apply(run_parse)))
     parse.database_commit(patobjects)
     f = datetime.datetime.now()
