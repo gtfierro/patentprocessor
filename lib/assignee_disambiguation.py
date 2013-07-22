@@ -2,7 +2,8 @@
 """
 Performs a basic assignee disambiguation
 """
-import redis
+import itertools
+from collections import defaultdict
 import uuid
 from collections import Counter
 from Levenshtein import jaro_winkler
@@ -15,12 +16,9 @@ THRESHOLD = 0.95
 # get alchemy.db from the directory above
 s = fetch_session(path_to_sqlite='..')
 
-# get redis session
-r = redis.StrictRedis(host='localhost')
-
-# delete all previous keys
-for i in r.keys():
-    r.delete(i)
+# bookkeeping for blocks
+blocks = defaultdict(list)
+id_map = defaultdict(list)
 
 # get all assignees in database
 assignees = s.query(RawAssignee).all()
@@ -38,55 +36,44 @@ def get_assignee_id(obj):
         return ''
 
 def create_assignee_blocks(list_of_assignees):
-    """
-    Iterates through all assignees. If the strings match within the THRESHOLD confidence,
-    we put them into the same block, else put the current assignee in its own block. Blocks
-    are stored as redis lists, named by the first ID we encounter for that block
-    """
-    redis_index = 0
-    assignees = list_of_assignees[:]
-    for assignee in assignees:
-        r.lpush(get_assignee_id(assignee), assignee.uuid)
-    sorted_assignees = sorted(map(get_assignee_id, assignees))
-    r.lpush(redis_index, sorted_assignees[0])
-    for index in xrange(1, len(sorted_assignees)):
-        current_assignee = sorted_assignees[index]
-        previous_assignee = sorted_assignees[index-1]
-        # if the current doesn't match, move to next bucket
-        if jaro_winkler(current_assignee, previous_assignee) < THRESHOLD:
-            redis_index += 1
-        r.lpush(redis_index, current_assignee)
-    r.set('num_blocks', redis_index)
+    assignees = []
+    for assignee in list_of_assignees:
+        a_id = get_assignee_id(assignee)
+        id_map[a_id].append(assignee.uuid)
+        assignees.append(a_id)
+    num_blocks = 0
+    for primary in assignees:
+        assignees.remove(primary)
+        blocks[primary].append(primary)
+        for secondary in assignees:
+            if jaro_winkler(primary, secondary) >= THRESHOLD:
+                assignees.remove(secondary)
+                blocks[primary].append(secondary)
 
-def disambiguate_by_frequency(block_number):
+def disambiguate_by_frequency(block_key):
     """
     For block, find the most frequent assignee attributes, and return a dict
     of those values.
     """
-    assignees = r.lrange(block_number, 0, -1)
-    # get name/organization
-    most_common_id = Counter(assignees).most_common()[0][0]
+    assignees = blocks[block_key]
     rawassignees = []
     for rawassignee in assignees:
-        rawassignees.extend([assignee_dict[raw_id] for raw_id in r.lrange(rawassignee, 0, -1)])
-    most_common_type = Counter(map(lambda x: x.type,
-                                   rawassignees)).most_common()[0][0]
-    most_common_residence = Counter(map(lambda x: x.residence,
-                                        rawassignees)).most_common()[0][0]
-    most_common_nationality = Counter(map(lambda x: x.nationality,
-                                        rawassignees)).most_common()[0][0]
-    return {'most_common_id': most_common_id,
-            'type': most_common_type,
-            'residence': most_common_residence,
-            'nationality': most_common_nationality}
+        rawassignees.extend([assignee_dict[raw_id] for raw_id in id_map[rawassignee]])
+    results = {}
+    for key in ('type', 'residence', 'nationality'):
+        results[key] = Counter(map(lambda x: getattr(x, key),
+                                    rawassignees)).most_common()[0][0]
+    results['most_common_id'] = Counter(assignees).most_common()[0][0]
+    return results
 
 def create_assignee_table():
     """
     Given a list of assignees and the redis key-value disambiguation,
     populates the Assignee table in the database
     """
-    for i in xrange(int(r.get('num_blocks'))):
-        disambiguated_dict = disambiguate_by_frequency(i)
+    print len(blocks.keys())
+    for assignee in blocks.iterkeys():
+        disambiguated_dict = disambiguate_by_frequency(assignee)
         disambiguated_name = disambiguated_dict.pop('most_common_id')
         disambiguated_name = normalize_utf8(disambiguated_name)
 
@@ -98,8 +85,8 @@ def create_assignee_table():
         else:
             record['organization'] = disambiguated_name
         assignee_obj = Assignee(**record)
-        for rawassignee in r.lrange(i, 0, -1):
-            for assignee_id in r.lrange(rawassignee, 0, -1):
+        for rawassignee in blocks[assignee]:
+            for assignee_id in id_map[rawassignee]:
                 ra = assignee_dict[assignee_id]
                 assignee_obj.rawassignees.append(ra)
         s.merge(assignee_obj)
@@ -111,10 +98,11 @@ def create_assignee_table():
 
 def examine():
     assignees = s.query(Assignee).all()
+    for a in assignees:
+        if len(a.rawassignees) > 1:
+            print a, a.rawassignees
+            print '-'*10
     print len(assignees)
-    print len(s.query(RawAssignee).all())
-    print s.query(Assignee).filter_by(organization = 'Cisco Technology, Inc.').first().rawassignees
-    print s.query(RawAssignee).first().assignee
 
 def run_disambiguation():
     create_assignee_blocks(assignees)
