@@ -14,7 +14,7 @@ from handlers.xml_util import normalize_utf8
 THRESHOLD = 0.95
 
 # get alchemy.db from the directory above
-s = fetch_session(path_to_sqlite='..')
+s = fetch_session()
 
 # bookkeeping for blocks
 blocks = defaultdict(list)
