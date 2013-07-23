@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from schema import *
 
 
-def fetch_session(db=None):
+def fetch_session(db=None, path_to_sqlite='.'):
     """
     Read from config.ini file and load appropriate database
     """
@@ -16,7 +16,8 @@ def fetch_session(db=None):
     if not db:
         db = config.get('global', 'database')
     if db[:6] == "sqlite":
-        engine = create_engine('sqlite:///{0}'.format(config.get(db, 'database')), echo=echo)
+        sqlite_db_path = os.path.join(path_to_sqlite, config.get(db, 'database'))
+        engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
     else:
         engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
             config.get(db, 'user'),
@@ -27,6 +28,8 @@ def fetch_session(db=None):
     Session = sessionmaker(bind=engine)
     session = Session()
     return session
+
+session = fetch_session()
 
 
 def add(obj, override=True, temp=False):
@@ -65,7 +68,7 @@ def add(obj, override=True, temp=False):
     pat.application = Application(**obj.app)
 
     #+asg
-    for asg, loc in obj.assignee_list():
+    for asg, loc in obj.assignee_list:
         asg = RawAssignee(**asg)
         loc = RawLocation(**loc)
         session.merge(loc)
@@ -73,7 +76,7 @@ def add(obj, override=True, temp=False):
         pat.rawassignees.append(asg)
 
     #+inv
-    for inv, loc in obj.inventor_list():
+    for inv, loc in obj.inventor_list:
         inv = RawInventor(**inv)
         loc = RawLocation(**loc)
         session.merge(loc)
@@ -81,17 +84,17 @@ def add(obj, override=True, temp=False):
         pat.rawinventors.append(inv)
 
     #+law
-    for law in obj.lawyer_list():
+    for law in obj.lawyer_list:
         law = RawLawyer(**law)
         pat.rawlawyers.append(law)
 
     #+usreldoc
-    for usr in obj.us_relation_list():
+    for usr in obj.us_relation_list:
         usr = USRelDoc(**usr)
         pat.usreldocs.append(usr)
 
     #+classes
-    for uspc, mc, sc in obj.us_classifications():
+    for uspc, mc, sc in obj.us_classifications:
         uspc = USPC(**uspc)
         mc = MainClass(**mc)
         sc = SubClass(**sc)
@@ -102,14 +105,14 @@ def add(obj, override=True, temp=False):
         pat.classes.append(uspc)
 
     #+ipcr
-    for ipc in obj.ipcr_classifications():
+    for ipc in obj.ipcr_classifications:
         ipc = IPCR(**ipc)
         pat.ipcrs.append(ipc)
 
     # citations are huge. this dumps them to
     # a temporary database which we can use for later
     if temp:
-        cits, refs = obj.citation_list()
+        cits, refs = obj.citation_list
         for cit in cits:
             cit["patent_id"] = obj.pat["number"]
             cit = TempCitation(**cit)
@@ -119,7 +122,7 @@ def add(obj, override=True, temp=False):
             ref = TempOtherReference(**ref)
             session.add(ref)
     else:
-        cits, refs = obj.citation_list()
+        cits, refs = obj.citation_list
         for cit in cits:
             cit = Citation(**cit)
             pat.citations.append(cit)
@@ -138,4 +141,3 @@ def commit():
         print str(e)
 
 
-session = fetch_session()
