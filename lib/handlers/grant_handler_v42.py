@@ -19,6 +19,7 @@ class PatentGrant(object):
     def __init__(self, xml_string, is_string=False):
         xh = xml_driver.XMLHandler()
         parser = xml_driver.make_parser()
+
         parser.setContentHandler(xh)
         parser.setFeature(xml_driver.handler.feature_external_ges, False)
         l = xml.sax.xmlreader.Locator()
@@ -45,7 +46,6 @@ class PatentGrant(object):
         self.abstract = xh.root.us_patent_grant.abstract.contents_of('p', '', as_string=True, upper=False)
         self.invention_title = self._invention_title()
 
-        # To consolidate with above?
         self.pat = {
             "id": self.patent,
             "type": self.pat_type,
