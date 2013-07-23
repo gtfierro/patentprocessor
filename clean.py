@@ -1,4 +1,5 @@
-#!/usr/bin/env Python
+#!/usr/bin/env python
+
 from lib import alchemy
 from lib import assignee_disambiguation
 import datetime
