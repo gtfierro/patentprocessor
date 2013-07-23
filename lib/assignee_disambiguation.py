@@ -36,6 +36,7 @@ def get_assignee_id(obj):
         return ''
 
 def create_assignee_blocks(list_of_assignees):
+    print 'Creating assignee blocks...'
     assignees = []
     for assignee in list_of_assignees:
         a_id = get_assignee_id(assignee)
@@ -46,9 +47,10 @@ def create_assignee_blocks(list_of_assignees):
         assignees.remove(primary)
         blocks[primary].append(primary)
         for secondary in assignees:
-            if jaro_winkler(primary, secondary) >= THRESHOLD:
+            if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
                 assignees.remove(secondary)
                 blocks[primary].append(secondary)
+    print 'Assignee blocks created!'
 
 def disambiguate_by_frequency(block_key):
     """
@@ -71,7 +73,7 @@ def create_assignee_table():
     Given a list of assignees and the redis key-value disambiguation,
     populates the Assignee table in the database
     """
-    print len(blocks.keys())
+    print 'Disambiguating assignees...'
     for assignee in blocks.iterkeys():
         disambiguated_dict = disambiguate_by_frequency(assignee)
         disambiguated_name = disambiguated_dict.pop('most_common_id')
@@ -92,6 +94,7 @@ def create_assignee_table():
         s.merge(assignee_obj)
     try:
         s.commit()
+        print 'Assignees finished!'
     except Exception, e:
         s.rollback()
 
@@ -99,10 +102,24 @@ def create_assignee_table():
 def examine():
     assignees = s.query(Assignee).all()
     for a in assignees:
-        if len(a.rawassignees) > 1:
-            print a, a.rawassignees
-            print '-'*10
+        print get_assignee_id(a), len(a.rawassignees)
+        for ra in a.rawassignees:
+          if get_assignee_id(ra) != get_assignee_id(a):
+              print get_assignee_id(ra)
+          print '-'*10
     print len(assignees)
+
+def printall():
+    assignees = s.query(Assignee).all()
+    with open('out.txt','wb') as f:
+      for a in assignees:
+        f.write(normalize_utf8(get_assignee_id(a)).encode('utf-8'))
+        f.write('\n')
+        for ra in a.rawassignees:
+          f.write(normalize_utf8(get_assignee_id(ra)).encode('utf-8'))
+          f.write('\n')
+        f.write('-'*20)
+        f.write('\n')
 
 def run_disambiguation():
     create_assignee_blocks(assignees)
