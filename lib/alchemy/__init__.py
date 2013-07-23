@@ -1,8 +1,10 @@
 import os
+import re
 import ConfigParser
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from collections import defaultdict
 from schema import *
 
 
@@ -30,6 +32,26 @@ def fetch_session(db=None, path_to_sqlite='.'):
     return session
 
 session = fetch_session()
+
+
+def get_config(filename="config.ini"):
+    """
+    This grabs a configuration file and converts it into
+    a dictionary
+    """
+    filename = "{0}/{1}".format(os.path.dirname(os.path.realpath(__file__)), filename)
+    print filename
+    config = defaultdict(dict)
+    if os.path.isfile(filename):
+        cfg = ConfigParser.ConfigParser()
+        cfg.read(filename)
+        for s in cfg.sections():
+            for k, v in cfg.items(s):
+                dec = re.compile('\d+(\.\d+)?')
+                if v in ("True", "False") or v.isdigit() or dec.match(v):
+                    v = eval(v)
+                config[s][k] = v
+    return config
 
 
 def add(obj, override=True, temp=False):
