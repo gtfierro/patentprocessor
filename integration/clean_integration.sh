@@ -4,64 +4,50 @@
 
 cd ..
 
-##### Two rows
-
+echo 'Testing test/fixtures/xml/ipg120327.one.xml'
 make spotless > /dev/null
-./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml -o .
+mkdir -p tmp/integration/ipg120327.one
+./parse.py -p test/fixtures/xml/ -x ipg120327.one.xml -o .
+./clean.py
+
+for table in assignee
+do
+  echo $table 'diffs...'
+  sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.one/${table}.csv
+  # remove UUIDs from database dump because these change each time
+  perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/ipg120327.one/${table}.csv
+  diff test/integration/clean/ipg120327.one/${table}.csv tmp/integration/ipg120327.one/${table}.csv
+done
+
+echo 'Testing test/fixtures/xml/ipg120327.two.xml'
+make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.two
+./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml -o .
+./clean.py
 
-
-echo Starting clean...
-python clean.py
-
-echo Starting diffs...
-for table in inventor inventor_1
+for table in assignee
 do
-  sqlite3 -csv inventor.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
+  echo $table 'diffs...'
+  sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
+  # remove UUIDs from database dump because these change each time
+  perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/ipg120327.two/${table}.csv
   diff test/integration/clean/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
 done
-
-for table in assignee assignee_1 grp wrd
-do
-  sqlite3 -csv assignee.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
-  diff test/integration/clean/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
-done
-
-for table in patent
-do
-  sqlite3 -csv patent.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
-  diff test/integration/clean/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
-done
-
-
-#### 18 rows
 
 make spotless > /dev/null
-./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml -o .
 mkdir -p tmp/integration/ipg120327.18
+./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml -o .
+./clean.py
 
-echo Starting clean...
-python clean.py
-
-echo Starting diffs...
-for table in inventor inventor_1
+for table in assignee
 do
-  sqlite3 -csv inventor.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  echo $table 'diffs...'
+  sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
+  # remove UUIDs from database dump because these change each time
+  perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/ipg120327.18/${table}.csv
   diff test/integration/clean/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
 done
 
-for table in assignee assignee_1 grp wrd
-do
-  sqlite3 -csv assignee.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
-  diff test/integration/clean/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
-done
-
-for table in patent
-do
-  sqlite3 -csv patent.sqlite3 "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
-  diff test/integration/clean/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
-done
-
-## clean up after we're done
+# clean up after we're done
 
 make spotless > /dev/null
