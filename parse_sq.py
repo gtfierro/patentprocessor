@@ -16,7 +16,10 @@ from lib.handlers.grant_handler_v42 import PatentGrant as PatentGrant1
 # 2013/01/15+
 from lib.handlers.grant_handler_v44 import PatentGrant as PatentGrant2
 
-class Patobj(object): pass
+
+class Patobj(object):
+    pass
+
 
 def xml_gen(obj):
     """
@@ -31,6 +34,7 @@ def xml_gen(obj):
             data = [data[-1]]
     yield "".join(data)
 
+
 def parse_patent(patent):
     patobj = Patobj()
     patobj.__dict__['pat'] = patent.pat
@@ -44,6 +48,7 @@ def parse_patent(patent):
     patobj.__dict__['ipcr_classifications'] = patent.ipcr_classifications()
     patobj.__dict__['citation_list'] = patent.citation_list()
     return patobj
+
 
 def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
     """
