@@ -5,31 +5,21 @@ import parse
 import time
 import itertools
 import datetime
+import logging
 from IPython.parallel import Client
 import requests
 import zipfile
 import cStringIO as StringIO
 from BeautifulSoup import BeautifulSoup as bs
+import lib.alchemy as alchemy
 
 sys.path.append('lib')
-import lib.patSQL as patSQL
 from config_parser import get_config_options
 
+logfile = "./" + 'xml-parsing.log'
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
+
 # table bookkeeping for the parse script
-
-assignee_table = patSQL.AssigneeSQL()
-citation_table = patSQL.CitationSQL()
-class_table = patSQL.ClassSQL()
-inventor_table = patSQL.InventorSQL()
-patent_table = patSQL.PatentSQL()
-patdesc_table = patSQL.PatdescSQL()
-lawyer_table = patSQL.LawyerSQL()
-sciref_table = patSQL.ScirefSQL()
-usreldoc_table = patSQL.UsreldocSQL()
-
-xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, \
-              patSQL.InventorXML, patSQL.PatentXML, patSQL.PatdescXML, \
-              patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
 
 def get_year_list(yearstring):
     """
@@ -121,19 +111,22 @@ def connect_client():
         except:
             time.sleep(2)
             continue
-    return dview
+    return c, dview
 
 def run_parse():
     import parse
     import time
     import sys
     import itertools
-    parsed_xmls = parse.parse_files(files)
-    parsed_grants = parse.parse_patents(parsed_xmls)
-    parse.build_tables(parsed_grants)
-    return parse.get_inserts()
+    import lib.alchemy as alchemy
+    import logging
+    logfile = "./" + 'xml-parsing.log'
+    logging.basicConfig(filename=logfile, level=logging.DEBUG)
+    xmls = parse.parse_files(files)
+    if xmls:
+        return parse.parse_patents(xmls)
+    return []
 
-# TODO: these don't work
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
@@ -150,7 +143,7 @@ if __name__=='__main__':
     process_config, parse_config = get_config_options(sys.argv[1])
 
     # connect to ipcluster and get config options
-    dview = connect_client()
+    c, dview = connect_client()
     dview.block=True
     dview['process_config'] = process_config
     dview['parse_config'] = parse_config
@@ -176,8 +169,9 @@ if __name__=='__main__':
 
     # run parse and commit SQL
     print 'Running parse...'
-    inserts = list(itertools.chain.from_iterable(dview.apply(run_parse)))
-    parse.commit_tables(inserts)
+    patobjects = itertools.chain.from_iterable(dview.apply(run_parse))
+    del dview
+    parse.database_commit(patobjects)
     f = datetime.datetime.now()
     print 'Finished parsing in {0}'.format(str(f-s))
 
