@@ -111,7 +111,7 @@ def connect_client():
         except:
             time.sleep(2)
             continue
-    return dview
+    return c, dview
 
 def run_parse():
     import parse
@@ -119,10 +119,14 @@ def run_parse():
     import sys
     import itertools
     import lib.alchemy as alchemy
+    import logging
+    logfile = "./" + 'xml-parsing.log'
+    logging.basicConfig(filename=logfile, level=logging.DEBUG)
     xmls = parse.parse_files(files)
-    return parse.parse_patents(xmls)
+    if xmls:
+        return parse.parse_patents(xmls)
+    return []
 
-# TODO: these don't work
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
@@ -139,7 +143,7 @@ if __name__=='__main__':
     process_config, parse_config = get_config_options(sys.argv[1])
 
     # connect to ipcluster and get config options
-    dview = connect_client()
+    c, dview = connect_client()
     dview.block=True
     dview['process_config'] = process_config
     dview['parse_config'] = parse_config
@@ -165,7 +169,8 @@ if __name__=='__main__':
 
     # run parse and commit SQL
     print 'Running parse...'
-    patobjects = list(itertools.chain.from_iterable(dview.apply(run_parse)))
+    patobjects = itertools.chain.from_iterable(dview.apply(run_parse))
+    del dview
     parse.database_commit(patobjects)
     f = datetime.datetime.now()
     print 'Finished parsing in {0}'.format(str(f-s))
