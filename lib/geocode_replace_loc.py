@@ -29,33 +29,41 @@ def create_table_temp2(cursor):
             SELECT  CityA,
                     StateA,
                     CountryA,
-                    ZipcodeA,
                     count(*) AS cnt
               FROM  temp1
           GROUP BY  CityA,
                     StateA,
-                    CountryA,
-                    ZipcodeA;
+                    CountryA;
 
-        CREATE INDEX IF NOT EXISTS t2_idx ON temp2 (CityA, StateA, CountryA, ZipcodeA);
+        CREATE INDEX IF NOT EXISTS t2_idx ON temp2 (CityA, StateA, CountryA);
           """)
 
 
 def update_table_locmerge(cursor):
     cursor.executescript("""
-        CREATE INDEX IF NOT EXISTS t1_idx ON temp1 (CityA, StateA, CountryA, ZipcodeA);
+        CREATE INDEX IF NOT EXISTS t1_idx ON temp1 (CityA, StateA, CountryA);
 
         INSERT OR REPLACE INTO locMerge
             SELECT  b.cnt,
-                    a.*,
-                    SUBSTR(a.CityA,1,3)
+                    a.jaro_match_value,
+                    a.count,
+                    a.cityA,
+                    a.stateA,
+                    a.countryA,
+                    '',
+                    a.ncity,
+                    a.nstate,
+                    a.ncountry,
+                    '',
+                    a.nlat,
+                    a.nlong,
+                    SUBSTR(a.cityA,1,3)
 
               FROM  temp1 AS a
         INNER JOIN  temp2 AS b
                 ON  a.CityA = b.CityA
                AND  a.StateA = b.StateA
-               AND  a.CountryA = b.CountryA
-               AND  a.ZipcodeA = b.ZipcodeA;
+               AND  a.CountryA = b.CountryA;
           """)
 
 
@@ -67,9 +75,7 @@ def create_table_temp3(cursor):
          LEFT JOIN  locMerge AS b
                 ON  a.City    = b.City
                AND  a.State   = b.State
-               AND  a.Country = b.Country
-               AND  a.Zipcode = b.Zipcode
-             WHERE  b.Zipcode IS NULL;
+               AND  a.Country = b.Country;
           """)
 
 
@@ -87,7 +93,7 @@ def create_loc_and_locmerge_tables(cursor):
         CREATE TABLE loc AS SELECT * FROM temp3;
 
         CREATE INDEX IF NOT EXISTS loc_idxCC ON loc (City, Country);
-        CREATE INDEX IF NOT EXISTS loc_idx   ON loc (City, State, Country, Zipcode);
+        CREATE INDEX IF NOT EXISTS loc_idx   ON loc (City, State, Country);
         CREATE INDEX IF NOT EXISTS loc_idxCS ON loc (City, State);
 
         DROP TABLE IF EXISTS temp2;
@@ -103,11 +109,9 @@ def domestic_sql():
                a.city as CityA,
                a.state as StateA,
                a.country as CountryA,
-               a.zipcode as ZipcodeA,
                b.city,
                b.state,
                'US',
-               b.zipcode,
                b.latitude,
                b.longitude
          FROM  loc AS a
@@ -129,11 +133,9 @@ def domestic_block_remove_sql():
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.city,
                 b.state,
                 'US',
-                b.zipcode,
                 b.latitude,
                 b.longitude
           FROM  loc AS a
@@ -156,11 +158,9 @@ def domestic_first3_jaro_winkler_sql():
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.city,
                 b.state,
                 'US',
-                b.zipcode,
                 b.latitude,
                 b.longitude
           FROM  loc AS a
@@ -179,22 +179,20 @@ def domestic_last4_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (10+jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
+    stmt = """SELECT  (jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
                 b.BlkCity)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.city,
                 b.state,
                 'US',
-                b.zipcode,
                 b.latitude,
                 b.longitude
           FROM  loc AS a
     INNER JOIN  usloc AS b
-            ON  SUBSTR(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),-4) = b.City4R
+            ON  UPPER(SUBSTR(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),-4)) = b.City4R
            AND  a.state = b.state
            AND  a.country = 'US'
          WHERE  jaro > %s
@@ -214,11 +212,9 @@ def foreign_full_name_1_sql():
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.full_name_nd_ro,
                 "",
                 b.cc1,
-                "",
                 b.lat,
                 b.long
           FROM  loc AS a
@@ -239,11 +235,9 @@ def foreign_full_name_2_sql():
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.full_name_nd_ro,
                 "",
                 b.cc1,
-                "",
                 b.lat,
                 b.long
           FROM  loc AS a
@@ -264,11 +258,9 @@ def foreign_short_form_sql():
                 a.city    AS CityA,
                 a.state   AS StateA,
                 a.country AS CountryA,
-                a.zipcode AS ZipcodeA,
                 b.full_name_nd_ro,
                 "",
                 b.cc1,
-                "",
                 b.lat,
                 b.long
           FROM  loc           AS a
@@ -289,11 +281,9 @@ def foreign_block_split_sql():
                 a.city    AS CityA,
                 a.state   AS StateA,
                 a.country AS CountryA,
-                a.zipcode AS ZipcodeA,
                 b.full_name_nd_ro,
                 "",
                 b.cc1,
-                "",
                 b.lat,
                 b.long
           FROM  loc AS a
@@ -309,17 +299,15 @@ def foreign_first3_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (20+jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
+    stmt = """SELECT  (jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
                 b.sort_name_ro)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.full_name_nd_ro,
                 "",
                 b.cc1,
-                "",
                 b.lat,
                 b.long
           FROM  loc AS a
@@ -338,22 +326,20 @@ def foreign_last4_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  (20+jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
+    stmt = """SELECT  (jarow(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),
                 b.sort_name_ro)) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.full_name_nd_ro,
                 "",
                 b.cc1,
-                "",
                 b.lat,
                 b.long
           FROM  loc AS a
     INNER JOIN  loctbl.gnsloc AS b
-            ON  SUBSTR(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),-4) = b.sort_name_ro
+            ON  UPPER(SUBSTR(remove_spaces(GET_ENTRY_FROM_ROW(a.City, %d)),-4)) = b.sort_name_ro
            AND  a.country = b.cc1
          WHERE  jaro > %s
            AND  separator_count(a.City) >= %d
@@ -372,11 +358,9 @@ def domestic_2nd_layer_sql():
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.city,
                 b.state,
                 'US',
-                b.zipcode,
                 b.latitude,
                 b.longitude
           FROM  (SELECT  * FROM  loc WHERE  NCity IS NOT NULL) AS a
@@ -391,17 +375,15 @@ def domestic_first3_2nd_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  14+jarow(remove_spaces(a.NCity),
+    stmt = """SELECT  jarow(remove_spaces(a.NCity),
                 b.BlkCity) AS Jaro,
                 a.cnt as cnt,
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.city,
                 b.state,
                 'US',
-                b.zipcode,
                 b.latitude,
                 b.longitude
           FROM  (SELECT  * FROM  loc WHERE  NCity IS NOT NULL) AS a
@@ -423,11 +405,9 @@ def foreign_full_name_2nd_layer_sql():
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.full_name_nd_ro,
                 '' as state,
                 b.cc1,
-                '' as zip,
                 b.lat,
                 b.long
           FROM  (SELECT  * FROM  loc WHERE  NCity IS NOT NULL) AS a
@@ -446,11 +426,9 @@ def foreign_full_nd_2nd_layer_sql():
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.full_name_nd_ro,
                 '' as state,
                 b.cc1,
-                '' as zip,
                 b.lat,
                 b.long
           FROM  (SELECT  * FROM  loc WHERE  NCity IS NOT NULL) AS a
@@ -469,11 +447,9 @@ def foreign_no_space_2nd_layer_sql():
                 a.city as CityA,
                 a.state as StateA,
                 a.country as CountryA,
-                a.zipcode as ZipcodeA,
                 b.full_name_nd_ro,
                 '' as state,
                 b.cc1,
-                '' as zip,
                 b.lat,
                 b.long
           FROM  (SELECT  * FROM  loc WHERE  NCity IS NOT NULL) AS a
@@ -487,17 +463,15 @@ def foreign_first3_2nd_jaro_winkler_sql():
 
     print sys._getframe().f_code.co_name
 
-    stmt = """SELECT  24+jarow(remove_spaces(a.NCity),
+    stmt = """SELECT  jarow(remove_spaces(a.NCity),
                 b.sort_name_ro) AS Jaro,
                 a.cnt     AS cnt,
                 a.city    AS CityA,
                 a.state   AS StateA,
                 a.country AS CountryA,
-                a.zipcode AS ZipcodeA,
                 b.full_name_nd_ro,
                 ''        AS state,
                 b.cc1,
-                ''        AS zip,
                 b.lat,
                 b.long
           FROM  (SELECT  * FROM  loc WHERE  NCity IS NOT NULL) AS a
@@ -509,30 +483,30 @@ def foreign_first3_2nd_jaro_winkler_sql():
     return stmt;
 
 
-def domestic_zipcode_sql():
-
-    print sys._getframe().f_code.co_name
-
-    stmt = """SELECT  31,
-                a.cnt     AS cnt,
-                a.city    AS CityA,
-                a.state   AS StateA,
-                a.country AS CountryA,
-                a.zipcode AS ZipcodeA,
-                b.City,
-                b.State,
-                'US',
-                b.zipcode,
-                b.latitude,
-                b.longitude
-          FROM  (SELECT  *,
-                         (GET_ENTRY_FROM_ROW(zipcode,0)+0) as Zip2
-                   FROM  loc
-                  WHERE  Zipcode != ''
-                    AND  Country = 'US') AS a
-    INNER JOIN  usloc AS b
-            ON  a.Zip2 = b.Zipcode"""
-    return stmt;
+# def domestic_zipcode_sql():
+# 
+#     print sys._getframe().f_code.co_name
+# 
+#     stmt = """SELECT  31,
+#                 a.cnt     AS cnt,
+#                 a.city    AS CityA,
+#                 a.state   AS StateA,
+#                 a.country AS CountryA,
+#                 a.zipcode AS ZipcodeA,
+#                 b.City,
+#                 b.State,
+#                 'US',
+#                 b.zipcode,
+#                 b.latitude,
+#                 b.longitude
+#           FROM  (SELECT  *,
+#                          (GET_ENTRY_FROM_ROW(zipcode,0)+0) as Zip2
+#                    FROM  loc
+#                   WHERE  Zipcode != ''
+#                     AND  Country = 'US') AS a
+#     INNER JOIN  usloc AS b
+#             ON  a.Zip2 = b.Zipcode"""
+#     return stmt;
 
 
 # TODO: Add this block to its own function, add a commented out call to

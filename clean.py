@@ -131,6 +131,7 @@ def handle_inventor():
                 """)
 
     i.commit()
+    print 'inventor_1 created'
 
     i.attach('hashTbl.sqlite3')
     i.merge(key=['NCity', 'NState', 'NCountry', 'NZipcode', 'NLat', 'NLong'],
@@ -138,10 +139,10 @@ def handle_inventor():
             tableFrom='locMerge',
             db='db')
 
-    i.merge(key=['NCity', 'NState', 'NCountry', 'NZipcode', 'NLat', 'NLong'],
-            on=['City', 'State', 'Country', 'Zipcode'],
-            tableFrom='locMerge',
-            db='db')
+#     i.merge(key=['NCity', 'NState', 'NCountry', 'NZipcode', 'NLat', 'NLong'],
+#             on=['City', 'State', 'Country', 'Zipcode'],
+#             tableFrom='locMerge',
+#             db='db')
 
     i.commit()
     i.close()
