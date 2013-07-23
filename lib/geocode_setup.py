@@ -3,14 +3,19 @@
 import re
 import fwork
 
-FIRST3_JARO_REQUIRED="0.92"
-LAST4_JARO_REQUIRED="10.90"
-
-def get_first3_jaro_required():
-    return FIRST3_JARO_REQUIRED
-
-def get_last4_jaro_required():
-    return LAST4_JARO_REQUIRED
+def get_jaro_required(replacement_operation):
+    if replacement_operation=='domestic_first3':
+        return "0.92"
+    elif replacement_operation=='domestic_last4':
+        return "0.90"
+    elif replacement_operation=='foreign_first3':
+        return "0.92"
+    elif replacement_operation=='foreign_last4':
+        return "0.90"
+    elif replacement_operation=='domestic_first3_2nd':
+        return "0.95"
+    elif replacement_operation=='foreign_first3_2nd':
+        return "0.95"
 
 #return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
 def get_entry_from_row(row, i):
@@ -209,7 +214,7 @@ def create_loc_indexes(cursor):
 def create_usloc_table(cursor):
     cursor.executescript("""
         CREATE TABLE IF NOT EXISTS usloc AS
-            SELECT  0 as Zipcode,
+            SELECT  '' as Zipcode,
                     Latitude,
                     Longitude,
                     UPPER(City)                        AS City,
@@ -218,7 +223,7 @@ def create_usloc_table(cursor):
                     SUBSTR(remove_spaces(City), -4)        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
-              FROM  loctbl.us_cities;
+              FROM  loctbl.us_cities_merged;
 
         CREATE INDEX If NOT EXISTS usloc_idxZ  on usloc (Zipcode);
         CREATE INDEX If NOT EXISTS usloc_idxCS on usloc (City, State);
@@ -255,10 +260,10 @@ def create_locMerge_table(cursor):
             NLat     FLOAT,
             NLong    FLOAT,
             City3    VARCHAR,
-            UNIQUE(City, State, Country, Zipcode));
+            UNIQUE(City, State, Country));
 
         CREATE INDEX IF NOT EXISTS okM_idxCC ON locMerge (City,Country);
-        CREATE INDEX IF NOT EXISTS okM_idx   ON locMerge (City,State,Country,Zipcode);
+        CREATE INDEX IF NOT EXISTS okM_idx   ON locMerge (City,State,Country);
         CREATE INDEX IF NOT EXISTS okM_idxCS ON locMerge (City,State);
         CREATE INDEX IF NOT EXISTS okM_idx3  ON locMerge (City3,State,Country);
         """)

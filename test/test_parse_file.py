@@ -7,12 +7,10 @@ import logging
 import re
 from collections import Iterable
 
-sys.path.append('..')
-sys.path.append('../lib')
+sys.path.append('../')
 import parse
-from patSQL import *
-sys.path.append('./handlers')
-from grant_handler import PatentGrant
+import lib.patSQL as patSQL
+import lib.handlers.grant_handler_v42 as grant_handler_v42
 
 basedir = os.path.dirname(__file__)
 testdir = os.path.join(basedir, './fixtures/xml/')
@@ -20,8 +18,8 @@ testfileone = 'ipg120327.one.xml'
 testfiletwo = 'ipg120327.two.xml'
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 
-xmlclasses = [AssigneeXML, CitationXML, ClassXML, InventorXML, \
-              PatentXML, PatdescXML, LawyerXML, ScirefXML, UsreldocXML]
+xmlclasses = [patSQL.AssigneeXML, patSQL.CitationXML, patSQL.ClassXML, patSQL.InventorXML, \
+              patSQL.PatentXML, patSQL.PatdescXML, patSQL.LawyerXML, patSQL.ScirefXML, patSQL.UsreldocXML]
 
 class TestParseFile(unittest.TestCase):
     
@@ -74,7 +72,7 @@ class TestParseFile(unittest.TestCase):
     def test_use_parse_files_one(self):
         filelist = [testdir+testfileone]
         parsed_output = list(parse.parse_files(filelist))
-        patobj = PatentGrant(parsed_output[0][1], True)
+        patobj = grant_handler_v42.PatentGrant(parsed_output[0][1], True)
         parsed_xml = [xmlclass(patobj) for xmlclass in xmlclasses]
         self.assertTrue(len(parsed_xml) == len(xmlclasses))
         self.assertTrue(all(parsed_xml))
@@ -86,7 +84,7 @@ class TestParseFile(unittest.TestCase):
         for us_patent_grant in parsed_output:
             self.assertTrue(isinstance(us_patent_grant, tuple))
             self.assertTrue(isinstance(us_patent_grant[1], str))
-            patobj = PatentGrant(us_patent_grant[1], True)
+            patobj = grant_handler_v42.PatentGrant(us_patent_grant[1], True)
             for xmlclass in xmlclasses:
                 parsed_xml.append(xmlclass(patobj))
         self.assertTrue(len(parsed_xml) == 2 * len(xmlclasses))
@@ -100,15 +98,6 @@ class TestParseFile(unittest.TestCase):
         self.assertTrue(len(files) == 1)
         self.assertTrue(all(filter(lambda x: isinstance(x, str), files)))
         self.assertTrue(all(map(lambda x: os.path.exists(x), files)))
-
-    def test_parse_patent(self):
-        testdir = os.path.join(basedir, './fixtures/xml')
-        xmlregex = r'ipg120327.one.xml'
-        filelist = parse.list_files(testdir, xmlregex)
-        grant_list = list(parse.parse_files(filelist))
-        parsed_grants = list(parse.parse_patents(grant_list))
-        self.assertTrue(len(parsed_grants) == len(grant_list)*len(xmlclasses))
-
 
 if __name__ == '__main__':
     unittest.main()

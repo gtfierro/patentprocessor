@@ -43,15 +43,15 @@ class TestGeocodeReplaceLoc(unittest.TestCase):
         pass
 
     def test_domestic_first3_jaro_winkler_sql(self):
-        query = geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (-1, -1, geocode_setup.get_first3_jaro_required(), -1)
+        query = geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (-1, -1, geocode_setup.get_jaro_required('domestic_first3'), -1)
         result = self.cursor.execute(query)
         rows = result.fetchall()
-        element = rows[6][6]
-        self.assertTrue('MARION'==element,"{0} should be {1}".format(element,'MARION'))
+        element = rows[6][5]
+        self.assertTrue('LOGAN'==element,"{0} should be {1}".format(element,'LOGAN'))
         pass
 
     def test_domestic_last4_jaro_winkler_sql(self):
-        query = geocode_replace_loc.domestic_last4_jaro_winkler_sql() % (-1, -1, geocode_setup.get_last4_jaro_required(), -1)
+        query = geocode_replace_loc.domestic_last4_jaro_winkler_sql() % (-1, -1, geocode_setup.get_jaro_required('domestic_last4'), -1)
         result = self.cursor.execute(query)
         rows = result.fetchall()
         element = rows[8][4]
@@ -142,12 +142,12 @@ class TestGeocodeReplaceLoc(unittest.TestCase):
         self.assertEquals(-1, num_rows,"{0} should be {1}".format(num_rows,-1))
         pass
 
-    def test_domestic_zipcode_sql(self):
-        query = geocode_replace_loc.domestic_zipcode_sql()
-        result = self.cursor.execute(query)
-        num_rows = result.rowcount
-        self.assertEquals(-1, num_rows,"{0} should be {1}".format(num_rows,-1))
-        pass
+#     def test_domestic_zipcode_sql(self):
+#         query = geocode_replace_loc.domestic_zipcode_sql()
+#         result = self.cursor.execute(query)
+#         num_rows = result.rowcount
+#         self.assertEquals(-1, num_rows,"{0} should be {1}".format(num_rows,-1))
+#         pass
 
 
 if __name__ == '__main__':
