@@ -2,4 +2,3 @@ sqlalchemy
 ipython
 unidecode
 MySQL-python
-python-Levenshtein

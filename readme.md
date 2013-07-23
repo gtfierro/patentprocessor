@@ -47,8 +47,20 @@ Any flavor of unixen with the following installed should work:
 * sqlite3 --> Note: you need version 3.7.15.1 or higher
 * IPython
 * pyzmq
+* python-Levenshtein
+* python-mysqldb
 * More? Please [file an
   issue](https://github.com/funginstitute/patentprocessor/issues) if you find another dependency.
+
+For Ubuntu, apt-get install the following packages
+
+```
+sudo apt-get install -y python-Levenshtein
+sudo apt-get install -y python-mysqldb
+sudo apt-get install -y python-pip
+sudo apt-get install -y python-pyzmq
+sudo pip install -r requirements.txt
+```
 
 In order to properly configure the preprocessing environment, the end user must
 manually perform the following:
