@@ -55,7 +55,7 @@ def fetch_session(db=None):
 session = fetch_session()
 
 
-def match(objects=[]):
+def match(objects=[], override={}):
     """
     Pass in several objects and make them equal
     This
@@ -68,7 +68,7 @@ def match(objects=[]):
 
     # we extend our objects and determine the
     # previously associated items
-    for obj in objects:
+    for obj in all_objects:
         clean = obj.__clean__
         # keep track of all the "clean" objects
         if clean:
@@ -94,6 +94,7 @@ def match(objects=[]):
     # create parameters based on most frequent
     for k in freq:
         param[k] = freq[k].most_common(1)[0][0]
+    param.update(override)
 
     # remove all clean objects
     for obj in clean_objects:
@@ -102,7 +103,7 @@ def match(objects=[]):
     # associate the data into the related object
     relobj = type(objects[0]).__related__(**param)
 
-    for obj in objects:
+    for obj in all_objects:
         relobj.__raw__.append(obj)
         relobj.__many__.append(obj.__single__)
     session.merge(relobj)
