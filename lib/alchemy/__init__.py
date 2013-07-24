@@ -58,13 +58,54 @@ session = fetch_session()
 def match(objects=[]):
     """
     Pass in several objects and make them equal
+    This
     """
     freq = defaultdict(Counter)
+    param = {}
+    all_objects = []
+    all_objects.extend(objects)
+    clean_objects = []
+
+    # we extend our objects and determine the
+    # previously associated items
     for obj in objects:
+        clean = obj.__clean__
+        # keep track of all the "clean" objects
+        if clean:
+            if clean not in clean_objects:
+                clean_objects.append(clean)
+            # add the "raw" objects as we want to
+            # iterate these items
+            for o in clean.__raw__:
+                if o not in all_objects:
+                    all_objects.append(o)
+
+    # this helps us determine items to summarize
+    # ques: how do we indicate most recent?
+    #   like for people and their locations? hrm..
+    for obj in all_objects:
         for k, v in obj.summarize.iteritems():
             if v not in (None, ""):
                 freq[k][v] += 1
-    print freq
+        if "id" not in param:
+            param["id"] = obj.uuid
+        param["id"] = min(param["id"], obj.uuid)
+
+    # create parameters based on most frequent
+    for k in freq:
+        param[k] = freq[k].most_common(1)[0][0]
+
+    # remove all clean objects
+    for obj in clean_objects:
+        session.delete(obj)
+
+    # associate the data into the related object
+    relobj = type(objects[0]).__related__(**param)
+
+    for obj in objects:
+        relobj.__raw__.append(obj)
+    session.merge(relobj)
+    session.commit()
 
 
 def add(obj, override=True, temp=False):
