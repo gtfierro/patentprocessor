@@ -10,6 +10,7 @@ import itertools
 import sys
 import lib.argconfig_parse as argconfig_parse
 import lib.alchemy as alchemy
+import shutil
 from lib.config_parser import get_xml_handlers
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
@@ -124,11 +125,13 @@ def move_tables(output_directory):
         return
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
-    for database in ['assignee', 'citation', 'class',
-                     'inventor', 'patent', 'patdesc',
-                     'lawyer', 'sciref', 'usreldoc']:
-        shutil.move("{0}.sqlite3".format(database),
-                    "{0}/{1}.sqlite3".format(output_directory, database))
+    dbtype = alchemy.config.get('global', 'database')
+    dbfile = alchemy.config.get(dbtype, 'database')
+    try:
+        shutil.move(dbfile,
+                    '{0}/{1}'.format(output_directory, dbfile))
+    except:
+        print 'Database file {0} does not exist'.format(dbfile)
 
 
 def main(patentroot, xmlregex, verbosity, output_directory='.'):
