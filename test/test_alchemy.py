@@ -17,6 +17,10 @@ class TestAscit(unittest.TestCase):
 
     def test_merge(self):
         asg = session.query(RawAssignee).filter(RawAssignee.uuid == "4ad62754-f43f-11e2-ab4e-080027072fcb").one()
+        uuids = [
+            "4ad62754-f43f-11e2-ab4e-080027072fcb"
+            "4dc99504-f43f-11e2-ab4e-080027072fcb"
+            "4ec5d1e8-f43f-11e2-ab4e-080027072fcb"]
         match([
             session.query(RawAssignee).filter(RawAssignee.uuid == "4ad62754-f43f-11e2-ab4e-080027072fcb").one(),
             session.query(RawAssignee).filter(RawAssignee.uuid == "4dc99504-f43f-11e2-ab4e-080027072fcb").one(),

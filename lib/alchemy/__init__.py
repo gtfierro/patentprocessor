@@ -9,22 +9,36 @@ from collections import Counter
 from schema import *
 
 
-def get_config(filename="config.ini"):
+def get_config(localfile="config.ini", default_file=True):
     """
     This grabs a configuration file and converts it into
-    a dictionary
+    a dictionary.
+
+    The default filename is called config.ini
+    First we load the global file, then we load a local file
     """
-    filename = "{0}/{1}".format(os.path.dirname(os.path.realpath(__file__)), filename)
+    if default_file:
+        openfile = "{0}/config.ini".format(os.path.dirname(os.path.realpath(__file__)))
+    else:
+        openfile = localfile
     config = defaultdict(dict)
-    if os.path.isfile(filename):
+    if os.path.isfile(openfile):
         cfg = ConfigParser.ConfigParser()
-        cfg.read(filename)
+        cfg.read(openfile)
         for s in cfg.sections():
             for k, v in cfg.items(s):
                 dec = re.compile('\d+(\.\d+)?')
                 if v in ("True", "False") or v.isdigit() or dec.match(v):
                     v = eval(v)
                 config[s][k] = v
+
+    # this enables us to load a local file
+    if default_file:
+        newconfig = get_config(localfile, default_file=False)
+        for section in newconfig:
+            for item in newconfig[section]:
+                config[section][item] = newconfig[section][item]
+
     return config
 
 
