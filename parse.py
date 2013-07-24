@@ -91,16 +91,10 @@ def parse_patent(xmltuple):
         logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
     patobj = Patobj()
-    patobj.__dict__['pat'] = patent.pat
-    patobj.__dict__['patent'] = patent.patent
-    patobj.__dict__['app'] = patent.app
-    patobj.__dict__['assignee_list'] = patent.assignee_list()
-    patobj.__dict__['inventor_list'] = patent.inventor_list()
-    patobj.__dict__['lawyer_list'] = patent.lawyer_list()
-    patobj.__dict__['us_relation_list'] = patent.us_relation_list()
-    patobj.__dict__['us_classifications'] = patent.us_classifications()
-    patobj.__dict__['ipcr_classifications'] = patent.ipcr_classifications()
-    patobj.__dict__['citation_list'] = patent.citation_list()
+    for attr in ['pat','patent','app','assignee_list','inventor_list','lawyer_list',
+                 'us_relation_list','us_classifications','ipcr_classifications',
+                 'citation_list']:
+        patobj.__dict__[attr] = getattr(patent,attr)
     return patobj
 
 def parse_patents(xmltuples):
