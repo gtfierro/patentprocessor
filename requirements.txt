@@ -2,3 +2,5 @@ sqlalchemy
 ipython
 unidecode
 MySQL-python
+redis
+
