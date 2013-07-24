@@ -213,19 +213,24 @@ class RawAssignee(Base):
     # -- Functions for Disambiguation --
 
     @hybrid_property
-    def pure(self):
-        return self.assignee
-
-    @hybrid_property
     def summarize(self):
         return {
-            "rawlocation_id": self.rawlocation_id,
             "type": self.type,
             "name_first": self.name_first,
             "name_last": self.name_last,
             "organization": self.organization,
             "residence": self.residence,
             "nationality": self.nationality}
+
+    @hybrid_property
+    def __clean__(self):
+        return self.assignee
+
+    @hybrid_property
+    def __related__(self):
+        return Assignee
+
+    # ----------------------------------
 
     def __repr__(self):
         if self.organization:
@@ -302,6 +307,24 @@ class Assignee(Base):
         else:
             return_string = "{0} {1}".format(self.name_first, self.name_last)
         return "<Assignee('{0}')>".format(unidecode(return_string))
+
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def __raw__(self):
+        return self.rawassignees
+
+    def set(self, **kwargs):
+        self.id = kwargs.get("id")
+        self.type = kwargs.get("type")
+        self.name_first = kwargs.get("name_first")
+        self.name_last = kwargs.get("name_last")
+        self.organization = kwargs.get("organization")
+        self.residence = kwargs.get("residence")
+        self.nationality = kwargs.get("nationality")
+
+    # ----------------------------------
+
 
 
 class Inventor(Base):
