@@ -2,16 +2,19 @@
 """
 Performs a basic assignee disambiguation
 """
-import itertools
 from collections import defaultdict
 import uuid
 from collections import Counter
 from Levenshtein import jaro_winkler
-from alchemy import fetch_session # gives us the `session` variable
+from alchemy import fetch_session  # gives us the `session` variable
+from alchemy import get_config
 from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
 
-THRESHOLD = 0.95
+config = get_config()
+print config
+
+THRESHOLD = config.get("assignee").get("threshold")
 
 # get alchemy.db from the directory above
 s = fetch_session()
@@ -24,16 +27,19 @@ id_map = defaultdict(list)
 assignees = s.query(RawAssignee).all()
 assignee_dict = dict(zip([a.uuid for a in assignees], assignees))
 
+
 def get_assignee_id(obj):
     """
     Returns string representing an assignee object. Returns obj.organization if
     it exists, else returns concatenated obj.name_first + '|' + obj.name_last
     """
-    if obj.organization: return obj.organization
+    if obj.organization:
+        return obj.organization
     try:
         return obj.name_first + '|' + obj.name_last
     except:
         return ''
+
 
 def create_assignee_blocks(list_of_assignees):
     print 'Creating assignee blocks...'
@@ -52,6 +58,7 @@ def create_assignee_blocks(list_of_assignees):
                 blocks[primary].append(secondary)
     print 'Assignee blocks created!'
 
+
 def disambiguate_by_frequency(block_key):
     """
     For block, find the most frequent assignee attributes, and return a dict
@@ -68,6 +75,7 @@ def disambiguate_by_frequency(block_key):
     results['most_common_id'] = Counter(assignees).most_common()[0][0]
     return results
 
+
 def create_assignee_table():
     """
     Given a list of assignees and the redis key-value disambiguation,
@@ -79,7 +87,7 @@ def create_assignee_table():
         disambiguated_name = disambiguated_dict.pop('most_common_id')
         disambiguated_name = normalize_utf8(disambiguated_name)
 
-        record = {'id': str(uuid.uuid1())} # dict for insertion
+        record = {'id': str(uuid.uuid1())}   # dict for insertion
         record.update(disambiguated_dict)
         if '|' in disambiguated_name:
             record['name_first'] = disambiguated_name.split('|')[0]
@@ -87,6 +95,7 @@ def create_assignee_table():
         else:
             record['organization'] = disambiguated_name
         assignee_obj = Assignee(**record)
+        print record
         for rawassignee in blocks[assignee]:
             for assignee_id in id_map[rawassignee]:
                 ra = assignee_dict[assignee_id]
@@ -95,7 +104,7 @@ def create_assignee_table():
     try:
         s.commit()
         print 'Assignees finished!'
-    except Exception, e:
+    except Exception:
         s.rollback()
 
 
@@ -104,26 +113,29 @@ def examine():
     for a in assignees:
         print get_assignee_id(a), len(a.rawassignees)
         for ra in a.rawassignees:
-          if get_assignee_id(ra) != get_assignee_id(a):
-              print get_assignee_id(ra)
-          print '-'*10
+            if get_assignee_id(ra) != get_assignee_id(a):
+                print get_assignee_id(ra)
+            print '-'*10
     print len(assignees)
+
 
 def printall():
     assignees = s.query(Assignee).all()
-    with open('out.txt','wb') as f:
-      for a in assignees:
-        f.write(normalize_utf8(get_assignee_id(a)).encode('utf-8'))
-        f.write('\n')
-        for ra in a.rawassignees:
-          f.write(normalize_utf8(get_assignee_id(ra)).encode('utf-8'))
-          f.write('\n')
-        f.write('-'*20)
-        f.write('\n')
+    with open('out.txt', 'wb') as f:
+        for a in assignees:
+            f.write(normalize_utf8(get_assignee_id(a)).encode('utf-8'))
+            f.write('\n')
+            for ra in a.rawassignees:
+                f.write(normalize_utf8(get_assignee_id(ra)).encode('utf-8'))
+                f.write('\n')
+            f.write('-'*20)
+            f.write('\n')
+
 
 def run_disambiguation():
     create_assignee_blocks(assignees)
     create_assignee_table()
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     run_disambiguation()

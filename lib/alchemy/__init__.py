@@ -31,8 +31,8 @@ def fetch_session(db=None):
     """
     Read from config.ini file and load appropriate database
     """
-    echo = config.get('global').get('echo')
     config = get_config()
+    echo = config.get('global').get('echo')
     if not db:
         db = config.get('global').get('database')
     if db[:6] == "sqlite":
@@ -50,6 +50,19 @@ def fetch_session(db=None):
     Session = sessionmaker(bind=engine)
     session = Session()
     return session
+
+session = fetch_session()
+
+
+def match(objects=[]):
+    """
+    Pass in several objects and make them equal
+    """
+    freq = defaultdict(lambda: defaultdict(int))
+    for obj in objects:
+        for k, v in obj.summarize.iteritems():
+            print k, v
+
 
 
 def add(obj, override=True, temp=False):
@@ -161,4 +174,3 @@ def commit():
         print str(e)
 
 
-session = fetch_session()

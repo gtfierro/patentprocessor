@@ -5,10 +5,16 @@ Installation:
 
 ```
 sudo apt-get install -y git
+sudo apt-get install -y redis-server
 sudo apt-get install -y python-pip
 sudo apt-get install -y python-zmq
 sudo apt-get install -y python-mysqldb
 sudo apt-get install -y python-Levenshtein
+```
+
+After git clone:
+
+```
 sudo pip install -r requirements.txt
 ```
 
