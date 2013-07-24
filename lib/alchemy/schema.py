@@ -182,7 +182,7 @@ class RawLocation(Base):
 
     @hybrid_property
     def __single__(self):
-        return [self.rawinventors, self.rawassignees]
+        return [self.rawassignees, self.rawinventors]
 
     @hybrid_property
     def __clean__(self):
@@ -233,7 +233,9 @@ class Location(Base):
 
     @hybrid_property
     def __many__(self):
-        return [self.assignees, self.inventors]
+        return {
+            "asg": self.assignees, 
+            "inv": self.inventors}
 
     # ----------------------------------
 
@@ -369,11 +371,11 @@ class RawLawyer(Base):
 
     @hybrid_property
     def __clean__(self):
-        return self.inventor
+        return self.lawyer
 
     @hybrid_property
     def __related__(self):
-        return Inventor
+        return Lawyer
 
     # ----------------------------------
 
