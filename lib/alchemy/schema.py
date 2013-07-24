@@ -210,6 +210,23 @@ class RawAssignee(Base):
     nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
 
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def pure(self):
+        return self.assignee
+
+    @hybrid_property
+    def summarize(self):
+        return {
+            "rawlocation_id": self.rawlocation_id,
+            "type": self.type,
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "organization": self.organization,
+            "residence": self.residence,
+            "nationality": self.nationality}
+
     def __repr__(self):
         if self.organization:
             return_string = self.organization
