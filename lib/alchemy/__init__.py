@@ -104,6 +104,7 @@ def match(objects=[]):
 
     for obj in objects:
         relobj.__raw__.append(obj)
+        relobj.__many__.append(obj.__single__)
     session.merge(relobj)
     session.commit()
 

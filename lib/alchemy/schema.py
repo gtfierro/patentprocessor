@@ -223,6 +223,10 @@ class RawAssignee(Base):
             "nationality": self.nationality}
 
     @hybrid_property
+    def __single__(self):
+        return self.patent
+
+    @hybrid_property
     def __clean__(self):
         return self.assignee
 
@@ -313,6 +317,10 @@ class Assignee(Base):
     @hybrid_property
     def __raw__(self):
         return self.rawassignees
+
+    @hybrid_property
+    def __many__(self):
+        return self.patents
 
     def set(self, **kwargs):
         self.id = kwargs.get("id")
