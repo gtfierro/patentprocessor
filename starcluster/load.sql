@@ -1,6 +1,7 @@
 /*
     Merge together two disctinct MySQL tables
     mysqldump [options] uspto -T /var/lib/mysql/uspto
+    mysql -u [user] -p --local-infile=1 -h [db] [tbl]
     
     READ THIS: http://dev.mysql.com/doc/refman/5.5/en/optimizing-innodb-bulk-data-loading.html
 */

@@ -216,5 +216,3 @@ def commit():
     except Exception, e:
         session.rollback()
         print str(e)
-
-
