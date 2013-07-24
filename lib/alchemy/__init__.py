@@ -8,39 +8,12 @@ from collections import defaultdict
 from schema import *
 
 
-def fetch_session(db=None, path_to_sqlite='.'):
-    """
-    Read from config.ini file and load appropriate database
-    """
-    echo = False
-    config = ConfigParser.ConfigParser()
-    config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
-    if not db:
-        db = config.get('global', 'database')
-    if db[:6] == "sqlite":
-        sqlite_db_path = os.path.join(path_to_sqlite, config.get(db, 'database'))
-        engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
-    else:
-        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
-            config.get(db, 'user'),
-            config.get(db, 'password'),
-            config.get(db, 'host'),
-            config.get(db, 'database')), echo=echo)
-    Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    return session
-
-session = fetch_session()
-
-
 def get_config(filename="config.ini"):
     """
     This grabs a configuration file and converts it into
     a dictionary
     """
     filename = "{0}/{1}".format(os.path.dirname(os.path.realpath(__file__)), filename)
-    print filename
     config = defaultdict(dict)
     if os.path.isfile(filename):
         cfg = ConfigParser.ConfigParser()
@@ -52,6 +25,31 @@ def get_config(filename="config.ini"):
                     v = eval(v)
                 config[s][k] = v
     return config
+
+
+def fetch_session(db=None):
+    """
+    Read from config.ini file and load appropriate database
+    """
+    echo = config.get('global').get('echo')
+    config = get_config()
+    if not db:
+        db = config.get('global').get('database')
+    if db[:6] == "sqlite":
+        sqlite_db_path = os.path.join(
+            config.get(db).get('path'),
+            config.get(db).get('database'))
+        engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
+    else:
+        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
+            config.get(db).get('user'),
+            config.get(db).get('password'),
+            config.get(db).get('host'),
+            config.get(db).get('database')), echo=echo)
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    return session
 
 
 def add(obj, override=True, temp=False):
@@ -163,3 +161,4 @@ def commit():
         print str(e)
 
 
+session = fetch_session()
