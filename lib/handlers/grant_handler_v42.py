@@ -110,6 +110,7 @@ class PatentGrant(object):
             print inst, datestring
             return None
 
+    @property
     def assignee_list(self):
         """
         Returns list of dictionaries:
@@ -150,6 +151,7 @@ class PatentGrant(object):
                 res.append([asg, loc])
         return res
 
+    @property
     def citation_list(self):
         """
         Returns a list of two lists. The first list is normal citations,
@@ -197,6 +199,7 @@ class PatentGrant(object):
                     ccnt += 1
         return [regular_cits, other_cits]
 
+    @property
     def inventor_list(self):
         """
         Returns list of lists of inventor dictionary and location dictionary
@@ -232,6 +235,7 @@ class PatentGrant(object):
                 res.append([inv, loc])
         return res
 
+    @property
     def lawyer_list(self):
         """
         Returns a list of lawyer dictionary
@@ -269,6 +273,7 @@ class PatentGrant(object):
             root.contents_of('doc_number')[0])
         return res
 
+    @property
     def us_relation_list(self):
         """
         returns list of dictionaries for us reldoc:
@@ -317,6 +322,7 @@ class PatentGrant(object):
                         res.append(data)
         return res
 
+    @property
     def us_classifications(self):
         """
         Returns list of dictionaries representing us classification
@@ -348,6 +354,7 @@ class PatentGrant(object):
                     i = i + 1
         return classes
 
+    @property
     def ipcr_classifications(self):
         """
         Returns list of dictionaries representing ipcr classifications
