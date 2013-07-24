@@ -177,6 +177,10 @@ class RawLocation(Base):
             "country": self.country}
 
     @hybrid_property
+    def uuid(self):
+        return self.id
+
+    @hybrid_property
     def __single__(self):
         return [self.rawinventors, self.rawassignees]
 
