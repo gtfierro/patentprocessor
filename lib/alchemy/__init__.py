@@ -5,6 +5,7 @@ import ConfigParser
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from collections import defaultdict
+from collections import Counter
 from schema import *
 
 
@@ -58,11 +59,12 @@ def match(objects=[]):
     """
     Pass in several objects and make them equal
     """
-    freq = defaultdict(lambda: defaultdict(int))
+    freq = defaultdict(Counter)
     for obj in objects:
         for k, v in obj.summarize.iteritems():
-            print k, v
-
+            if v not in (None, ""):
+                freq[k][v] += 1
+    print freq
 
 
 def add(obj, override=True, temp=False):
