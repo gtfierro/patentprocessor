@@ -17,10 +17,6 @@ from lib.handlers.grant_handler_v42 import PatentGrant as PatentGrant1
 from lib.handlers.grant_handler_v44 import PatentGrant as PatentGrant2
 
 
-class Patobj(object):
-    pass
-
-
 def xml_gen(obj):
     """
     XML generator for iteration of the large XML file
@@ -33,21 +29,6 @@ def xml_gen(obj):
             yield "".join(data[:-1])
             data = [data[-1]]
     yield "".join(data)
-
-
-def parse_patent(patent):
-    patobj = Patobj()
-    patobj.__dict__['pat'] = patent.pat
-    patobj.__dict__['patent'] = patent.patent
-    patobj.__dict__['app'] = patent.app
-    patobj.__dict__['assignee_list'] = patent.assignee_list()
-    patobj.__dict__['inventor_list'] = patent.inventor_list()
-    patobj.__dict__['lawyer_list'] = patent.lawyer_list()
-    patobj.__dict__['us_relation_list'] = patent.us_relation_list()
-    patobj.__dict__['us_classifications'] = patent.us_classifications()
-    patobj.__dict__['ipcr_classifications'] = patent.ipcr_classifications()
-    patobj.__dict__['citation_list'] = patent.citation_list()
-    return patobj
 
 
 def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
@@ -73,7 +54,6 @@ def main(patentroot, xmlregex="ipg\d{6}.xml", commit=100, func=alchemy.add):
                 if i == 0:
                     print ">=130115"
                 patobj = PatentGrant2(xml_string, is_string=True)
-            patobj = parse_patent(patobj)
             alchemy.add(patobj, override=False, temp=False)
             if (i + 1) % commit == 0:
                 print " *", datetime.now() - t, ":", (i+1), filename
