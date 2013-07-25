@@ -274,7 +274,9 @@ class RawAssignee(Base):
 
     @hybrid_property
     def __single__(self):
-        return self.patent
+        return {
+            "pat": self.patent,
+            "loc": self.rawlocation.location}
 
     @hybrid_property
     def __clean__(self):
@@ -316,7 +318,9 @@ class RawInventor(Base):
 
     @hybrid_property
     def __single__(self):
-        return self.patent
+        return {
+            "pat": self.patent,
+            "loc": self.rawlocation.location}
 
     @hybrid_property
     def __clean__(self):
@@ -410,7 +414,9 @@ class Assignee(Base):
 
     @hybrid_property
     def __many__(self):
-        return self.patents
+        return {
+            "pat": self.patents,
+            "loc": self.locations}
 
     # ----------------------------------
 
@@ -444,7 +450,9 @@ class Inventor(Base):
 
     @hybrid_property
     def __many__(self):
-        return self.patents
+        return {
+            "pat": self.patents,
+            "loc": self.locations}
 
     # ----------------------------------
 
