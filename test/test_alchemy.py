@@ -15,10 +15,8 @@ class TestAlchemy(unittest.TestCase):
         pass
 
     def tearDown(self):
-        os.system("cp {0}/alchemy.raw {0}/test.db".format(config.get("sqlite").get("path")))
-        pass
-
-    def test_general(self):
+        # we keep this to tidy up our database if it fails
+        session.commit()
         pass
 
     def test_assigneematch(self):
@@ -172,6 +170,24 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(1, len(asg[4].assignee.locations))
         self.assertEqual(2, len(asg[5].assignee.locations))
 
+    def test_inventor_location(self):
+        # insert an assignee first.
+        # then location. make sure links ok
+        inv = session.query(RawInventor).limit(20).all()
+        loc = session.query(RawLocation).limit(40).all()
+
+        alchemy.match(inv[0:5])
+        alchemy.match(inv[5:10])
+        alchemy.match(inv[10:15])
+        alchemy.match(inv[15:20])
+        alchemy.match(loc[0:20])
+        alchemy.match(loc[20:40])
+
+        self.assertEqual(1, len(inv[14].inventor.locations))
+        self.assertEqual(2, len(inv[15].inventor.locations))
+        self.assertEqual(4, len(loc[19].location.inventors))
+        self.assertEqual(1, len(loc[20].location.inventors))
+
     def test_location_assignee(self):
         asg = session.query(RawAssignee).limit(20).all()
         loc = session.query(RawLocation).limit(40).all()
@@ -186,9 +202,27 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(2, len(loc[19].location.assignees))
         self.assertEqual(1, len(asg[4].assignee.locations))
         self.assertEqual(2, len(asg[5].assignee.locations))
-        pass
+
+    def test_location_inventor(self):
+        # insert an assignee first.
+        # then location. make sure links ok
+        inv = session.query(RawInventor).limit(20).all()
+        loc = session.query(RawLocation).limit(40).all()
+
+        alchemy.match(loc[0:20])
+        alchemy.match(loc[20:40])
+        alchemy.match(inv[0:5])
+        alchemy.match(inv[5:10])
+        alchemy.match(inv[10:15])
+        alchemy.match(inv[15:20])
+
+        self.assertEqual(1, len(inv[14].inventor.locations))
+        self.assertEqual(2, len(inv[15].inventor.locations))
+        self.assertEqual(4, len(loc[19].location.inventors))
+        self.assertEqual(1, len(loc[20].location.inventors))
 
 if __name__ == '__main__':
     config = alchemy.get_config()
+    os.system("cp {0}/alchemy.raw {0}/test.db".format(config.get("sqlite").get("path")))
     session = alchemy.session
     unittest.main()

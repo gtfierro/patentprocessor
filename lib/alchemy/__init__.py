@@ -77,7 +77,6 @@ def match(objects=[], override={}):
 
     TODO: Add stuff to have a flag so it doesn't search
     TODO: Add stuff to default to certain variables
-    TODO: Add better linkage of inventor/assignee > l
     """
     if type(objects).__name__ not in ('list', 'tuple'):
         objects = [objects]
@@ -132,7 +131,7 @@ def match(objects=[], override={}):
             for key in relobj.__many__.keys():
                 if type(obj.__single__[key]).__name__ in ('list', 'tuple'):
                     relobj.__many__[key].extend(set(obj.__single__[key]) - set(relobj.__many__[key]))
-                elif obj.__single__[key] not in relobj.__many__[key]:
+                elif obj.__single__[key] and obj.__single__[key] not in relobj.__many__[key]:
                     relobj.__many__[key].append(obj.__single__[key])
         else:
             if obj.__single__ and obj.__single__ not in relobj.__many__:
