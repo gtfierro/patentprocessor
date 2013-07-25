@@ -72,8 +72,11 @@ session = fetch_session()
 def match(objects=[], override={}):
     """
     Pass in several objects and make them equal
-    This
+    Override is specified if there is a desire to override
+    certain fields
     """
+    if type(objects).__name__ not in ('list', 'tuple'):
+        objects = [objects]
     freq = defaultdict(Counter)
     param = {}
     all_objects = []
@@ -82,7 +85,7 @@ def match(objects=[], override={}):
 
     # we extend our objects and determine the
     # previously associated items
-    for obj in all_objects:
+    for obj in objects:
         clean = obj.__clean__
         # keep track of all the "clean" objects
         if clean:
@@ -113,13 +116,23 @@ def match(objects=[], override={}):
     # remove all clean objects
     for obj in clean_objects:
         session.delete(obj)
+    session.commit()  # commit necessary
 
+    relobj = objects[0].__related__(**param)
     # associate the data into the related object
-    relobj = type(objects[0]).__related__(**param)
 
     for obj in all_objects:
         relobj.__raw__.append(obj)
-        relobj.__many__.append(obj.__single__)
+        if type(relobj.__many__).__name__ in ("dict"):
+            # if it is a dictionary type, iterate and add
+            for key in relobj.__many__.keys():
+                if type(obj.__single__[key]).__name__ in ('list', 'tuple'):
+                    relobj.__many__[key].extend(set(obj.__single__[key]) - set(relobj.__many__[key]))
+                elif obj.__single__[key] not in relobj.__many__[key]:
+                    relobj.__many__[key].append(obj.__single__[key])
+        else:
+            if obj.__single__ and obj.__single__ not in relobj.__many__:
+                relobj.__many__.append(obj.__single__)
     session.merge(relobj)
     session.commit()
 
@@ -130,7 +143,7 @@ def add(obj, override=True, temp=False):
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
 
     Case Sensitivity and Table Reflection
-    MySQL has inconsistent support for case-sensitive identifier names,
+spr0us    MySQL has inconsistent support for case-sensitive identifier names,
     basing support on specific details of the underlying operating system.
     However, it has been observed that no matter what case sensitivity
     behavior is present, the names of tables in foreign key declarations

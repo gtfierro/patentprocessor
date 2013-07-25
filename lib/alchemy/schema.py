@@ -182,7 +182,9 @@ class RawLocation(Base):
 
     @hybrid_property
     def __single__(self):
-        return [self.rawassignees, self.rawinventors]
+        return {
+            "asg": [asg.assignee for asg in self.rawassignees if asg.assignee],
+            "inv": [inv.inventor for inv in self.rawinventors if inv.inventor]}
 
     @hybrid_property
     def __clean__(self):
@@ -206,8 +208,8 @@ class Location(Base):
     country = Column(Unicode(10), index=True)
     latitude = Column(Float)
     longitude = Column(Float)
-    assignees = relationship("Assignee", secondary=locationassignee, backref="location")
-    inventors = relationship("Inventor", secondary=locationinventor, backref="location")
+    assignees = relationship("Assignee", secondary=locationassignee, backref="locations")
+    inventors = relationship("Inventor", secondary=locationinventor, backref="locations")
     rawlocations = relationship("RawLocation", backref="location")
     __table_args__ = (
         Index("dloc_idx1", "latitude", "longitude"),
@@ -229,13 +231,11 @@ class Location(Base):
 
     @hybrid_property
     def __raw__(self):
-        return self.rawlocation
+        return self.rawlocations
 
     @hybrid_property
     def __many__(self):
-        return {
-            "asg": self.assignees, 
-            "inv": self.inventors}
+        return {"asg": self.assignees, "inv": self.inventors}
 
     # ----------------------------------
 
@@ -290,7 +290,7 @@ class RawAssignee(Base):
         if self.organization:
             return_string = self.organization
         else:
-            return_string = "{0} {1}".format(self.name_first, self.name_last)
+            return_string = u"{0} {1}".format(self.name_first, self.name_last)
         return "<RawAssignee('{0}')>".format(unidecode(return_string))
 
 
@@ -330,7 +330,7 @@ class RawInventor(Base):
 
     @hybrid_property
     def name_full(self):
-        return "{first} {last}".format(
+        return u"{first} {last}".format(
             first=self.name_first,
             last=self.name_last)
 
@@ -351,7 +351,7 @@ class RawLawyer(Base):
 
     @hybrid_property
     def name_full(self):
-        return "{first} {last}".format(
+        return u"{first} {last}".format(
             first=self.name_first,
             last=self.name_last)
 
@@ -418,7 +418,7 @@ class Assignee(Base):
         if self.organization:
             return_string = self.organization
         else:
-            return_string = "{0} {1}".format(self.name_first, self.name_last)
+            return_string = u"{0} {1}".format(self.name_first, self.name_last)
         return "<Assignee('{0}')>".format(unidecode(return_string))
 
 
@@ -432,7 +432,7 @@ class Inventor(Base):
 
     @hybrid_property
     def name_full(self):
-        return "{first} {last}".format(
+        return u"{first} {last}".format(
             first=self.name_first,
             last=self.name_last)
 
@@ -461,6 +461,12 @@ class Lawyer(Base):
     country = Column(Unicode(10))
     rawlawyers = relationship("RawLawyer", backref="lawyer")
 
+    @hybrid_property
+    def name_full(self):
+        return u"{first} {last}".format(
+            first=self.name_first,
+            last=self.name_last)
+
     # -- Functions for Disambiguation --
 
     @hybrid_property
@@ -475,8 +481,8 @@ class Lawyer(Base):
 
     def __repr__(self):
         data = []
-        if self.name_first:
-            data.append("{0} {1}".format(self.name_first, self.name_last))
+        if self.name_full:
+            data.append(self.name_full)
         if self.organization:
             data.append(self.organization)
         return "<Lawyer('{0}')>".format(unidecode(", ".join(data)))
