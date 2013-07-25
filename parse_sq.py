@@ -5,6 +5,7 @@ import re
 import sys
 sys.path.append('.')
 sys.path.append('./lib/')
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 import alchemy
 from argconfig_parse import ArgHandler
