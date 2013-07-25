@@ -144,15 +144,34 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(0, len(loc0[0].location.inventors))
         self.assertEqual(1, locs.count())
         self.assertEqual("Hong Kong, MN, US", loc0[0].location.address)
-
-        # the inventors/assignees > locations link is
-        # funny but the idea should be, we add either
-        # type of record and if the corresponding type
-        # exists, we create the linkage
+        self.assertEqual(None, loc0[0].location.latitude)
+        self.assertEqual(None, loc0[0].location.longitude)
 
         # override the default values provided
-        alchemy.match(loc0[0], {"city": u"Frisco", "state": u"Cali", "country": u"US"})
+        alchemy.match(loc0[0], {"city": u"Frisco", "state": u"Cali", "country": u"US", "longitude": 10.0, "latitude": 10.0})
         self.assertEqual("Frisco, Cali, US", loc0[0].location.address)
+        self.assertEqual(10.0, loc0[0].location.latitude)
+        self.assertEqual(10.0, loc0[0].location.longitude)
+
+    def test_assignee_location(self):
+        # insert an assignee first.
+        # then location. make sure links ok
+        asg = session.query(RawAssignee).limit(20).all()
+        loc = session.query(RawLocation).limit(40).all()
+
+        alchemy.match(asg[0:5])
+        alchemy.match(asg[5:10])
+        alchemy.match(asg[10:15])
+        alchemy.match(asg[15:20])
+        alchemy.match(loc[0:20])
+        alchemy.match(loc[20:40])
+
+        self.assertEqual(2, len(loc[19].location.assignees))
+        self.assertEqual(1, len(asg[4].assignee.locations))
+        self.assertEqual(2, len(asg[5].assignee.locations))
+
+    def test_location_assignee(self):
+        pass
 
 if __name__ == '__main__':
     config = alchemy.get_config()
