@@ -18,36 +18,43 @@ def init(self, *args, **kwargs):
         self.__dict__[self.kw[i]] = arg
     for k, v in kwargs.iteritems():
         self.__dict__[k] = v
+
+
+def update(self, **kwargs):
+    for k in kwargs:
+        self.__dict__[k] = kwargs.get(k)
+
 Base.__init__ = init
+Base.update = update
 # <<<<<<
 
 
 # ASSOCIATION ----------------------
 
-patentassignee = Table('patent_assignee', Base.metadata,
+patentassignee = Table(
+    'patent_assignee', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('assignee_id', Unicode(36), ForeignKey('assignee.id'))
-)
+    Column('assignee_id', Unicode(36), ForeignKey('assignee.id')))
 
-patentinventor = Table('patent_inventor', Base.metadata,
+patentinventor = Table(
+    'patent_inventor', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
-)
+    Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
-patentlawyer = Table('patent_lawyer', Base.metadata,
+patentlawyer = Table(
+    'patent_lawyer', Base.metadata,
     Column('patent_id', Unicode(20), ForeignKey('patent.id')),
-    Column('lawyer_id', Unicode(36), ForeignKey('lawyer.id'))
-)
+    Column('lawyer_id', Unicode(36), ForeignKey('lawyer.id')))
 
-locationassignee = Table('location_assignee', Base.metadata,
+locationassignee = Table(
+    'location_assignee', Base.metadata,
     Column('location_id', Unicode(256), ForeignKey('location.id')),
-    Column('assignee_id', Unicode(36), ForeignKey('assignee.id'))
-)
+    Column('assignee_id', Unicode(36), ForeignKey('assignee.id')))
 
-locationinventor = Table('location_inventor', Base.metadata,
+locationinventor = Table(
+    'location_inventor', Base.metadata,
     Column('location_id', Unicode(256), ForeignKey('location.id')),
-    Column('inventor_id', Unicode(36), ForeignKey('inventor.id'))
-)
+    Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
 # PATENT ---------------------------
 
@@ -160,6 +167,35 @@ class RawLocation(Base):
             addy.append(self.country)
         return ", ".join(addy)
 
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def summarize(self):
+        return {
+            "city": self.city,
+            "state": self.state,
+            "country": self.country}
+
+    @hybrid_property
+    def uuid(self):
+        return self.id
+
+    @hybrid_property
+    def __single__(self):
+        return {
+            "asg": [asg.assignee for asg in self.rawassignees if asg.assignee],
+            "inv": [inv.inventor for inv in self.rawinventors if inv.inventor]}
+
+    @hybrid_property
+    def __clean__(self):
+        return self.location
+
+    @hybrid_property
+    def __related__(self):
+        return Location
+
+    # ----------------------------------
+
     def __repr__(self):
         return "<RawLocation('{0}')>".format(unidecode(self.address))
 
@@ -172,6 +208,8 @@ class Location(Base):
     country = Column(Unicode(10), index=True)
     latitude = Column(Float)
     longitude = Column(Float)
+    assignees = relationship("Assignee", secondary=locationassignee, backref="locations")
+    inventors = relationship("Inventor", secondary=locationinventor, backref="locations")
     rawlocations = relationship("RawLocation", backref="location")
     __table_args__ = (
         Index("dloc_idx1", "latitude", "longitude"),
@@ -188,6 +226,18 @@ class Location(Base):
         if self.country:
             addy.append(self.country)
         return ", ".join(addy)
+
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def __raw__(self):
+        return self.rawlocations
+
+    @hybrid_property
+    def __many__(self):
+        return {"asg": self.assignees, "inv": self.inventors}
+
+    # ----------------------------------
 
     def __repr__(self):
         return "<Location('{0}')>".format(self.address)
@@ -210,11 +260,37 @@ class RawAssignee(Base):
     nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
 
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def summarize(self):
+        return {
+            "type": self.type,
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "organization": self.organization,
+            "residence": self.residence,
+            "nationality": self.nationality}
+
+    @hybrid_property
+    def __single__(self):
+        return self.patent
+
+    @hybrid_property
+    def __clean__(self):
+        return self.assignee
+
+    @hybrid_property
+    def __related__(self):
+        return Assignee
+
+    # ----------------------------------
+
     def __repr__(self):
         if self.organization:
             return_string = self.organization
         else:
-            return_string = "{0} {1}".format(self.name_first, self.name_last)
+            return_string = u"{0} {1}".format(self.name_first, self.name_last)
         return "<RawAssignee('{0}')>".format(unidecode(return_string))
 
 
@@ -229,9 +305,32 @@ class RawInventor(Base):
     nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
 
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def summarize(self):
+        return {
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "nationality": self.nationality}
+
+    @hybrid_property
+    def __single__(self):
+        return self.patent
+
+    @hybrid_property
+    def __clean__(self):
+        return self.inventor
+
+    @hybrid_property
+    def __related__(self):
+        return Inventor
+
+    # ----------------------------------
+
     @hybrid_property
     def name_full(self):
-        return "{first} {last}".format(
+        return u"{first} {last}".format(
             first=self.name_first,
             last=self.name_last)
 
@@ -252,9 +351,33 @@ class RawLawyer(Base):
 
     @hybrid_property
     def name_full(self):
-        return "{first} {last}".format(
+        return u"{first} {last}".format(
             first=self.name_first,
             last=self.name_last)
+
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def summarize(self):
+        return {
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "organization": self.organization,
+            "country": self.country}
+
+    @hybrid_property
+    def __single__(self):
+        return self.patent
+
+    @hybrid_property
+    def __clean__(self):
+        return self.lawyer
+
+    @hybrid_property
+    def __related__(self):
+        return Lawyer
+
+    # ----------------------------------
 
     def __repr__(self):
         data = []
@@ -279,11 +402,23 @@ class Assignee(Base):
     nationality = Column(Unicode(10))
     rawassignees = relationship("RawAssignee", backref="assignee")
 
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def __raw__(self):
+        return self.rawassignees
+
+    @hybrid_property
+    def __many__(self):
+        return self.patents
+
+    # ----------------------------------
+
     def __repr__(self):
         if self.organization:
             return_string = self.organization
         else:
-            return_string = "{0} {1}".format(self.name_first, self.name_last)
+            return_string = u"{0} {1}".format(self.name_first, self.name_last)
         return "<Assignee('{0}')>".format(unidecode(return_string))
 
 
@@ -297,9 +432,21 @@ class Inventor(Base):
 
     @hybrid_property
     def name_full(self):
-        return "{first} {last}".format(
+        return u"{first} {last}".format(
             first=self.name_first,
             last=self.name_last)
+
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def __raw__(self):
+        return self.rawinventors
+
+    @hybrid_property
+    def __many__(self):
+        return self.patents
+
+    # ----------------------------------
 
     def __repr__(self):
         return "<Inventor('{0}')>".format(unidecode(self.name_full))
@@ -314,10 +461,28 @@ class Lawyer(Base):
     country = Column(Unicode(10))
     rawlawyers = relationship("RawLawyer", backref="lawyer")
 
+    @hybrid_property
+    def name_full(self):
+        return u"{first} {last}".format(
+            first=self.name_first,
+            last=self.name_last)
+
+    # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def __raw__(self):
+        return self.rawlawyers
+
+    @hybrid_property
+    def __many__(self):
+        return self.patents
+
+    # ----------------------------------
+
     def __repr__(self):
         data = []
-        if self.name_first:
-            data.append("{0} {1}".format(self.name_first, self.name_last))
+        if self.name_full:
+            data.append(self.name_full)
         if self.organization:
             data.append(self.organization)
         return "<Lawyer('{0}')>".format(unidecode(", ".join(data)))

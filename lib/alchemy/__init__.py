@@ -1,29 +1,66 @@
 import os
+import re
 import ConfigParser
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from collections import defaultdict
+from collections import Counter
 from schema import *
 
 
-def fetch_session(db=None, path_to_sqlite='.'):
+def get_config(localfile="config.ini", default_file=True):
+    """
+    This grabs a configuration file and converts it into
+    a dictionary.
+
+    The default filename is called config.ini
+    First we load the global file, then we load a local file
+    """
+    if default_file:
+        openfile = "{0}/config.ini".format(os.path.dirname(os.path.realpath(__file__)))
+    else:
+        openfile = localfile
+    config = defaultdict(dict)
+    if os.path.isfile(openfile):
+        cfg = ConfigParser.ConfigParser()
+        cfg.read(openfile)
+        for s in cfg.sections():
+            for k, v in cfg.items(s):
+                dec = re.compile('\d+(\.\d+)?')
+                if v in ("True", "False") or v.isdigit() or dec.match(v):
+                    v = eval(v)
+                config[s][k] = v
+
+    # this enables us to load a local file
+    if default_file:
+        newconfig = get_config(localfile, default_file=False)
+        for section in newconfig:
+            for item in newconfig[section]:
+                config[section][item] = newconfig[section][item]
+
+    return config
+
+
+def fetch_session(db=None):
     """
     Read from config.ini file and load appropriate database
     """
-    echo = False
-    config = ConfigParser.ConfigParser()
-    config.read('{0}/config.ini'.format(os.path.dirname(os.path.realpath(__file__))))
+    config = get_config()
+    echo = config.get('global').get('echo')
     if not db:
-        db = config.get('global', 'database')
+        db = config.get('global').get('database')
     if db[:6] == "sqlite":
-        sqlite_db_path = os.path.join(path_to_sqlite, config.get(db, 'database'))
+        sqlite_db_path = os.path.join(
+            config.get(db).get('path'),
+            config.get(db).get('database'))
         engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
     else:
         engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
-            config.get(db, 'user'),
-            config.get(db, 'password'),
-            config.get(db, 'host'),
-            config.get(db, 'database')), echo=echo)
+            config.get(db).get('user'),
+            config.get(db).get('password'),
+            config.get(db).get('host'),
+            config.get(db).get('database')), echo=echo)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -32,13 +69,85 @@ def fetch_session(db=None, path_to_sqlite='.'):
 session = fetch_session()
 
 
+def match(objects=[], override={}):
+    """
+    Pass in several objects and make them equal
+    Override is specified if there is a desire to override
+    certain fields
+
+    TODO: Add stuff to have a flag so it doesn't search
+    TODO: Add stuff to default to certain variables
+    TODO: Add better linkage of inventor/assignee > location
+    """
+    if type(objects).__name__ not in ('list', 'tuple'):
+        objects = [objects]
+    freq = defaultdict(Counter)
+    param = {}
+    all_objects = []
+    all_objects.extend(objects)
+    clean_objects = []
+
+    # we extend our objects and determine the
+    # previously associated items
+    for obj in objects:
+        clean = obj.__clean__
+        # keep track of all the "clean" objects
+        if clean:
+            if clean not in clean_objects:
+                clean_objects.append(clean)
+            # add the "raw" objects as we want to
+            # iterate these items
+            for o in clean.__raw__:
+                if o not in all_objects:
+                    all_objects.append(o)
+
+    # this helps us determine items to summarize
+    # ques: how do we indicate most recent?
+    #   like for people and their locations? hrm..
+    for obj in all_objects:
+        for k, v in obj.summarize.iteritems():
+            if v not in (None, ""):
+                freq[k][v] += 1
+        if "id" not in param:
+            param["id"] = obj.uuid
+        param["id"] = min(param["id"], obj.uuid)
+
+    # create parameters based on most frequent
+    for k in freq:
+        param[k] = freq[k].most_common(1)[0][0]
+    param.update(override)
+
+    # remove all clean objects
+    for obj in clean_objects:
+        session.delete(obj)
+    session.commit()  # commit necessary
+
+    relobj = objects[0].__related__(**param)
+    # associate the data into the related object
+
+    for obj in all_objects:
+        relobj.__raw__.append(obj)
+        if type(relobj.__many__).__name__ in ("dict"):
+            # if it is a dictionary type, iterate and add
+            for key in relobj.__many__.keys():
+                if type(obj.__single__[key]).__name__ in ('list', 'tuple'):
+                    relobj.__many__[key].extend(set(obj.__single__[key]) - set(relobj.__many__[key]))
+                elif obj.__single__[key] not in relobj.__many__[key]:
+                    relobj.__many__[key].append(obj.__single__[key])
+        else:
+            if obj.__single__ and obj.__single__ not in relobj.__many__:
+                relobj.__many__.append(obj.__single__)
+    session.merge(relobj)
+    session.commit()
+
+
 def add(obj, override=True, temp=False):
     """
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
 
     Case Sensitivity and Table Reflection
-    MySQL has inconsistent support for case-sensitive identifier names,
+spr0us    MySQL has inconsistent support for case-sensitive identifier names,
     basing support on specific details of the underlying operating system.
     However, it has been observed that no matter what case sensitivity
     behavior is present, the names of tables in foreign key declarations
@@ -133,41 +242,9 @@ def add(obj, override=True, temp=False):
     session.merge(pat)
 
 
-def add_cit(obj, override=True):
-    """
-    Citations and OtherReference seem to be pretty intense so
-    we ignore these for the time being
-    """
-
-    # if a patent exists, remove it so we can replace it
-    pat_query = session.query(Patent).filter(Patent.number == obj.patent)
-    if pat_query.count():
-        if override:
-            session.delete(pat_query.one())
-        else:
-            return
-    if not obj.pat["number"]:
-        return
-
-    pat = Patent(**obj.pat)
-
-    #+cit, +othercit
-    cits, refs = obj.citation_list
-    for cit in cits:
-        cit = Citation(**cit)
-        pat.citations.append(cit)
-    for ref in refs:
-        ref = OtherReference(**ref)
-        pat.otherreferences.append(ref)
-
-    session.merge(pat)
-
-
 def commit():
     try:
         session.commit()
     except Exception, e:
         session.rollback()
         print str(e)
-
-
