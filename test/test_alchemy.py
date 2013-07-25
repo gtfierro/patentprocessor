@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 import alchemy
 from alchemy.schema import *
 
+
 class TestAlchemy(unittest.TestCase):
 
     def setUp(self):
@@ -14,6 +15,7 @@ class TestAlchemy(unittest.TestCase):
         pass
 
     def tearDown(self):
+        os.system("cp {0}/alchemy.raw {0}/test.db".format(config.get("sqlite").get("path")))
         pass
 
     def test_general(self):
@@ -171,6 +173,19 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(2, len(asg[5].assignee.locations))
 
     def test_location_assignee(self):
+        asg = session.query(RawAssignee).limit(20).all()
+        loc = session.query(RawLocation).limit(40).all()
+
+        alchemy.match(loc[0:20])
+        alchemy.match(loc[20:40])
+        alchemy.match(asg[0:5])
+        alchemy.match(asg[5:10])
+        alchemy.match(asg[10:15])
+        alchemy.match(asg[15:20])
+
+        self.assertEqual(2, len(loc[19].location.assignees))
+        self.assertEqual(1, len(asg[4].assignee.locations))
+        self.assertEqual(2, len(asg[5].assignee.locations))
         pass
 
 if __name__ == '__main__':
