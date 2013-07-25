@@ -1,13 +1,37 @@
 README
 ======
 
-Installation:
+#### Installation:
 
-    sudo apt-get install -y git
-    sudo apt-get install -y python-pip
-    sudo apt-get install -y python-zmq
-    sudo apt-get install -y python-mysqldb
-    sudo pip install -r requirements.txt
+```
+sudo apt-get install -y git
+sudo apt-get install -y redis-server
+sudo apt-get install -y python-pip
+sudo apt-get install -y python-zmq
+sudo apt-get install -y python-mysqldb
+sudo apt-get install -y python-Levenshtein
+```
+
+After git clone:
+
+```
+sudo pip install -r requirements.txt
+```
+
+#### Some MySQL recipes specific to AWS:
+
+Export files into CSV
+
+```
+mysql -u [user] -p [passwd] --database=[db] --host=[host] --batch -e "select * from [table] limit 10" | sed 's/\t/","/g;s/^/"/;s/$/"/;s/\n//g' > [table].csv
+```
+
+Allow local file reading (local-infile must be 1 for security purposes)
+
+```
+mysql -u [user] -p --local-infile=1 -h [db] [tbl]
+```
+
 
 Executing sample scripts
 
