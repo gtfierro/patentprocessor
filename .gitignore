@@ -31,3 +31,4 @@ XML/*
 *.db
 lib/alchemy/config.ini
 *.pickle
+build/

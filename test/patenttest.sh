@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ -f /tmp/res ] ;
   then rm /tmp/res ;
