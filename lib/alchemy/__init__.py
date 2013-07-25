@@ -74,6 +74,10 @@ def match(objects=[], override={}):
     Pass in several objects and make them equal
     Override is specified if there is a desire to override
     certain fields
+
+    TODO: Add stuff to have a flag so it doesn't search
+    TODO: Add stuff to default to certain variables
+    TODO: Add better linkage of inventor/assignee > location
     """
     if type(objects).__name__ not in ('list', 'tuple'):
         objects = [objects]
