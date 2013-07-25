@@ -6,8 +6,7 @@ from collections import defaultdict
 import uuid
 from collections import Counter
 from Levenshtein import jaro_winkler
-from alchemy import fetch_session  # gives us the `session` variable
-from alchemy import get_config
+from alchemy import session, get_config, match
 from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
 
@@ -16,14 +15,13 @@ config = get_config()
 THRESHOLD = config.get("assignee").get("threshold")
 
 # get alchemy.db from the directory above
-s = fetch_session()
 
 # bookkeeping for blocks
 blocks = defaultdict(list)
 id_map = defaultdict(list)
 
 # get all assignees in database
-assignees = s.query(RawAssignee).all()
+assignees = [a for a in session.query(RawAssignee).yield_per(1)]
 assignee_dict = dict(zip([a.uuid for a in assignees], assignees))
 
 
@@ -58,23 +56,6 @@ def create_assignee_blocks(list_of_assignees):
     print 'Assignee blocks created!'
 
 
-def disambiguate_by_frequency(block_key):
-    """
-    For block, find the most frequent assignee attributes, and return a dict
-    of those values.
-    """
-    assignees = blocks[block_key]
-    rawassignees = []
-    for rawassignee in assignees:
-        rawassignees.extend([assignee_dict[raw_id] for raw_id in id_map[rawassignee]])
-    results = {}
-    for key in ('type', 'residence', 'nationality'):
-        results[key] = Counter(map(lambda x: getattr(x, key),
-                                    rawassignees)).most_common()[0][0]
-    results['most_common_id'] = Counter(assignees).most_common()[0][0]
-    return results
-
-
 def create_assignee_table():
     """
     Given a list of assignees and the redis key-value disambiguation,
@@ -82,30 +63,10 @@ def create_assignee_table():
     """
     print 'Disambiguating assignees...'
     for assignee in blocks.iterkeys():
-        disambiguated_dict = disambiguate_by_frequency(assignee)
-        disambiguated_name = disambiguated_dict.pop('most_common_id')
-        disambiguated_name = normalize_utf8(disambiguated_name)
-
-        record = {'id': str(uuid.uuid1())}   # dict for insertion
-        record.update(disambiguated_dict)
-        if '|' in disambiguated_name:
-            record['name_first'] = disambiguated_name.split('|')[0]
-            record['name_last'] = disambiguated_name.split('|')[1]
-        else:
-            record['organization'] = disambiguated_name
-        assignee_obj = Assignee(**record)
-        print record
-        for rawassignee in blocks[assignee]:
-            for assignee_id in id_map[rawassignee]:
-                ra = assignee_dict[assignee_id]
-                assignee_obj.rawassignees.append(ra)
-        s.merge(assignee_obj)
-    try:
-        s.commit()
-        print 'Assignees finished!'
-    except Exception:
-        s.rollback()
-
+        ra_ids = (id_map[ra] for ra in blocks[assignee])
+        for block in ra_ids:
+          rawassignees = [assignee_dict[ra_id] for ra_id in block]
+          match(rawassignees)
 
 def examine():
     assignees = s.query(Assignee).all()
