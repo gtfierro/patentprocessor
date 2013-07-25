@@ -12,7 +12,6 @@ from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
 
 config = get_config()
-print config
 
 THRESHOLD = config.get("assignee").get("threshold")
 
