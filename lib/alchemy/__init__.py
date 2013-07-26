@@ -157,6 +157,24 @@ def match(objects=[], override={}, keepdefault=False):
     session.commit()
 
 
+def unmatch(obj):
+    """
+    Separate our a dataset
+    """
+    all_objects = []
+    clean_objects = []
+
+    if obj.__tablename__[:3] != "raw":
+        obj = obj.__raw__[0]
+
+    all_objects.append(obj)
+    clean = obj.__clean__
+    if clean:
+        all_objects = clean.__raw__
+        session.delete(clean)
+        session.commit()
+    return
+
 def add(obj, override=True, temp=False):
     """
     PatentGrant Object converting to tables via SQLAlchemy

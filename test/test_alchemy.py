@@ -52,6 +52,22 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(10.0, loc[0].location.latitude)
         self.assertEqual(10.0, loc[0].location.longitude)
 
+    def test_unmatch(self):
+        loc = session.query(RawLocation).limit(20).all()
+        asg = session.query(RawAssignee).limit(20).all()
+        alchemy.match(asg)
+        alchemy.match(loc[0:10])
+        alchemy.match(loc[10:20])
+
+        self.assertEqual(2, session.query(Location).count())
+        self.assertEqual(2, session.query(locationassignee).count())
+        alchemy.unmatch(loc[0])
+        self.assertEqual(1, session.query(Location).count())
+        self.assertEqual(1, session.query(locationassignee).count())
+        alchemy.unmatch(loc[10])
+        self.assertEqual(0, session.query(Location).count())
+        self.assertEqual(0, session.query(locationassignee).count())
+
     def test_assigneematch(self):
         # blindly assume first 10 are the same
         asg0 = session.query(RawAssignee).limit(10).all()
