@@ -54,6 +54,12 @@ def fetch_session(db=None):
         sqlite_db_path = os.path.join(
             config.get(db).get('path'),
             config.get(db).get('database'))
+        #Delete any existing database if we should refresh
+        if(config.get('sqlite').get('refresh')):
+            try:
+                os.remove(sqlite_db_path)
+            except:
+                pass
         engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
     else:
         engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
