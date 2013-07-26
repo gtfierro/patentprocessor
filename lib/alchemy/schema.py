@@ -230,6 +230,15 @@ class Location(Base):
     # -- Functions for Disambiguation --
 
     @hybrid_property
+    def summarize(self):
+        return {
+            "city": self.city,
+            "state": self.state,
+            "country": self.country,
+            "latitude": self.latitude,
+            "longitude": self.longitude}
+
+    @hybrid_property
     def __raw__(self):
         return self.rawlocations
 
@@ -409,6 +418,16 @@ class Assignee(Base):
     # -- Functions for Disambiguation --
 
     @hybrid_property
+    def summarize(self):
+        return {
+            "type": self.type,
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "organization": self.organization,
+            "residence": self.residence,
+            "nationality": self.nationality}
+
+    @hybrid_property
     def __raw__(self):
         return self.rawassignees
 
@@ -445,6 +464,13 @@ class Inventor(Base):
     # -- Functions for Disambiguation --
 
     @hybrid_property
+    def summarize(self):
+        return {
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "nationality": self.nationality}
+
+    @hybrid_property
     def __raw__(self):
         return self.rawinventors
 
@@ -476,6 +502,14 @@ class Lawyer(Base):
             last=self.name_last)
 
     # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def summarize(self):
+        return {
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "organization": self.organization,
+            "country": self.country}
 
     @hybrid_property
     def __raw__(self):
