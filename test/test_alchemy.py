@@ -29,6 +29,10 @@ class TestAlchemy(unittest.TestCase):
         alchemy.match(asg1)
         alchemy.match([asg0[0], asg1[0].assignee])
 
+    def test_default_file(self):
+        
+        pass
+
     def test_assigneematch(self):
         # blindly assume first 10 are the same
         asg0 = session.query(RawAssignee).limit(10).all()

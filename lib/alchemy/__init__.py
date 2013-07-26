@@ -109,6 +109,9 @@ def match(objects=[], override={}, keepdefault=False):
                 if o not in all_objects:
                     all_objects.append(o)
 
+    if clean_objects:
+        print clean_objects[0].summarize
+
     # this helps us determine items to summarize
     # ques: how do we indicate most recent?
     #   like for people and their locations? hrm..
