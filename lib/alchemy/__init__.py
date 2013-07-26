@@ -69,26 +69,35 @@ def fetch_session(db=None):
 session = fetch_session()
 
 
-def match(objects=[], override={}):
+def match(objects=[], override={}, keepdefault=False):
     """
     Pass in several objects and make them equal
     Override is specified if there is a desire to override
     certain fields
 
-    TODO: Add stuff to have a flag so it doesn't search
-    TODO: Add stuff to default to certain variables
+    Args:
+        objects: A list of RawObjects like RawAssignee
+          also supports CleanObjects like Assignee
+        keepdefault: Keep the default keyword
+        override: Fields to override the variable with
+
+        Default key priority:
+        auto > keepdefault > override
     """
     if type(objects).__name__ not in ('list', 'tuple'):
         objects = [objects]
     freq = defaultdict(Counter)
     param = {}
     all_objects = []
-    all_objects.extend(objects)
     clean_objects = []
 
     # we extend our objects and determine the
     # previously associated items
     for obj in objects:
+        if obj.__tablename__[:3] != "raw":
+            obj = obj.__raw__[0]
+
+        all_objects.append(obj)
         clean = obj.__clean__
         # keep track of all the "clean" objects
         if clean:
@@ -110,6 +119,11 @@ def match(objects=[], override={}):
         if "id" not in param:
             param["id"] = obj.uuid
         param["id"] = min(param["id"], obj.uuid)
+
+    # fetch the default option based on first
+    # clean_object detected
+    #if keepdefault and clean_objects:
+    #    pass
 
     # create parameters based on most frequent
     for k in freq:

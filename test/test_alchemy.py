@@ -12,12 +12,22 @@ class TestAlchemy(unittest.TestCase):
     def setUp(self):
         # this basically resets our testing database
         os.system("cp {0}/alchemy.raw {0}/test.db".format(config.get("sqlite").get("path")))
+        session = alchemy.fetch_session()
         pass
 
     def tearDown(self):
         # we keep this to tidy up our database if it fails
-        session.commit()
+        session.close()
         pass
+
+    def test_raw_clean(self):
+        # add a Clean record to mark something against
+        asg0 = session.query(RawAssignee).limit(10).all()
+        asg1 = session.query(RawAssignee).limit(10).offset(10).all()
+
+        alchemy.match(asg0)
+        alchemy.match(asg1)
+        alchemy.match([asg0[0], asg1[0].assignee])
 
     def test_assigneematch(self):
         # blindly assume first 10 are the same
@@ -80,9 +90,9 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual("Kevin Yu", inv0[0].inventor.name_full)
 
         # determine the most common organization name
-        alchemy.match(session.query(RawInventor).limit(40).all())
-        self.assertEqual(40, len(inv1[0].inventor.rawinventors))
-        self.assertEqual("Richard Agarwal", inv0[0].inventor.name_full)
+        alchemy.match(session.query(RawInventor).all())
+        self.assertEqual(137, len(inv1[0].inventor.rawinventors))
+        self.assertEqual("Robert Wang", inv0[0].inventor.name_full)
 
     def test_lawyermatch(self):
         # blindly assume first 10 are the same
@@ -114,10 +124,10 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual("Devin Ko", law0[0].lawyer.name_full)
 
         # determine the most common organization name
-        alchemy.match(session.query(RawLawyer).limit(40).all())
+        alchemy.match(session.query(RawLawyer).all())
 
-        self.assertEqual(40, len(law1[0].lawyer.rawlawyers))
-        self.assertEqual("Nirav T. Addington", law0[0].lawyer.name_full)
+        self.assertEqual(57, len(law1[0].lawyer.rawlawyers))
+        self.assertEqual("Robert Robert Chuey", law0[0].lawyer.name_full)
 
     def test_locationmatch(self):
         # blindly assume first 10 are the same
@@ -223,6 +233,5 @@ class TestAlchemy(unittest.TestCase):
 
 if __name__ == '__main__':
     config = alchemy.get_config()
-    os.system("cp {0}/alchemy.raw {0}/test.db".format(config.get("sqlite").get("path")))
     session = alchemy.session
     unittest.main()
