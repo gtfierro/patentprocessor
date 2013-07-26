@@ -31,15 +31,26 @@ class TestAlchemy(unittest.TestCase):
 
     def test_set_default(self):
         # create two items
-        loc = session.query(RawAssignee).all()
-
-        alchemy.match(loc0[0], {"city": u"Frisco", "state": u"Cali", "country": u"US", "longitude": 10.0, "latitude": 10.0})
-        self.assertEqual("Frisco, Cali, US", loc0[0].location.address)
-
+        loc = session.query(RawLocation).all()
         alchemy.match(loc)
-        self.assertEqual("Hong Kong, MN, US", loc0[0].location.address)
-        self.assertEqual(10.0, loc0[0].location.latitude)
-        self.assertEqual(10.0, loc0[0].location.longitude)
+
+        alchemy.match(loc[0], {"city": u"Frisco", "state": u"Cali", "country": u"US", "longitude": 10.0, "latitude": 10.0})
+        self.assertEqual("Frisco, Cali, US", loc[0].location.address)
+
+        alchemy.match(loc[0], keepdefault=True)
+        self.assertEqual("Frisco, Cali, US", loc[0].location.address)
+        self.assertEqual(10.0, loc[0].location.latitude)
+        self.assertEqual(10.0, loc[0].location.longitude)
+
+        alchemy.match(loc[0])
+        self.assertEqual("Hong Kong, OH, US", loc[0].location.address)
+        self.assertEqual(10.0, loc[0].location.latitude)
+        self.assertEqual(10.0, loc[0].location.longitude)
+
+        alchemy.match(loc[0], {"city": u"Frisco"}, keepdefault=True)
+        self.assertEqual("Frisco, OH, US", loc[0].location.address)
+        self.assertEqual(10.0, loc[0].location.latitude)
+        self.assertEqual(10.0, loc[0].location.longitude)
 
     def test_assigneematch(self):
         # blindly assume first 10 are the same
