@@ -16,7 +16,7 @@ patents = (p for p in alchemy.session.query(alchemy.Patent).yield_per(1))
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
 ROW = lambda x: u'{number}, {mainclass}, {subclass}, {name_first}, {name_middle}, {name_last},\
-{state}, {zipcode}, {country}, {assignee}\n'.format(**x)
+{state}, {zipcode}, {latitude}, {longitude}, {country}, {assignee}\n'.format(**x)
 
 insert_rows = []
 
@@ -28,6 +28,8 @@ for patent in patents:
            'subclass': patent.classes[0].subclass_id,
            'state': loc.state,
            'zipcode': '',
+           'latitude': loc.latitude,
+           'longitude': loc.longitude,
            'country': loc.country,
            'city': loc.city,
            }
