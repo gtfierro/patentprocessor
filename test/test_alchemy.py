@@ -29,9 +29,17 @@ class TestAlchemy(unittest.TestCase):
         alchemy.match(asg1)
         alchemy.match([asg0[0], asg1[0].assignee])
 
-    def test_default_file(self):
-        
-        pass
+    def test_set_default(self):
+        # create two items
+        loc = session.query(RawAssignee).all()
+
+        alchemy.match(loc0[0], {"city": u"Frisco", "state": u"Cali", "country": u"US", "longitude": 10.0, "latitude": 10.0})
+        self.assertEqual("Frisco, Cali, US", loc0[0].location.address)
+
+        alchemy.match(loc)
+        self.assertEqual("Hong Kong, MN, US", loc0[0].location.address)
+        self.assertEqual(10.0, loc0[0].location.latitude)
+        self.assertEqual(10.0, loc0[0].location.longitude)
 
     def test_assigneematch(self):
         # blindly assume first 10 are the same

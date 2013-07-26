@@ -109,24 +109,24 @@ def match(objects=[], override={}, keepdefault=False):
                 if o not in all_objects:
                     all_objects.append(o)
 
+    exist_param = {}
     if clean_objects:
-        print clean_objects[0].summarize
+        exist_param = clean_objects[0].summarize
 
-    # this helps us determine items to summarize
-    # ques: how do we indicate most recent?
-    #   like for people and their locations? hrm..
-    for obj in all_objects:
-        for k, v in obj.summarize.iteritems():
-            if v not in (None, ""):
-                freq[k][v] += 1
-        if "id" not in param:
-            param["id"] = obj.uuid
-        param["id"] = min(param["id"], obj.uuid)
-
-    # fetch the default option based on first
-    # clean_object detected
-    #if keepdefault and clean_objects:
-    #    pass
+    if keepdefault:
+        param = exist_param
+    else:
+        param = exist_param
+        # this helps us determine items to summarize
+        # ques: how do we indicate most recent?
+        #   like for people and their locations? hrm..
+        for obj in all_objects:
+            for k, v in obj.summarize.iteritems():
+                if v not in (None, ""):
+                    freq[k][v] += 1
+            if "id" not in param:
+                param["id"] = obj.uuid
+            param["id"] = min(param["id"], obj.uuid)
 
     # create parameters based on most frequent
     for k in freq:

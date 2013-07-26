@@ -232,6 +232,7 @@ class Location(Base):
     @hybrid_property
     def summarize(self):
         return {
+            "id": self.id,
             "city": self.city,
             "state": self.state,
             "country": self.country,
@@ -420,6 +421,7 @@ class Assignee(Base):
     @hybrid_property
     def summarize(self):
         return {
+            "id": self.id,
             "type": self.type,
             "name_first": self.name_first,
             "name_last": self.name_last,
@@ -466,6 +468,7 @@ class Inventor(Base):
     @hybrid_property
     def summarize(self):
         return {
+            "id": self.id,
             "name_first": self.name_first,
             "name_last": self.name_last,
             "nationality": self.nationality}
@@ -506,6 +509,7 @@ class Lawyer(Base):
     @hybrid_property
     def summarize(self):
         return {
+            "id": self.id,
             "name_first": self.name_first,
             "name_last": self.name_last,
             "organization": self.organization,
