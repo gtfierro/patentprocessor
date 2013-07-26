@@ -165,7 +165,7 @@ class RawLocation(Base):
             addy.append(self.state)
         if self.country:
             addy.append(self.country)
-        return ", ".join(addy)
+        return u", ".join(addy)
 
     # -- Functions for Disambiguation --
 
@@ -225,7 +225,7 @@ class Location(Base):
             addy.append(self.state)
         if self.country:
             addy.append(self.country)
-        return ", ".join(addy)
+        return u", ".join(addy)
 
     # -- Functions for Disambiguation --
 
