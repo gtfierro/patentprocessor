@@ -84,7 +84,7 @@ def match(objects=[], override={}, keepdefault=False):
         Default key priority:
         auto > keepdefault > override
     """
-    if type(objects).__name__ not in ('list', 'tuple'):
+    if type(objects).__name__ not in ('list', 'tuple', 'Query'):
         objects = [objects]
     freq = defaultdict(Counter)
     param = {}
@@ -162,7 +162,6 @@ def unmatch(obj):
     Separate our a dataset
     """
     all_objects = []
-    clean_objects = []
 
     if obj.__tablename__[:3] != "raw":
         obj = obj.__raw__[0]
@@ -173,7 +172,7 @@ def unmatch(obj):
         all_objects = clean.__raw__
         session.delete(clean)
         session.commit()
-    return
+
 
 def add(obj, override=True, temp=False):
     """
