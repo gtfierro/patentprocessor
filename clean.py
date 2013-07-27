@@ -2,6 +2,7 @@
 
 from lib import alchemy
 from lib import assignee_disambiguation
+from lib import geoalchemy
 import datetime
 
 t1 = datetime.datetime.now()
@@ -15,6 +16,9 @@ t1 = datetime.datetime.now()
 
 # run assignee disambiguation and populate the Assignee table
 assignee_disambiguation.run_disambiguation()
+
+#Run new geocoding
+geoalchemy.main()
 
 #def run_org_clean():
 #    org = orgClean.orgClean(db = 'assignee.sqlite3', fld = 'assigneeAsc', table = 'assignee_1', other = "")
