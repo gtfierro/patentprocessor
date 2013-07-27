@@ -145,7 +145,6 @@ def match(objects=[], override={}, keepdefault=False):
     for obj in clean_objects:
         if obj != clean_main:
             session.delete(obj)
-    session.commit()
 
     if clean_main:
         relobj = clean_main
