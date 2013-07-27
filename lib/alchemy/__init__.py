@@ -69,7 +69,7 @@ def fetch_session(db=None):
 session = fetch_session()
 
 
-def match(objects=[], override={}, keepdefault=False, csession=None):
+def match(objects=[], override={}, keepdefault=False):
     """
     Pass in several objects and make them equal
     Override is specified if there is a desire to override
@@ -84,9 +84,6 @@ def match(objects=[], override={}, keepdefault=False, csession=None):
         Default key priority:
         auto > keepdefault > override
     """
-    if not csession:
-        csession = session
-
     if type(objects).__name__ not in ('list', 'tuple', 'Query'):
         objects = [objects]
     freq = defaultdict(Counter)
@@ -138,8 +135,9 @@ def match(objects=[], override={}, keepdefault=False, csession=None):
 
     # remove all clean objects
     for obj in clean_objects:
-        csession.delete(obj)
-    csession.commit()  # commit necessary
+        session.delete(obj)
+    if clean_objects:
+        session.commit()  # commit necessary
 
     relobj = objects[0].__related__(**param)
     # associate the data into the related object
@@ -156,17 +154,15 @@ def match(objects=[], override={}, keepdefault=False, csession=None):
         else:
             if obj.__single__ and obj.__single__ not in relobj.__many__:
                 relobj.__many__.append(obj.__single__)
-    csession.merge(relobj)
-    csession.commit()
+    session.merge(relobj)
+    session.commit()
 
 
-def unmatch(obj, csession=None):
+def unmatch(obj):
     """
     Separate our a dataset
     """
     all_objects = []
-    if not csession:
-        csession = session
 
     if obj.__tablename__[:3] != "raw":
         obj = obj.__raw__[0]
@@ -179,7 +175,7 @@ def unmatch(obj, csession=None):
         session.commit()
 
 
-def add(obj, override=True, temp=False, csession=None):
+def add(obj, override=True, temp=False):
     """
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
@@ -197,8 +193,6 @@ def add(obj, override=True, temp=False, csession=None):
     lower case both within SQLAlchemy as well as on the MySQL database
     itself, especially if database reflection features are to be used.
     """
-    if not csession:
-        csession = session
 
     # if a patent exists, remove it so we can replace it
     pat_query = session.query(Patent).filter(Patent.number == obj.patent)
@@ -220,7 +214,7 @@ def add(obj, override=True, temp=False, csession=None):
     for asg, loc in obj.assignee_list:
         asg = RawAssignee(**asg)
         loc = RawLocation(**loc)
-        csession.merge(loc)
+        session.merge(loc)
         asg.rawlocation = loc
         pat.rawassignees.append(asg)
 
@@ -228,7 +222,7 @@ def add(obj, override=True, temp=False, csession=None):
     for inv, loc in obj.inventor_list:
         inv = RawInventor(**inv)
         loc = RawLocation(**loc)
-        csession.merge(loc)
+        session.merge(loc)
         inv.rawlocation = loc
         pat.rawinventors.append(inv)
 
@@ -247,8 +241,8 @@ def add(obj, override=True, temp=False, csession=None):
         uspc = USPC(**uspc)
         mc = MainClass(**mc)
         sc = SubClass(**sc)
-        csession.merge(mc)
-        csession.merge(sc)
+        session.merge(mc)
+        session.merge(sc)
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
@@ -258,22 +252,33 @@ def add(obj, override=True, temp=False, csession=None):
         ipc = IPCR(**ipc)
         pat.ipcrs.append(ipc)
 
-    cits, refs = obj.citation_list
-    for cit in cits:
-        cit = Citation(**cit)
-        pat.citations.append(cit)
-    for ref in refs:
-        ref = OtherReference(**ref)
-        pat.otherreferences.append(ref)
+    # citations are huge. this dumps them to
+    # a temporary database which we can use for later
+    if temp:
+        cits, refs = obj.citation_list
+        for cit in cits:
+            cit["patent_id"] = obj.pat["number"]
+            cit = TempCitation(**cit)
+            session.add(cit)
+        for ref in refs:
+            ref["patent_id"] = obj.pat["number"]
+            ref = TempOtherReference(**ref)
+            session.add(ref)
+    else:
+        cits, refs = obj.citation_list
+        for cit in cits:
+            cit = Citation(**cit)
+            pat.citations.append(cit)
+        for ref in refs:
+            ref = OtherReference(**ref)
+            pat.otherreferences.append(ref)
 
-    csession.merge(pat)
+    session.merge(pat)
 
 
-def commit(cession=None):
-    if not csession:
-        csession = session
+def commit():
     try:
-        csession.commit()
+        session.commit()
     except Exception, e:
-        csession.rollback()
+        session.rollback()
         print str(e)
