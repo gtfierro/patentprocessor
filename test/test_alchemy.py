@@ -29,6 +29,9 @@ class TestAlchemy(unittest.TestCase):
         alchemy.match(asg1)
         alchemy.match([asg0[0], asg1[0].assignee])
 
+    def test_match_all(self):
+        alchemy.match(session.query(RawAssignee))
+
     def test_set_default(self):
         # create two items
         loc = session.query(RawLocation).all()
