@@ -89,6 +89,7 @@ class TestAlchemy(unittest.TestCase):
 
         # merge the assignees together
         alchemy.match([asg0[0], asg1[0]])
+
         self.assertEqual(20, len(asg0[0].assignee.rawassignees))
         self.assertEqual(20, len(asg1[0].assignee.rawassignees))
         self.assertEqual(20, len(asg0[0].assignee.patents))
@@ -274,6 +275,10 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(1, len(loc[20].location.inventors))
 
 if __name__ == '__main__':
+    from sqlalchemy import func
     config = alchemy.get_config()
     session = alchemy.session
+    #z = session.query(RawAssignee).first().summarize
+    #for k in z:
+    #    print session.query(z[k], func.count()).group_by(z[k]).order_by(func.count()).all()
     unittest.main()
