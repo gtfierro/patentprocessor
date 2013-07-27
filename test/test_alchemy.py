@@ -32,6 +32,12 @@ class TestAlchemy(unittest.TestCase):
     def test_match_all(self):
         alchemy.match(session.query(RawAssignee))
 
+    def test_session2(self):
+        session = alchemy.fetch_session("sqlite")
+        alchemy.match(session.query(RawAssignee))
+        print session.query(Location).count()
+
+
     def test_set_default(self):
         # create two items
         loc = session.query(RawLocation).all()
