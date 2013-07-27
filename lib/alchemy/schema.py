@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy import Column, Date, Integer, Float
 from sqlalchemy import ForeignKey, Index
 from sqlalchemy import Unicode, UnicodeText
@@ -19,13 +20,14 @@ def init(self, *args, **kwargs):
     for k, v in kwargs.iteritems():
         self.__dict__[k] = v
 
-
-def update(self, **kwargs):
-    for k in kwargs:
-        self.__dict__[k] = kwargs.get(k)
+# tried this, but it doesn't seem to work.
+# i think these must trigger something
+# def update(self, **kwargs):
+#     for k in kwargs:
+#         self.__dict__[k] = kwargs.get(k)
 
 Base.__init__ = init
-Base.update = update
+# Base.update = update
 # <<<<<<
 
 
@@ -247,6 +249,46 @@ class Location(Base):
     def __many__(self):
         return {"asg": self.assignees, "inv": self.inventors}
 
+    @hybrid_property
+    def __related__(self):
+        return RawLocation
+
+    def __rawgroup__(self, session, key):
+        if key in RawLocation.__dict__:
+            return session.query(RawLocation.__dict__[key], func.count()).filter(
+                RawLocation.location_id == self.id).group_by(
+                    RawLocation.__dict__[key]).all()
+        else:
+            return []
+
+    def relink(self, session, obj):
+        if obj == self:
+            return
+        session.query(RawLocation).filter(
+            RawLocation.location_id == obj.id).update(
+                {RawLocation.location_id: self.id},
+                synchronize_session=False)
+        session.query(locationassignee).filter(
+            locationassignee.c.assignee_id == obj.id).update(
+                {locationassignee.c.assignee_id: self.id},
+                synchronize_session=False)
+        session.query(locationinventor).filter(
+            locationinventor.c.inventor_id == obj.id).update(
+                {locationinventor.c.inventor_id: self.id},
+                synchronize_session=False)
+
+    def update(self, **kwargs):
+        if "city" in kwargs:
+            self.city = kwargs["city"]
+        if "state" in kwargs:
+            self.state = kwargs["state"]
+        if "country" in kwargs:
+            self.country = kwargs["country"]
+        if "latitude" in kwargs:
+            self.latitude = kwargs["latitude"]
+        if "longitude" in kwargs:
+            self.longitude = kwargs["longitude"]
+
     # ----------------------------------
 
     def __repr__(self):
@@ -439,6 +481,48 @@ class Assignee(Base):
             "pat": self.patents,
             "loc": self.locations}
 
+    @hybrid_property
+    def __related__(self):
+        return RawAssignee
+
+    def __rawgroup__(self, session, key):
+        if key in RawAssignee.__dict__:
+            return session.query(RawAssignee.__dict__[key], func.count()).filter(
+                RawAssignee.assignee_id == self.id).group_by(
+                    RawAssignee.__dict__[key]).all()
+        else:
+            return []
+
+    def relink(self, session, obj):
+        if obj == self:
+            return
+        session.query(RawAssignee).filter(
+            RawAssignee.assignee_id == obj.id).update(
+                {RawAssignee.assignee_id: self.id},
+                synchronize_session=False)
+        session.query(patentassignee).filter(
+            patentassignee.c.assignee_id == obj.id).update(
+                {patentassignee.c.assignee_id: self.id},
+                synchronize_session=False)
+        session.query(locationassignee).filter(
+            locationassignee.c.assignee_id == obj.id).update(
+                {locationassignee.c.assignee_id: self.id},
+                synchronize_session=False)
+
+    def update(self, **kwargs):
+        if "type" in kwargs:
+            self.type = kwargs["type"]
+        if "name_first" in kwargs:
+            self.name_first = kwargs["name_first"]
+        if "name_last" in kwargs:
+            self.name_last = kwargs["name_last"]
+        if "organization" in kwargs:
+            self.organization = kwargs["organization"]
+        if "residence" in kwargs:
+            self.residence = kwargs["residence"]
+        if "nationality" in kwargs:
+            self.nationality = kwargs["nationality"]
+
     # ----------------------------------
 
     def __repr__(self):
@@ -483,6 +567,42 @@ class Inventor(Base):
             "pat": self.patents,
             "loc": self.locations}
 
+    @hybrid_property
+    def __related__(self):
+        return RawInventor
+
+    def __rawgroup__(self, session, key):
+        if key in RawInventor.__dict__:
+            return session.query(RawInventor.__dict__[key], func.count()).filter(
+                RawInventor.inventor_id == self.id).group_by(
+                    RawInventor.__dict__[key]).all()
+        else:
+            return []
+
+    def relink(self, session, obj):
+        if obj == self:
+            return
+        session.query(RawInventor).filter(
+            RawInventor.inventor_id == obj.id).update(
+                {RawInventor.inventor_id: self.id},
+                synchronize_session=False)
+        session.query(patentinventor).filter(
+            patentinventor.c.inventor_id == obj.id).update(
+                {patentinventor.c.inventor_id: self.id},
+                synchronize_session=False)
+        session.query(locationinventor).filter(
+            locationinventor.c.inventor_id == obj.id).update(
+                {locationinventor.c.inventor_id: self.id},
+                synchronize_session=False)
+
+    def update(self, **kwargs):
+        if "name_first" in kwargs:
+            self.name_first = kwargs["name_first"]
+        if "name_last" in kwargs:
+            self.name_last = kwargs["name_last"]
+        if "nationality" in kwargs:
+            self.nationality = kwargs["nationality"]
+
     # ----------------------------------
 
     def __repr__(self):
@@ -522,6 +642,40 @@ class Lawyer(Base):
     @hybrid_property
     def __many__(self):
         return self.patents
+
+    @hybrid_property
+    def __related__(self):
+        return RawLawyer
+
+    def __rawgroup__(self, session, key):
+        if key in RawLawyer.__dict__:
+            return session.query(RawLawyer.__dict__[key], func.count()).filter(
+                RawLawyer.lawyer_id == self.id).group_by(
+                    RawLawyer.__dict__[key]).all()
+        else:
+            return []
+
+    def relink(self, session, obj):
+        if obj == self:
+            return
+        session.query(RawLawyer).filter(
+            RawLawyer.lawyer_id == obj.id).update(
+                {RawLawyer.lawyer_id: self.id},
+                synchronize_session=False)
+        session.query(patentlawyer).filter(
+            patentlawyer.c.lawyer_id == obj.id).update(
+                {patentlawyer.c.lawyer_id: self.id},
+                synchronize_session=False)
+
+    def update(self, **kwargs):
+        if "name_first" in kwargs:
+            self.name_first = kwargs["name_first"]
+        if "name_last" in kwargs:
+            self.name_last = kwargs["name_last"]
+        if "organization" in kwargs:
+            self.organization = kwargs["organization"]
+        if "country" in kwargs:
+            self.country = kwargs["country"]
 
     # ----------------------------------
 
