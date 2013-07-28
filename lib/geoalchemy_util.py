@@ -2,6 +2,18 @@ import re
 from bs4 import BeautifulSoup
 import unicodedata
 
+#Return a ", " separated string of the location
+def concatenate_location(city, state, country):
+    location_list = []
+    if(city!=''):
+        location_list.append(city)
+    if(state!=''):
+        location_list.append(state)
+    if(country!=''):
+        location_list.append(country)
+    location = ", ".join(location_list)
+    return location
+
 #Many accent references are difficult to idenity programmatically.
 #These are handled by manually replacing each entry.
 #The replacements are stored in lib/manual_replacement_library.txt
@@ -85,4 +97,7 @@ def clean_raw_location(text):
     soup = BeautifulSoup(text)
     souptext = unicode(soup.get_text())
     souptext =  unicodedata.normalize('NFC', souptext)
+    
+    #Convert to lowercase
+    souptext = souptext.lower()
     return souptext
