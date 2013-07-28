@@ -34,15 +34,16 @@ raw_google_session = raw_google_session_class()
     
 def main():
     #Get all of the raw locations from the XML parsing
-    parsed_raw_locations = alchemy.session.query(alchemy.RawLocation)
+    raw_parsed_locations = alchemy.session.query(alchemy.RawLocation)
+    #raw_google_locations = raw_google_session.query(RawGoogle)
     grouped_locations=[]
-    for instance in parsed_raw_locations:
+    for instance in raw_parsed_locations:
         #Convert the location into a string that matches the Google format
         parsed_raw_location = geoalchemy_util.concatenate_location(instance.city, instance.state, instance.country)
         cleaned_location = geoalchemy_util.clean_raw_location(parsed_raw_location)
         #Find the location from the raw_google database that matches this input
         matching_location = raw_google_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
-        alchemy.match(instance)
+        #alchemy.match(instance)
         if(matching_location):
             #Group by latitude and longitude for now. Round to
             #encourage a little more overlap
@@ -59,16 +60,26 @@ def main():
     #We now have a list of all locations in the file, along with their
     #matching locations and the id used to group them
     #Sort the list by the grouping_id
-    keyfunc = lambda x:x[2]
+    keyfunc = lambda x:x['grouping_id']
     grouped_locations.sort(key=keyfunc)
+    print "grouped_locations sorted"
     #Group by the grouping_id
     for key, grouping in itertools.groupby(grouped_locations, keyfunc):
         #match_group is the list of RawLocation objects which we call match on
         #We need to get only the RawLocation objects back from the dict
         match_group = []
-        latitude = grouping[0]["latitude"]
-        longitude = grouping[0]["longitude"]
+        #Get the latitude and longitude for the group
+        splitkey = key.split('|')
+        #The length should be 2
+        if(len(splitkey)==2):
+            latitude = splitkey[0]
+            longitude = splitkey[1]
+        else:
+            latitude = 0
+            longitude = 0
         for grouped_location in grouping:
             match_group.append(grouped_location["raw_location"])
+            
         alchemy.match(match_group, {"latitude":latitude, "longitude":longitude})
-        print "match called"
+        #print "match called"
+    print "matches made"
