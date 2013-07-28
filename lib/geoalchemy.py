@@ -1,17 +1,20 @@
-import sqlalchemy as alchemy
+import sqlalchemy
 import sqlalchemy.orm as orm
 import sqlalchemy.ext.declarative as declarative
+import geoalchemy_util
+
+import alchemy
 
 base = declarative.declarative_base()
 
 class UniqueRawGoogle(base):
     __tablename__ = 'unique_raw_google'
-    id = alchemy.Column("rowid", alchemy.Integer,primary_key=True)
-    input_address = alchemy.Column(alchemy.String)
-    output_address = alchemy.Column(alchemy.String)
-    hierarchy = alchemy.Column(alchemy.String)
-    latitude = alchemy.Column(alchemy.REAL)
-    longitude = alchemy.Column(alchemy.REAL)
+    id = sqlalchemy.Column("rowid", sqlalchemy.Integer,primary_key=True)
+    input_address = sqlalchemy.Column(sqlalchemy.String)
+    output_address = sqlalchemy.Column(sqlalchemy.String)
+    hierarchy = sqlalchemy.Column(sqlalchemy.String)
+    latitude = sqlalchemy.Column(sqlalchemy.REAL)
+    longitude = sqlalchemy.Column(sqlalchemy.REAL)
     
     def __init__(self, input_address, output_address, hierarchy, latitude, longitude):
         self.input_address=input_address
@@ -25,12 +28,12 @@ class UniqueRawGoogle(base):
     
 class AllRawGoogle(base):
     __tablename__ = 'all_raw_google'
-    id = alchemy.Column("rowid", alchemy.Integer,primary_key=True)
-    input_address = alchemy.Column(alchemy.String)
-    output_address = alchemy.Column(alchemy.String)
-    hierarchy = alchemy.Column(alchemy.String)
-    latitude = alchemy.Column(alchemy.REAL)
-    longitude = alchemy.Column(alchemy.REAL)
+    id = sqlalchemy.Column("rowid", sqlalchemy.Integer,primary_key=True)
+    input_address = sqlalchemy.Column(sqlalchemy.String)
+    output_address = sqlalchemy.Column(sqlalchemy.String)
+    hierarchy = sqlalchemy.Column(sqlalchemy.String)
+    latitude = sqlalchemy.Column(sqlalchemy.REAL)
+    longitude = sqlalchemy.Column(sqlalchemy.REAL)
     
     def __init__(self, input_address, output_address, hierarchy, latitude, longitude):
         self.input_address=input_address
@@ -43,7 +46,7 @@ class AllRawGoogle(base):
         return "<AllRawGoogle('%s','%s','%s','%s','%s')>" % (self.input_address, self.output_address, self.hierarchy, self.latitude, self.longitude)
 
 raw_google_dbpath = 'lib/raw_google.sqlite3'
-raw_google_engine = alchemy.create_engine('sqlite:///%s' % raw_google_dbpath)
+raw_google_engine = sqlalchemy.create_engine('sqlite:///%s' % raw_google_dbpath)
 raw_google_session_class = orm.sessionmaker(bind=raw_google_engine)
 raw_google_session = raw_google_session_class()
     
