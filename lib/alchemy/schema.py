@@ -190,6 +190,14 @@ class RawLocation(Base):
     def __related__(self):
         return Location
 
+    def unlink(self, session):
+        clean = self.__clean__
+        clean.__raw__.pop(clean.__raw__.index(self))
+        clean.patents = [obj.patent for obj in clean.rawinventors]
+        clean.locations = [obj.rawlocation.location for obj in clean.rawinventors if obj.rawlocation.location]
+        clean.patents = list(set(clean.patents))
+        clean.locations = list(set(clean.locations))
+
     # ----------------------------------
 
     def __repr__(self):
@@ -324,7 +332,7 @@ class RawAssignee(Base):
 
     def unlink(self, session):
         clean = self.__clean__
-        clean.rawassignees.pop(clean.rawassignees.index(self))
+        clean.__raw__.pop(clean.__raw__.index(self))
         clean.patents = [obj.patent for obj in clean.rawassignees]
         clean.locations = [obj.rawlocation.location for obj in clean.rawassignees if obj.rawlocation.location]
         clean.patents = list(set(clean.patents))
@@ -370,7 +378,7 @@ class RawInventor(Base):
 
     def unlink(self, session):
         clean = self.__clean__
-        clean.rawinventors.pop(clean.rawinventors.index(self))
+        clean.__raw__.pop(clean.__raw__.index(self))
         clean.patents = [obj.patent for obj in clean.rawinventors]
         clean.locations = [obj.rawlocation.location for obj in clean.rawinventors if obj.rawlocation.location]
         clean.patents = list(set(clean.patents))
@@ -425,7 +433,7 @@ class RawLawyer(Base):
 
     def unlink(self, session):
         clean = self.__clean__
-        clean.rawlawyers.pop(clean.rawlawyers.index(self))
+        clean.__raw__.pop(clean.__raw__.index(self))
         clean.patents = [obj.patent for obj in clean.rawlawyers]
         clean.patents = list(set(clean.patents))
 
