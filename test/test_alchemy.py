@@ -32,6 +32,13 @@ class TestAlchemy(unittest.TestCase):
     def test_match_all(self):
         alchemy.match(session.query(RawAssignee), session)
 
+    def test_merger(self):
+        asg = session.query(RawAssignee).limit(20)
+        alchemy.match(asg[0:10], session)
+        alchemy.match(asg[10:20], session)
+
+        session.query(Assignee)
+
     def test_set_default(self):
         # create two items
         loc = session.query(RawLocation)
@@ -172,6 +179,7 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(20, len(asg1[0].assignee.rawassignees))
         self.assertEqual(20, len(asg0[0].assignee.patents))
         self.assertEqual(1, asgs.count())
+
 
         # override the default values provided
         alchemy.match(asg0[0], session, {"organization": u"Kevin"})
