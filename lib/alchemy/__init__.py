@@ -230,7 +230,7 @@ def add(obj, override=True, temp=False):
     for cit in cits:
         if cit['country'] == 'US':
             # granted patent doc number
-            if re.match(r'^[A-Z]+\d+$', cit['number']):
+            if re.match(r'^[A-Z]*\d+$', cit['number']):
                 cit = USPatentCitation(**cit)
                 pat.uspatentcitations.append(cit)
             # if not above, it's probably an application
