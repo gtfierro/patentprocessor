@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy import Column, Date, Integer, Float
 from sqlalchemy import ForeignKey, Index
 from sqlalchemy import Unicode, UnicodeText
@@ -19,13 +20,14 @@ def init(self, *args, **kwargs):
     for k, v in kwargs.iteritems():
         self.__dict__[k] = v
 
-
-def update(self, **kwargs):
-    for k in kwargs:
-        self.__dict__[k] = kwargs.get(k)
+# tried this, but it doesn't seem to work.
+# i think these must trigger something
+# def update(self, **kwargs):
+#     for k in kwargs:
+#         self.__dict__[k] = kwargs.get(k)
 
 Base.__init__ = init
-Base.update = update
+# Base.update = update
 # <<<<<<
 
 
@@ -176,7 +178,7 @@ class RawLocation(Base):
             addy.append(self.state)
         if self.country:
             addy.append(self.country)
-        return ", ".join(addy)
+        return u", ".join(addy)
 
     # -- Functions for Disambiguation --
 
@@ -192,18 +194,27 @@ class RawLocation(Base):
         return self.id
 
     @hybrid_property
-    def __single__(self):
-        return {
-            "asg": [asg.assignee for asg in self.rawassignees if asg.assignee],
-            "inv": [inv.inventor for inv in self.rawinventors if inv.inventor]}
-
-    @hybrid_property
     def __clean__(self):
         return self.location
 
     @hybrid_property
     def __related__(self):
         return Location
+
+    def unlink(self, session):
+        clean = self.__clean__
+        clean.__raw__.pop(clean.__raw__.index(self))
+        clean.assignees = []
+        clean.inventors = []
+        for raw in clean.__raw__:
+            for obj in raw.rawassignees:
+                if obj.assignee and obj.assignee not in clean.assignees:
+                    clean.assignees.append(obj.assignee)
+            for obj in raw.rawinventors:
+                if obj.inventor and obj.inventor not in clean.inventors:
+                    clean.inventors.append(obj.inventor)
+        if len(clean.__raw__) == 0:
+            session.delete(clean)
 
     # ----------------------------------
 
@@ -236,17 +247,71 @@ class Location(Base):
             addy.append(self.state)
         if self.country:
             addy.append(self.country)
-        return ", ".join(addy)
+        return u", ".join(addy)
 
     # -- Functions for Disambiguation --
+
+    @hybrid_property
+    def summarize(self):
+        return {
+            "id": self.id,
+            "city": self.city,
+            "state": self.state,
+            "country": self.country,
+            "latitude": self.latitude,
+            "longitude": self.longitude}
 
     @hybrid_property
     def __raw__(self):
         return self.rawlocations
 
     @hybrid_property
-    def __many__(self):
-        return {"asg": self.assignees, "inv": self.inventors}
+    def __related__(self):
+        return RawLocation
+
+    def __rawgroup__(self, session, key):
+        if key in RawLocation.__dict__:
+            return session.query(RawLocation.__dict__[key], func.count()).filter(
+                RawLocation.location_id == self.id).group_by(
+                    RawLocation.__dict__[key]).all()
+        else:
+            return []
+
+    def relink(self, session, obj):
+        if obj == self:
+            return
+        if obj.__tablename__[:3] == "raw":
+            self.assignees.extend([asg.assignee for asg in obj.rawassignees if asg.assignee])
+            self.inventors.extend([inv.inventor for inv in obj.rawinventors if inv.inventor])
+            if obj and obj not in self.__raw__:
+                self.__raw__.append(obj)
+            self.assignees = list(set(self.assignees))
+            self.inventors = list(set(self.inventors))
+        else:
+            session.query(RawLocation).filter(
+                RawLocation.location_id == obj.id).update(
+                    {RawLocation.location_id: self.id},
+                    synchronize_session=False)
+            session.query(locationassignee).filter(
+                locationassignee.c.location_id == obj.id).update(
+                    {locationassignee.c.location_id: self.id},
+                    synchronize_session=False)
+            session.query(locationinventor).filter(
+                locationinventor.c.location_id == obj.id).update(
+                    {locationinventor.c.location_id: self.id},
+                    synchronize_session=False)
+
+    def update(self, **kwargs):
+        if "city" in kwargs:
+            self.city = kwargs["city"]
+        if "state" in kwargs:
+            self.state = kwargs["state"]
+        if "country" in kwargs:
+            self.country = kwargs["country"]
+        if "latitude" in kwargs:
+            self.latitude = kwargs["latitude"]
+        if "longitude" in kwargs:
+            self.longitude = kwargs["longitude"]
 
     # ----------------------------------
 
@@ -284,16 +349,24 @@ class RawAssignee(Base):
             "nationality": self.nationality}
 
     @hybrid_property
-    def __single__(self):
-        return self.patent
-
-    @hybrid_property
     def __clean__(self):
         return self.assignee
 
     @hybrid_property
     def __related__(self):
         return Assignee
+
+    def unlink(self, session):
+        clean = self.__clean__
+        clean.__raw__.pop(clean.__raw__.index(self))
+        clean.patents = [obj.patent for obj in clean.__raw__]
+        clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
+        clean.patents = list(set(clean.patents))
+        clean.locations = list(set(clean.locations))
+        session.commit()
+
+        if len(clean.__raw__) == 0:
+            session.delete(clean)
 
     # ----------------------------------
 
@@ -326,16 +399,22 @@ class RawInventor(Base):
             "nationality": self.nationality}
 
     @hybrid_property
-    def __single__(self):
-        return self.patent
-
-    @hybrid_property
     def __clean__(self):
         return self.inventor
 
     @hybrid_property
     def __related__(self):
         return Inventor
+
+    def unlink(self, session):
+        clean = self.__clean__
+        clean.__raw__.pop(clean.__raw__.index(self))
+        clean.patents = [obj.patent for obj in clean.__raw__]
+        clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
+        clean.patents = list(set(clean.patents))
+        clean.locations = list(set(clean.locations))
+        if len(clean.__raw__) == 0:
+            session.delete(clean)
 
     # ----------------------------------
 
@@ -377,16 +456,20 @@ class RawLawyer(Base):
             "country": self.country}
 
     @hybrid_property
-    def __single__(self):
-        return self.patent
-
-    @hybrid_property
     def __clean__(self):
         return self.lawyer
 
     @hybrid_property
     def __related__(self):
         return Lawyer
+
+    def unlink(self, session):
+        clean = self.__clean__
+        clean.__raw__.pop(clean.__raw__.index(self))
+        clean.patents = [obj.patent for obj in clean.__raw__]
+        clean.patents = list(set(clean.patents))
+        if len(clean.__raw__) == 0:
+            session.delete(clean)
 
     # ----------------------------------
 
@@ -416,12 +499,69 @@ class Assignee(Base):
     # -- Functions for Disambiguation --
 
     @hybrid_property
+    def summarize(self):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "organization": self.organization,
+            "residence": self.residence,
+            "nationality": self.nationality}
+
+    @hybrid_property
     def __raw__(self):
         return self.rawassignees
 
     @hybrid_property
-    def __many__(self):
-        return self.patents
+    def __related__(self):
+        return RawAssignee
+
+    def __rawgroup__(self, session, key):
+        if key in RawAssignee.__dict__:
+            return session.query(RawAssignee.__dict__[key], func.count()).filter(
+                RawAssignee.assignee_id == self.id).group_by(
+                    RawAssignee.__dict__[key]).all()
+        else:
+            return []
+
+    def relink(self, session, obj):
+        if obj == self:
+            return
+        if obj.__tablename__[:3] == "raw":
+            if obj.rawlocation.location:
+                self.locations.append(obj.rawlocation.location)
+            if obj.patent and obj.patent not in self.patents:
+                self.patents.append(obj.patent)
+            if obj and obj not in self.__raw__:
+                self.__raw__.append(obj)
+        else:
+            session.query(RawAssignee).filter(
+                RawAssignee.assignee_id == obj.id).update(
+                    {RawAssignee.assignee_id: self.id},
+                    synchronize_session=False)
+            session.query(patentassignee).filter(
+                patentassignee.c.assignee_id == obj.id).update(
+                    {patentassignee.c.assignee_id: self.id},
+                    synchronize_session=False)
+            session.query(locationassignee).filter(
+                locationassignee.c.assignee_id == obj.id).update(
+                    {locationassignee.c.assignee_id: self.id},
+                    synchronize_session=False)
+
+    def update(self, **kwargs):
+        if "type" in kwargs:
+            self.type = kwargs["type"]
+        if "name_first" in kwargs:
+            self.name_first = kwargs["name_first"]
+        if "name_last" in kwargs:
+            self.name_last = kwargs["name_last"]
+        if "organization" in kwargs:
+            self.organization = kwargs["organization"]
+        if "residence" in kwargs:
+            self.residence = kwargs["residence"]
+        if "nationality" in kwargs:
+            self.nationality = kwargs["nationality"]
 
     # ----------------------------------
 
@@ -450,12 +590,60 @@ class Inventor(Base):
     # -- Functions for Disambiguation --
 
     @hybrid_property
+    def summarize(self):
+        return {
+            "id": self.id,
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "nationality": self.nationality}
+
+    @hybrid_property
     def __raw__(self):
         return self.rawinventors
 
     @hybrid_property
-    def __many__(self):
-        return self.patents
+    def __related__(self):
+        return RawInventor
+
+    def __rawgroup__(self, session, key):
+        if key in RawInventor.__dict__:
+            return session.query(RawInventor.__dict__[key], func.count()).filter(
+                RawInventor.inventor_id == self.id).group_by(
+                    RawInventor.__dict__[key]).all()
+        else:
+            return []
+
+    def relink(self, session, obj):
+        if obj == self:
+            return
+        if obj.__tablename__[:3] == "raw":
+            if obj.rawlocation.location:
+                self.locations.append(obj.rawlocation.location)
+            if obj.patent and obj.patent not in self.patents:
+                self.patents.append(obj.patent)
+            if obj and obj not in self.__raw__:
+                self.__raw__.append(obj)
+        else:
+            session.query(RawInventor).filter(
+                RawInventor.inventor_id == obj.id).update(
+                    {RawInventor.inventor_id: self.id},
+                    synchronize_session=False)
+            session.query(patentinventor).filter(
+                patentinventor.c.inventor_id == obj.id).update(
+                    {patentinventor.c.inventor_id: self.id},
+                    synchronize_session=False)
+            session.query(locationinventor).filter(
+                locationinventor.c.inventor_id == obj.id).update(
+                    {locationinventor.c.inventor_id: self.id},
+                    synchronize_session=False)
+
+    def update(self, **kwargs):
+        if "name_first" in kwargs:
+            self.name_first = kwargs["name_first"]
+        if "name_last" in kwargs:
+            self.name_last = kwargs["name_last"]
+        if "nationality" in kwargs:
+            self.nationality = kwargs["nationality"]
 
     # ----------------------------------
 
@@ -481,12 +669,57 @@ class Lawyer(Base):
     # -- Functions for Disambiguation --
 
     @hybrid_property
+    def summarize(self):
+        return {
+            "id": self.id,
+            "name_first": self.name_first,
+            "name_last": self.name_last,
+            "organization": self.organization,
+            "country": self.country}
+
+    @hybrid_property
     def __raw__(self):
         return self.rawlawyers
 
     @hybrid_property
-    def __many__(self):
-        return self.patents
+    def __related__(self):
+        return RawLawyer
+
+    def __rawgroup__(self, session, key):
+        if key in RawLawyer.__dict__:
+            return session.query(RawLawyer.__dict__[key], func.count()).filter(
+                RawLawyer.lawyer_id == self.id).group_by(
+                    RawLawyer.__dict__[key]).all()
+        else:
+            return []
+
+    def relink(self, session, obj):
+        if obj == self:
+            return
+        if obj.__tablename__[:3] == "raw":
+            if obj.patent and obj.patent not in self.patents:
+                self.patents.append(obj.patent)
+            if obj and obj not in self.__raw__:
+                self.__raw__.append(obj)
+        else:
+            session.query(RawLawyer).filter(
+                RawLawyer.lawyer_id == obj.id).update(
+                    {RawLawyer.lawyer_id: self.id},
+                    synchronize_session=False)
+            session.query(patentlawyer).filter(
+                patentlawyer.c.lawyer_id == obj.id).update(
+                    {patentlawyer.c.lawyer_id: self.id},
+                    synchronize_session=False)
+
+    def update(self, **kwargs):
+        if "name_first" in kwargs:
+            self.name_first = kwargs["name_first"]
+        if "name_last" in kwargs:
+            self.name_last = kwargs["name_last"]
+        if "organization" in kwargs:
+            self.organization = kwargs["organization"]
+        if "country" in kwargs:
+            self.country = kwargs["country"]
 
     # ----------------------------------
 
