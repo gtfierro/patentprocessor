@@ -156,6 +156,7 @@ if __name__=='__main__':
     if downloaddir and not os.path.exists(downloaddir):
         os.makedirs(downloaddir)
     dview['downloaddir'] = parse_config['downloaddir']
+    print 'Downloading files at {0}'.format(str(datetime.datetime.today()))
     dview.apply(download_files)
     print 'Downloaded files:',parse_config['years']
     f = datetime.datetime.now()

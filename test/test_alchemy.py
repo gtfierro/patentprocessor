@@ -1,6 +1,7 @@
 import unittest
 import os
 import sys
+import shutil
 sys.path.append('../lib/')
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 import alchemy
@@ -11,9 +12,8 @@ class TestAlchemy(unittest.TestCase):
 
     def setUp(self):
         # this basically resets our testing database
-        os.system("cp {0}/alchemy.raw {0}/test.db".format(config.get("sqlite").get("path")))
-        session = alchemy.fetch_session()
-        pass
+        path = config.get('sqlite').get('path')
+        shutil.copyfile('{0}/alchemy.raw'.format(path), '{0}/test.db'.format(path))
 
     def tearDown(self):
         # we keep this to tidy up our database if it fails

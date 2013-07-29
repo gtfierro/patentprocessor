@@ -1,92 +1,52 @@
-import sys
-sys.path.append( './lib/' )
-import SQLite
-import datetime
-import shutil
+#!/usr/bin/env python
+"""
+Takes the existing database (as indicated by the alchemy configuration file) and creates
+a dump CSV file with the appropriate columns as needed for the disambiguation:
 
-t1 = datetime.datetime.now()
-print "Start", t1
+  patent doc number, main class, sub class, inventor first name, inventor middle name, inventor last name,
+  city, state, zipcode, country, assignee
+"""
 
-##Create invpat
-ip = SQLite.SQLite(db = 'invpat.sqlite3', tbl = 'invpat')
-ip.c.execute("DROP TABLE IF EXISTS invpat")
-ip.c.execute("""CREATE TABLE invpat(Firstname TEXT, Middlename TEXT, Lastname TEXT, Street TEXT,
-            City TEXT, State TEXT, Country TEXT, Zipcode TEXT, Latitude REAL,
-            Longitude REAL, InvSeq INT, Patent TEXT, AppYear TEXT, ApplyYear TEXT, GYear INT,
-            AppDate TEXT, Assignee TEXT, AsgNum INT, Class TEXT, Coauthor TEXT, Invnum TEXT,
-            Invnum_N TEXT, Unique_Record_ID TEXT);""")
+from lib import alchemy
+from lib.assignee_disambiguation import get_assignee_id
+from lib.handlers.xml_util import normalize_utf8
 
-##From inventor.sqlite3: Firstname, Lastname, Street, City, State, Country, Zipcode, Latitude, Longitude, InvSeq
-ip.attach('inventor.sqlite3')
-ip.c.execute("""INSERT INTO invpat (
-                  Firstname,
-                  Lastname,
-                  Street,
-                  City,
-                  State,
-                  Country,
-                  Zipcode,
-                  Latitude,
-                  Longitude,
-                  Patent,
-                  InvSeq)
-               SELECT  Firstname,
-                       Lastname,
-                       Street,
-                       NCity,
-                       NState,
-                       NCountry,
-                       '',
-                       NLat,
-                       NLong,
-                       Patent,
-                       InvSeq
-                 FROM  db.inventor_1""")
-ip.detach()
+# get patents as iterator to save memory
+patents = (p for p in alchemy.session.query(alchemy.Patent).yield_per(1))
 
-##From patent.sqlite3: Patent, AppYear, GYear, AppDate
-ip.attach('patent.sqlite3')
-ip.merge(key = ['AppYear', 'GYear', 'AppDate'], on= ['Patent'], tableFrom = 'patent', db = 'db')
-ip.detach()
+# create CSV file row using a dictionary. Use `ROW(dictionary)`
+ROW = lambda x: u'{number}, {mainclass}, {subclass}, {name_first}, {name_middle}, {name_last},\
+{state}, {zipcode}, {latitude}, {longitude}, {country}, {assignee}\n'.format(**x)
 
-##From assignee.sqlite3: Assignee, AsgNum
-ip.attach('assignee.sqlite3')
-ip.merge(key = [['Assignee', 'assigneeAsc'], 'AsgNum'], on = ['Patent'], tableFrom = 'assignee_1', db = 'db')
-ip.detach()
+insert_rows = []
 
-##From class: class
-ip.attach('class_1.sqlite3')
-ip.merge(key = [['Class', 'ClassSub']], on = ['Patent'], tableFrom = 'class_1', db = 'db')
-ip.detach()
-ip.commit()
+for patent in patents:
+    # create common dict for this patent
+    loc = patent.rawinventors[0].rawlocation
+    row = {'number': patent.number,
+           'mainclass': patent.classes[0].mainclass_id,
+           'subclass': patent.classes[0].subclass_id,
+           'state': loc.state,
+           'zipcode': '',
+           'latitude': loc.latitude,
+           'longitude': loc.longitude,
+           'country': loc.country,
+           'city': loc.city,
+           }
+    row['assignee'] = get_assignee_id(patent.assignees[0]) if patent.assignees else ''
+    # generate a row for each of the inventors on a patent
+    for ri in patent.rawinventors:
+        namedict = {'name_first': ri.name_first}
+        raw_name = ri.name_last.split(' ')
+        # name_last is the last space-delimited word. Middle name is everything before that
+        name_middle, name_last = ' '.join(raw_name[:-1]), raw_name[-1]
+        namedict['name_middle'] = name_middle
+        namedict['name_last'] = name_last
+        tmprow = row.copy()
+        tmprow.update(namedict)
+        newrow = normalize_utf8(ROW(tmprow))
+        insert_rows.append(newrow)
 
-##Generate invnum
-ip.c.execute("UPDATE invpat SET invnum = patent || '-' || invseq")
-ip.c.execute("UPDATE invpat SET Invnum_N = Invnum")
-ip.c.execute("UPDATE invpat SET Unique_Record_ID = Invnum")
-ip.c.execute("UPDATE invpat SET Middlename = Firstname")
-ip.c.execute("UPDATE invpat SET ApplyYear = AppYear")
-ip.commit()
-
-##Index invpat
-ip.c.execute("CREATE INDEX idx_invpat_assignee on invpat (Assignee);")
-ip.c.execute("CREATE INDEX idx_invpat_asgnum on invpat (AsgNum);")
-ip.c.execute("CREATE INDEX idx_invpat_gyear on invpat (Gyear);")
-ip.c.execute("CREATE INDEX idx_invpat_invnum_n  ON invpat (Invnum_N);")
-ip.c.execute("CREATE INDEX idx_invpat_city on invpat (City);")
-ip.c.execute("CREATE INDEX idx_invpat_city_state on invpat (City, State);")
-ip.c.execute("CREATE INDEX idx_invpat_state on invpat (State);")
-ip.c.execute("CREATE INDEX idx_invpat_patent ON invpat (Patent);")
-ip.c.execute("CREATE INDEX idx_invpat_patent_invseq ON invpat (Patent, InvSeq);")
-
-ip.commit()
-
-ip.close()
-
-print "Finish", datetime.datetime.now()-t1
-
-
-#tables = ["assignee", "citation", "class", "inventor", "patent", "patdesc", "lawyer", "sciref", "usreldoc"]
-#for table in tables:
-#    filename = table + ".sqlite3"
-#    shutil.move(filename,flder)
+with open('disambiguator.csv', 'wb') as csv:
+    for row in insert_rows:
+        csv.write(row)

@@ -54,6 +54,13 @@ def fetch_session(db=None):
         sqlite_db_path = os.path.join(
             config.get(db).get('path'),
             config.get(db).get('database'))
+        #Delete any existing database if we should refresh
+        #Actually doesn't work properly - it calls itself on clean.py as well! Needs more work
+        #if(config.get('sqlite').get('refresh')):
+        #    try:
+        #        os.remove(sqlite_db_path)
+        #    except:
+        #        pass
         engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
     else:
         engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
@@ -263,26 +270,25 @@ def add(obj, override=True, temp=False):
         ipc = IPCR(**ipc)
         pat.ipcrs.append(ipc)
 
-    # citations are huge. this dumps them to
-    # a temporary database which we can use for later
-    if temp:
-        cits, refs = obj.citation_list
-        for cit in cits:
-            cit["patent_id"] = obj.pat["number"]
-            cit = TempCitation(**cit)
-            session.add(cit)
-        for ref in refs:
-            ref["patent_id"] = obj.pat["number"]
-            ref = TempOtherReference(**ref)
-            session.add(ref)
-    else:
-        cits, refs = obj.citation_list
-        for cit in cits:
-            cit = Citation(**cit)
-            pat.citations.append(cit)
-        for ref in refs:
-            ref = OtherReference(**ref)
-            pat.otherreferences.append(ref)
+    #+citations
+    cits, refs = obj.citation_list
+    for cit in cits:
+        if cit['country'] == 'US':
+            # granted patent doc number
+            if re.match(r'^[A-Z]+\d+$', cit['number']):
+                cit = USPatentCitation(**cit)
+                pat.uspatentcitations.append(cit)
+            # if not above, it's probably an application
+            else:
+                cit = USApplicationCitation(**cit)
+                pat.usapplicationcitations.append(cit)
+        # if not US, then foreign citation
+        else:
+            cit = ForeignCitation(**cit)
+            pat.foreigncitations.append(cit)
+    for ref in refs:
+        ref = OtherReference(**ref)
+        pat.otherreferences.append(ref)
 
     session.merge(pat)
 
