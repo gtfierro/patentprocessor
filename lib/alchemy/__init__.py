@@ -67,20 +67,18 @@ def fetch_session(db=None):
     return session
 
 
-def match(objects, session, override={}, keepdefault=False):
+def match(objects, session, default={}, keepexisting=False):
     """
     Pass in several objects and make them equal
-    Override is specified if there is a desire to override
-    certain fields
 
     Args:
         objects: A list of RawObjects like RawAssignee
           also supports CleanObjects like Assignee
-        keepdefault: Keep the default keyword
-        override: Fields to override the variable with
+        keepexisting: Keep the default keyword
+        default: Fields to default the clean variable with
 
         Default key priority:
-        auto > keepdefault > override
+        auto > keepexisting > default
     """
     if type(objects).__name__ in ('list', 'tuple'):
         objects = list(set(objects))
@@ -106,7 +104,7 @@ def match(objects, session, override={}, keepdefault=False):
                 clean_cnt = len(clean.__raw__)
                 clean_main = clean
             # figures out the most frequent items
-            if not keepdefault:
+            if not keepexisting:
                 for k in clean.__related__.summarize:
                     freq[k] += Counter(dict(clean.__rawgroup__(session, k)))
         elif obj and obj not in raw_objects:
@@ -116,13 +114,13 @@ def match(objects, session, override={}, keepdefault=False):
     if clean_main:
         exist_param = clean_main.summarize
 
-    if keepdefault:
+    if keepexisting:
         param = exist_param
     else:
         param = exist_param
         for obj in raw_objects:
             for k, v in obj.summarize.iteritems():
-                if k not in override:
+                if k not in default:
                     freq[k][v] += 1
             if "id" not in exist_param:
                 if "id" not in param:
@@ -137,7 +135,7 @@ def match(objects, session, override={}, keepdefault=False):
             freq[k].pop("")
         if freq[k]:
             param[k] = freq[k].most_common(1)[0][0]
-    param.update(override)
+    param.update(default)
 
     # remove all clean objects
     for obj in clean_objects:
