@@ -322,6 +322,15 @@ class RawAssignee(Base):
     def __related__(self):
         return Assignee
 
+    def unlink(self, session):
+        clean = self.__clean__
+        clean.rawassignees.pop(clean.rawassignees.index(self))
+        clean.patents = [asg.patent for asg in clean.rawassignees]
+        clean.locations = [asg.rawlocation.location for asg in clean.rawassignees if asg.rawlocation.location]
+
+        clean.patents = list(set(clean.patents))
+        clean.locations = list(set(clean.locations))
+
     # ----------------------------------
 
     def __repr__(self):
@@ -465,10 +474,9 @@ class Assignee(Base):
         if obj == self:
             return
         if obj.__tablename__[:3] == "raw":
-            if obj.patent and obj.patent:
-                self.patents.append(obj.patent)
             if obj.rawlocation.location:
                 self.locations.append(obj.rawlocation.location)
+            self.patents.append(obj.patent)
             self.rawassignees.append(obj)
         else:
             self.patents.extend(obj.patents)
@@ -478,9 +486,6 @@ class Assignee(Base):
         self.patents = list(set(self.patents))
         self.locations = list(set(self.locations))
         self.rawassignees = list(set(self.rawassignees))
-
-    def unlink(self, session, obj):
-        pass
 
     def update(self, **kwargs):
         if "type" in kwargs:
@@ -550,10 +555,9 @@ class Inventor(Base):
         if obj == self:
             return
         if obj.__tablename__[:3] == "raw":
-            if obj.patent and obj.patent:
-                self.patents.append(obj.patent)
             if obj.rawlocation.location:
                 self.locations.append(obj.rawlocation.location)
+            self.patents.append(obj.patent)
             self.rawinventors.append(obj)
         else:
             self.patents.extend(obj.patents)
