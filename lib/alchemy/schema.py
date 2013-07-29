@@ -325,9 +325,8 @@ class RawAssignee(Base):
     def unlink(self, session):
         clean = self.__clean__
         clean.rawassignees.pop(clean.rawassignees.index(self))
-        clean.patents = [asg.patent for asg in clean.rawassignees]
-        clean.locations = [asg.rawlocation.location for asg in clean.rawassignees if asg.rawlocation.location]
-
+        clean.patents = [obj.patent for obj in clean.rawassignees]
+        clean.locations = [obj.rawlocation.location for obj in clean.rawassignees if obj.rawlocation.location]
         clean.patents = list(set(clean.patents))
         clean.locations = list(set(clean.locations))
 
@@ -368,6 +367,14 @@ class RawInventor(Base):
     @hybrid_property
     def __related__(self):
         return Inventor
+
+    def unlink(self, session):
+        clean = self.__clean__
+        clean.rawinventors.pop(clean.rawinventors.index(self))
+        clean.patents = [obj.patent for obj in clean.rawinventors]
+        clean.locations = [obj.rawlocation.location for obj in clean.rawinventors if obj.rawlocation.location]
+        clean.patents = list(set(clean.patents))
+        clean.locations = list(set(clean.locations))
 
     # ----------------------------------
 
@@ -415,6 +422,12 @@ class RawLawyer(Base):
     @hybrid_property
     def __related__(self):
         return Lawyer
+
+    def unlink(self, session):
+        clean = self.__clean__
+        clean.rawlawyers.pop(clean.rawlawyers.index(self))
+        clean.patents = [obj.patent for obj in clean.rawlawyers]
+        clean.patents = list(set(clean.patents))
 
     # ----------------------------------
 

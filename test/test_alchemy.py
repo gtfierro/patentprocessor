@@ -55,7 +55,7 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(10.0, loc[0].location.latitude)
         self.assertEqual(10.0, loc[0].location.longitude)
 
-    def test_unmatch(self):
+    def test_unmatch_assignee(self):
         loc = session.query(RawLocation).limit(20).all()
         asg = session.query(RawAssignee).limit(20).all()
         alchemy.match(asg)
@@ -76,6 +76,49 @@ class TestAlchemy(unittest.TestCase):
         alchemy.unmatch(loc[10].location)
         self.assertEqual(0, session.query(Location).count())
         self.assertEqual(0, session.query(locationassignee).count())
+
+    def test_unmatch_inventor(self):
+        loc = session.query(RawLocation).limit(20).all()
+        inv = session.query(RawInventor).limit(20).all()
+        alchemy.match(inv)
+        alchemy.match(loc[0:10])
+        alchemy.match(loc[10:20])
+
+        clean = inv[0].inventor
+        alchemy.unmatch(inv[0])
+        self.assertEqual(None, inv[0].inventor)
+        self.assertEqual(19, len(clean.rawinventors))
+        self.assertEqual(10, len(clean.patents))
+
+        alchemy.unmatch(inv[1])
+        self.assertEqual(None, inv[1].inventor)
+        self.assertEqual(18, len(clean.rawinventors))
+        # this patent is repeated
+        self.assertEqual(10, len(clean.patents))
+
+        alchemy.unmatch(inv[2])
+        self.assertEqual(None, inv[2].inventor)
+        self.assertEqual(17, len(clean.rawinventors))
+        self.assertEqual(9, len(clean.patents))
+
+        self.assertEqual(2, session.query(Location).count())
+        self.assertEqual(2, session.query(locationinventor).count())
+        alchemy.unmatch(loc[0].location)
+        self.assertEqual(1, session.query(Location).count())
+
+        self.assertEqual(1, session.query(locationinventor).count())
+        alchemy.unmatch(loc[10].location)
+        self.assertEqual(0, session.query(Location).count())
+        self.assertEqual(0, session.query(locationinventor).count())
+
+    def test_unmatch_lawyer(self):
+        law = session.query(RawLawyer).limit(20).all()
+        alchemy.match(law)
+
+        alchemy.unmatch(law[0])
+        self.assertEqual(None, law[0].lawyer)
+        self.assertEqual(19, len(law[1].lawyer.rawlawyers))
+        self.assertEqual(14, len(law[1].lawyer.patents))
 
     def test_assigneematch(self):
         # blindly assume first 10 are the same
