@@ -91,6 +91,7 @@ def parse_patent(xmltuple):
     except Exception as inst:
         logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
+    del xmltuple
     patobj = Patobj()
     for attr in ['pat','patent','app','assignee_list','inventor_list','lawyer_list',
                  'us_relation_list','us_classifications','ipcr_classifications',
