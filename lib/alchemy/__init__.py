@@ -160,16 +160,18 @@ def match(objects=[], override={}, keepdefault=False):
     session.commit()
 
 
-def unmatch(obj):
+def unmatch(objects):
     """
     Separate our dataset
     """
-    if obj.__tablename__[:3] == "raw":
-        obj.unlink(session)
-    else:
-        session.delete(obj)
+    if type(objects).__name__ not in ('list', 'tuple', 'Query'):
+        objects = [objects]
+    for obj in objects:
+        if obj.__tablename__[:3] == "raw":
+            obj.unlink(session)
+        else:
+            session.delete(obj)
     session.commit()
-
 
 def add(obj, override=True, temp=False):
     """

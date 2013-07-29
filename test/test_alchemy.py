@@ -55,41 +55,70 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(10.0, loc[0].location.latitude)
         self.assertEqual(10.0, loc[0].location.longitude)
 
-    def test_unmatch_assignee(self):
+    def test_unmatch_asgloc(self):
         loc = session.query(RawLocation).limit(20).all()
         asg = session.query(RawAssignee).limit(20).all()
         alchemy.match(asg)
-        alchemy.match(loc[0:10])
-        alchemy.match(loc[10:20])
+        alchemy.match(loc[0:5])
+        alchemy.match(loc[5:10])
+        alchemy.match(loc[10:15])
+        alchemy.match(loc[15:20])
 
+        clean = asg[0].assignee
         alchemy.unmatch(asg[0])
         self.assertEqual(None, asg[0].assignee)
-        self.assertEqual(19, len(asg[1].assignee.rawassignees))
-        self.assertEqual(19, len(asg[1].assignee.patents))
+        self.assertEqual(19, len(clean.rawassignees))
+        self.assertEqual(19, len(clean.patents))
 
+        self.assertEqual(4, session.query(Location).count())
+        self.assertEqual(4, session.query(locationassignee).count())
+
+        clean = loc[0].location
+        self.assertEqual(5, len(clean.rawlocations))
+        alchemy.unmatch(loc[0])
+        self.assertEqual(4, len(clean.rawlocations))
+        alchemy.unmatch(loc[1])
+        self.assertEqual(3, len(clean.rawlocations))
+        alchemy.unmatch(loc[2:5])
+        self.assertEqual(None, loc[0].location)
+        self.assertEqual(3, session.query(Location).count())
+        self.assertEqual(3, session.query(locationassignee).count())
+
+        alchemy.unmatch(loc[5].location)
         self.assertEqual(2, session.query(Location).count())
         self.assertEqual(2, session.query(locationassignee).count())
-        alchemy.unmatch(loc[0].location)
-        self.assertEqual(1, session.query(Location).count())
-
-        self.assertEqual(1, session.query(locationassignee).count())
         alchemy.unmatch(loc[10].location)
-        self.assertEqual(0, session.query(Location).count())
-        self.assertEqual(0, session.query(locationassignee).count())
+        self.assertEqual(1, session.query(Location).count())
+        self.assertEqual(1, session.query(locationassignee).count())
 
-    def test_unmatch_inventor(self):
+    def test_unmatch_invloc(self):
         loc = session.query(RawLocation).limit(20).all()
         inv = session.query(RawInventor).limit(20).all()
         alchemy.match(inv)
-        alchemy.match(loc[0:10])
-        alchemy.match(loc[10:20])
-        self.assertEqual(2, session.query(locationinventor).count())
+        alchemy.match(loc[0:5])
+        alchemy.match(loc[5:10])
+        alchemy.match(loc[10:15])
+        alchemy.match(loc[15:20])
 
         clean = inv[0].inventor
         alchemy.unmatch(inv[0])
         self.assertEqual(None, inv[0].inventor)
         self.assertEqual(19, len(clean.rawinventors))
         self.assertEqual(10, len(clean.patents))
+
+        self.assertEqual(4, session.query(Location).count())
+        self.assertEqual(4, session.query(locationinventor).count())
+
+        clean = loc[0].location
+        self.assertEqual(5, len(clean.rawlocations))
+        alchemy.unmatch(loc[0])
+        self.assertEqual(4, len(clean.rawlocations))
+        alchemy.unmatch(loc[1])
+        self.assertEqual(3, len(clean.rawlocations))
+        alchemy.unmatch(loc[2:5])
+        self.assertEqual(None, loc[0].location)
+        self.assertEqual(3, session.query(Location).count())
+        self.assertEqual(3, session.query(locationinventor).count())
 
         alchemy.unmatch(inv[1])
         self.assertEqual(None, inv[1].inventor)

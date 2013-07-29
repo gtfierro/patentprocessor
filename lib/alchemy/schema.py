@@ -193,11 +193,17 @@ class RawLocation(Base):
     def unlink(self, session):
         clean = self.__clean__
         clean.__raw__.pop(clean.__raw__.index(self))
-
-        clean.assignees = [obj.patent for obj in clean.__raw__]
-        clean.inventors = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
-        clean.assignees = list(set(clean.assignees))
-        clean.inventors = list(set(clean.inventors))
+        clean.assignees = []
+        clean.inventors = []
+        for raw in clean.__raw__:
+            for obj in raw.rawassignees:
+                if obj.assignee and obj.assignee not in clean.assignees:
+                    clean.assignees.append(obj.assignee)
+            for obj in raw.rawinventors:
+                if obj.inventor and obj.inventor not in clean.inventors:
+                    clean.inventors.append(obj.inventor)
+        if len(clean.__raw__) == 0:
+            session.delete(clean)
 
     # ----------------------------------
 
@@ -338,6 +344,8 @@ class RawAssignee(Base):
         clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
         clean.patents = list(set(clean.patents))
         clean.locations = list(set(clean.locations))
+        if len(clean.__raw__) == 0:
+            session.delete(clean)
 
     # ----------------------------------
 
@@ -384,6 +392,8 @@ class RawInventor(Base):
         clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
         clean.patents = list(set(clean.patents))
         clean.locations = list(set(clean.locations))
+        if len(clean.__raw__) == 0:
+            session.delete(clean)
 
     # ----------------------------------
 
@@ -437,6 +447,8 @@ class RawLawyer(Base):
         clean.__raw__.pop(clean.__raw__.index(self))
         clean.patents = [obj.patent for obj in clean.__raw__]
         clean.patents = list(set(clean.patents))
+        if len(clean.__raw__) == 0:
+            session.delete(clean)
 
     # ----------------------------------
 
