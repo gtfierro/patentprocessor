@@ -67,7 +67,7 @@ def fetch_session(db=None):
     return session
 
 
-def match(objects=[], override={}, keepdefault=False):
+def match(objects, session, override={}, keepdefault=False):
     """
     Pass in several objects and make them equal
     Override is specified if there is a desire to override
@@ -82,7 +82,9 @@ def match(objects=[], override={}, keepdefault=False):
         Default key priority:
         auto > keepdefault > override
     """
-    if type(objects).__name__ not in ('list', 'tuple', 'Query'):
+    if type(objects).__name__ in ('list', 'tuple'):
+        objects = list(set(objects))
+    elif type(objects).__name__ not in ('list', 'tuple', 'Query'):
         objects = [objects]
     freq = defaultdict(Counter)
     param = {}
@@ -153,18 +155,23 @@ def match(objects=[], override={}, keepdefault=False):
         relobj = objects[0].__related__(**param)
     # associate the data into the related object
 
+    print param
+
     for obj in raw_objects:
         relobj.relink(session, obj)
 
     session.merge(relobj)
     session.commit()
+    session.close()
 
 
-def unmatch(objects):
+def unmatch(objects, session):
     """
     Separate our dataset
     """
-    if type(objects).__name__ not in ('list', 'tuple', 'Query'):
+    if type(objects).__name__ in ('list', 'tuple'):
+        objects = list(set(objects))
+    elif type(objects).__name__ not in ('list', 'tuple', 'Query'):
         objects = [objects]
     for obj in objects:
         if obj.__tablename__[:3] == "raw":
@@ -172,6 +179,7 @@ def unmatch(objects):
         else:
             session.delete(obj)
     session.commit()
+
 
 def add(obj, override=True, temp=False):
     """
