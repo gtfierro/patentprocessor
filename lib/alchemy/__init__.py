@@ -170,6 +170,9 @@ def match(objects, session, default={}, keepexisting=False):
 def unmatch(objects, session):
     """
     Separate our dataset
+    # TODO. THIS NEEDS TO BE FIGURED OUT
+    # Unlinking doesn't seem to be working
+    # properly if a LOCATION is added
     """
     if type(objects).__name__ in ('list', 'tuple'):
         objects = list(set(objects))
