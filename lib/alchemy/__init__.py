@@ -94,6 +94,8 @@ def match(objects, session, default={}, keepexisting=False):
     for obj in objects:
         if obj.__tablename__[:3] == "raw":
             clean = obj.__clean__
+            if clean:
+                print clean
         else:
             clean = obj
             obj = None
