@@ -2,5 +2,5 @@ sqlalchemy
 ipython
 unidecode
 MySQL-python
-redis
-
+pyzmq
+beautifulsoup4
