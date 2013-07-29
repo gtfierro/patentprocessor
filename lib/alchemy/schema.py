@@ -183,12 +183,6 @@ class RawLocation(Base):
         return self.id
 
     @hybrid_property
-    def __single__(self):
-        return {
-            "asg": [asg.assignee for asg in self.rawassignees if asg.assignee],
-            "inv": [inv.inventor for inv in self.rawinventors if inv.inventor]}
-
-    @hybrid_property
     def __clean__(self):
         return self.location
 
@@ -246,10 +240,6 @@ class Location(Base):
         return self.rawlocations
 
     @hybrid_property
-    def __many__(self):
-        return {"asg": self.assignees, "inv": self.inventors}
-
-    @hybrid_property
     def __related__(self):
         return RawLocation
 
@@ -264,18 +254,18 @@ class Location(Base):
     def relink(self, session, obj):
         if obj == self:
             return
-        session.query(RawLocation).filter(
-            RawLocation.location_id == obj.id).update(
-                {RawLocation.location_id: self.id},
-                synchronize_session=False)
-        session.query(locationassignee).filter(
-            locationassignee.c.assignee_id == obj.id).update(
-                {locationassignee.c.assignee_id: self.id},
-                synchronize_session=False)
-        session.query(locationinventor).filter(
-            locationinventor.c.inventor_id == obj.id).update(
-                {locationinventor.c.inventor_id: self.id},
-                synchronize_session=False)
+        if obj.__tablename__[:3] == "raw":
+            self.assignees.extend([asg.assignee for asg in obj.rawassignees if asg.assignee])
+            self.inventors.extend([inv.inventor for inv in obj.rawinventors if inv.inventor])
+            self.rawlocations.append(obj)
+        else:
+            self.assignees.extend(obj.assignees)
+            self.inventors.extend(obj.inventors)
+            self.rawlocations.extend(obj.rawlocations)
+
+        self.assignees = list(set(self.assignees))
+        self.inventors = list(set(self.inventors))
+        self.rawlocations = list(set(self.rawlocations))
 
     def update(self, **kwargs):
         if "city" in kwargs:
@@ -325,12 +315,6 @@ class RawAssignee(Base):
             "nationality": self.nationality}
 
     @hybrid_property
-    def __single__(self):
-        return {
-            "pat": self.patent,
-            "loc": self.rawlocation.location}
-
-    @hybrid_property
     def __clean__(self):
         return self.assignee
 
@@ -367,12 +351,6 @@ class RawInventor(Base):
             "name_first": self.name_first,
             "name_last": self.name_last,
             "nationality": self.nationality}
-
-    @hybrid_property
-    def __single__(self):
-        return {
-            "pat": self.patent,
-            "loc": self.rawlocation.location}
 
     @hybrid_property
     def __clean__(self):
@@ -420,10 +398,6 @@ class RawLawyer(Base):
             "name_last": self.name_last,
             "organization": self.organization,
             "country": self.country}
-
-    @hybrid_property
-    def __single__(self):
-        return self.patent
 
     @hybrid_property
     def __clean__(self):
@@ -476,12 +450,6 @@ class Assignee(Base):
         return self.rawassignees
 
     @hybrid_property
-    def __many__(self):
-        return {
-            "pat": self.patents,
-            "loc": self.locations}
-
-    @hybrid_property
     def __related__(self):
         return RawAssignee
 
@@ -496,18 +464,23 @@ class Assignee(Base):
     def relink(self, session, obj):
         if obj == self:
             return
-        session.query(RawAssignee).filter(
-            RawAssignee.assignee_id == obj.id).update(
-                {RawAssignee.assignee_id: self.id},
-                synchronize_session=False)
-        session.query(patentassignee).filter(
-            patentassignee.c.assignee_id == obj.id).update(
-                {patentassignee.c.assignee_id: self.id},
-                synchronize_session=False)
-        session.query(locationassignee).filter(
-            locationassignee.c.assignee_id == obj.id).update(
-                {locationassignee.c.assignee_id: self.id},
-                synchronize_session=False)
+        if obj.__tablename__[:3] == "raw":
+            if obj.patent and obj.patent:
+                self.patents.append(obj.patent)
+            if obj.rawlocation.location:
+                self.locations.append(obj.rawlocation.location)
+            self.rawassignees.append(obj)
+        else:
+            self.patents.extend(obj.patents)
+            self.locations.extend(obj.locations)
+            self.rawassignees.extend(obj.rawassignees)
+
+        self.patents = list(set(self.patents))
+        self.locations = list(set(self.locations))
+        self.rawassignees = list(set(self.rawassignees))
+
+    def unlink(self, session, obj):
+        pass
 
     def update(self, **kwargs):
         if "type" in kwargs:
@@ -562,12 +535,6 @@ class Inventor(Base):
         return self.rawinventors
 
     @hybrid_property
-    def __many__(self):
-        return {
-            "pat": self.patents,
-            "loc": self.locations}
-
-    @hybrid_property
     def __related__(self):
         return RawInventor
 
@@ -582,18 +549,33 @@ class Inventor(Base):
     def relink(self, session, obj):
         if obj == self:
             return
-        session.query(RawInventor).filter(
-            RawInventor.inventor_id == obj.id).update(
-                {RawInventor.inventor_id: self.id},
-                synchronize_session=False)
-        session.query(patentinventor).filter(
-            patentinventor.c.inventor_id == obj.id).update(
-                {patentinventor.c.inventor_id: self.id},
-                synchronize_session=False)
-        session.query(locationinventor).filter(
-            locationinventor.c.inventor_id == obj.id).update(
-                {locationinventor.c.inventor_id: self.id},
-                synchronize_session=False)
+        if obj.__tablename__[:3] == "raw":
+            if obj.patent and obj.patent:
+                self.patents.append(obj.patent)
+            if obj.rawlocation.location:
+                self.locations.append(obj.rawlocation.location)
+            self.rawinventors.append(obj)
+        else:
+            self.patents.extend(obj.patents)
+            self.locations.extend(obj.locations)
+            self.rawinventors.extend(obj.rawinventors)
+
+        self.patents = list(set(self.patents))
+        self.locations = list(set(self.locations))
+        self.rawinventors = list(set(self.rawinventors))
+
+        #session.query(RawInventor).filter(
+        #    RawInventor.inventor_id == obj.id).update(
+        #        {RawInventor.inventor_id: self.id},
+        #        synchronize_session=False)
+        #session.query(patentinventor).filter(
+        #    patentinventor.c.inventor_id == obj.id).update(
+        #        {patentinventor.c.inventor_id: self.id},
+        #        synchronize_session=False)
+        #session.query(locationinventor).filter(
+        #    locationinventor.c.inventor_id == obj.id).update(
+        #        {locationinventor.c.inventor_id: self.id},
+        #        synchronize_session=False)
 
     def update(self, **kwargs):
         if "name_first" in kwargs:
@@ -640,10 +622,6 @@ class Lawyer(Base):
         return self.rawlawyers
 
     @hybrid_property
-    def __many__(self):
-        return self.patents
-
-    @hybrid_property
     def __related__(self):
         return RawLawyer
 
@@ -658,14 +636,16 @@ class Lawyer(Base):
     def relink(self, session, obj):
         if obj == self:
             return
-        session.query(RawLawyer).filter(
-            RawLawyer.lawyer_id == obj.id).update(
-                {RawLawyer.lawyer_id: self.id},
-                synchronize_session=False)
-        session.query(patentlawyer).filter(
-            patentlawyer.c.lawyer_id == obj.id).update(
-                {patentlawyer.c.lawyer_id: self.id},
-                synchronize_session=False)
+        if obj.__tablename__[:3] == "raw":
+            if obj.patent and obj.patent:
+                self.patents.append(obj.patent)
+            self.rawlawyers.append(obj)
+        else:
+            self.patents.extend(obj.patents)
+            self.rawlawyers.extend(obj.rawlawyers)
+
+        self.patents = list(set(self.patents))
+        self.rawlawyers = list(set(self.rawlawyers))
 
     def update(self, **kwargs):
         if "name_first" in kwargs:
