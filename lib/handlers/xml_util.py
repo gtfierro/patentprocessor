@@ -74,10 +74,8 @@ def translate_underscore(string, lower=False):
     Replaces the underscore HTML idiom <sub>&#x2014;</sub> with the literal
     underscore character _.
     """
-    # RL added >>>>>>
     if lower:
         string = string.lower()
-    # <<<<<<
     return string.replace('<sub>&#x2014;</sub>','_').replace('<sub>-</sub>','_').replace(u'<sub>\u2014</sub>','_')
 
 
@@ -120,13 +118,11 @@ def clean(string, upper=True):
     string = remove_escape_sequences(string)
     string = translate_underscore(string)
     string = escape_html(string)
-    # RL added >>>>>>
     string = string.replace("&nbsp;", " ").replace("&amp;", "&")
     if upper:
         return string.upper()
     else:
         return string
-    # <<<<<<
 
 def augment_class(string):
     """

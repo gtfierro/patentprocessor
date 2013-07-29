@@ -10,6 +10,7 @@ import itertools
 import sys
 import lib.argconfig_parse as argconfig_parse
 import lib.alchemy as alchemy
+import shutil
 from lib.config_parser import get_xml_handlers
 
 regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
@@ -90,17 +91,12 @@ def parse_patent(xmltuple):
     except Exception as inst:
         logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
+    del xmltuple
     patobj = Patobj()
-    patobj.__dict__['pat'] = patent.pat
-    patobj.__dict__['patent'] = patent.patent
-    patobj.__dict__['app'] = patent.app
-    patobj.__dict__['assignee_list'] = patent.assignee_list()
-    patobj.__dict__['inventor_list'] = patent.inventor_list()
-    patobj.__dict__['lawyer_list'] = patent.lawyer_list()
-    patobj.__dict__['us_relation_list'] = patent.us_relation_list()
-    patobj.__dict__['us_classifications'] = patent.us_classifications()
-    patobj.__dict__['ipcr_classifications'] = patent.ipcr_classifications()
-    patobj.__dict__['citation_list'] = patent.citation_list()
+    for attr in ['pat','patent','app','assignee_list','inventor_list','lawyer_list',
+                 'us_relation_list','us_classifications','ipcr_classifications',
+                 'citation_list']:
+        patobj.__dict__[attr] = getattr(patent,attr)
     return patobj
 
 def parse_patents(xmltuples):
@@ -130,13 +126,13 @@ def move_tables(output_directory):
         return
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
-    # RL modified >>>>>>
-    for database in ['assignee', 'citation', 'class',
-                     'inventor', 'patent', 'patdesc',
-                     'lawyer', 'sciref', 'usreldoc']:
-        shutil.move("{0}.sqlite3".format(database),
-                    "{0}/{1}.sqlite3".format(output_directory, database))
-    # <<<<<<
+    dbtype = alchemy.config.get('global', 'database')
+    dbfile = alchemy.config.get(dbtype, 'database')
+    try:
+        shutil.move(dbfile,
+                    '{0}/{1}'.format(output_directory, dbfile))
+    except:
+        print 'Database file {0} does not exist'.format(dbfile)
 
 
 def main(patentroot, xmlregex, verbosity, output_directory='.'):
