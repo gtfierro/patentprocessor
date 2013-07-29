@@ -122,7 +122,8 @@ def match(objects, session, override={}, keepdefault=False):
         param = exist_param
         for obj in raw_objects:
             for k, v in obj.summarize.iteritems():
-                freq[k][v] += 1
+                if k not in override:
+                    freq[k][v] += 1
             if "id" not in exist_param:
                 if "id" not in param:
                     param["id"] = obj.uuid
