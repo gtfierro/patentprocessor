@@ -155,8 +155,6 @@ def match(objects, session, override={}, keepdefault=False):
         relobj = objects[0].__related__(**param)
     # associate the data into the related object
 
-    print param
-
     for obj in raw_objects:
         relobj.relink(session, obj)
 
