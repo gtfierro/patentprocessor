@@ -40,7 +40,7 @@ class TestAlchemy(unittest.TestCase):
         alchemy.match(loc[0], session, {"city": u"Frisco", "state": u"Cali", "country": u"US", "longitude": 10.0, "latitude": 10.0})
         self.assertEqual("Frisco, Cali, US", loc[0].location.address)
 
-        alchemy.match(loc[0], session, keepdefault=True)
+        alchemy.match(loc[0], session, keepexisting=True)
         self.assertEqual("Frisco, Cali, US", loc[0].location.address)
         self.assertEqual(10.0, loc[0].location.latitude)
         self.assertEqual(10.0, loc[0].location.longitude)
@@ -50,7 +50,7 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(10.0, loc[0].location.latitude)
         self.assertEqual(10.0, loc[0].location.longitude)
 
-        alchemy.match(loc[0], session, {"city": u"Frisco"}, keepdefault=True)
+        alchemy.match(loc[0], session, {"city": u"Frisco"}, keepexisting=True)
         self.assertEqual("Frisco, OH, US", loc[0].location.address)
         self.assertEqual(10.0, loc[0].location.latitude)
         self.assertEqual(10.0, loc[0].location.longitude)
