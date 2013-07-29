@@ -120,6 +120,7 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(3, session.query(Location).count())
         self.assertEqual(3, session.query(locationinventor).count())
 
+        clean = inv[5].inventor
         alchemy.unmatch(inv[1])
         self.assertEqual(None, inv[1].inventor)
         self.assertEqual(18, len(clean.rawinventors))
@@ -131,15 +132,13 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(17, len(clean.rawinventors))
         self.assertEqual(9, len(clean.patents))
 
+        alchemy.unmatch(loc[5].location)
         self.assertEqual(2, session.query(Location).count())
         self.assertEqual(2, session.query(locationinventor).count())
-        alchemy.unmatch(loc[0].location)
-        self.assertEqual(1, session.query(Location).count())
 
-        self.assertEqual(1, session.query(locationinventor).count())
         alchemy.unmatch(loc[10].location)
-        self.assertEqual(0, session.query(Location).count())
-        self.assertEqual(0, session.query(locationinventor).count())
+        self.assertEqual(1, session.query(Location).count())
+        self.assertEqual(1, session.query(locationinventor).count())
 
     def test_unmatch_lawyer(self):
         law = session.query(RawLawyer).limit(20).all()
