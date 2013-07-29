@@ -22,7 +22,7 @@ insert_rows = []
 
 for patent in patents:
     # create common dict for this patent
-    loc = patent.rawinventors[0].rawlocation
+    loc = patent.rawinventors[0].rawlocation.location
     row = {'number': patent.number,
            'mainclass': patent.classes[0].mainclass_id,
            'subclass': patent.classes[0].subclass_id,
