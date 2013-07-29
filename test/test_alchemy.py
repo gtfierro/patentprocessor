@@ -84,6 +84,8 @@ class TestAlchemy(unittest.TestCase):
         alchemy.match(loc[0:10])
         alchemy.match(loc[10:20])
 
+        print session.query(locationinventor).count()
+
         clean = inv[0].inventor
         alchemy.unmatch(inv[0])
         self.assertEqual(None, inv[0].inventor)
