@@ -193,10 +193,11 @@ class RawLocation(Base):
     def unlink(self, session):
         clean = self.__clean__
         clean.__raw__.pop(clean.__raw__.index(self))
-        clean.patents = [obj.patent for obj in clean.rawinventors]
-        clean.locations = [obj.rawlocation.location for obj in clean.rawinventors if obj.rawlocation.location]
-        clean.patents = list(set(clean.patents))
-        clean.locations = list(set(clean.locations))
+
+        clean.assignees = [obj.patent for obj in clean.__raw__]
+        clean.inventors = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
+        clean.assignees = list(set(clean.assignees))
+        clean.inventors = list(set(clean.inventors))
 
     # ----------------------------------
 
@@ -333,8 +334,8 @@ class RawAssignee(Base):
     def unlink(self, session):
         clean = self.__clean__
         clean.__raw__.pop(clean.__raw__.index(self))
-        clean.patents = [obj.patent for obj in clean.rawassignees]
-        clean.locations = [obj.rawlocation.location for obj in clean.rawassignees if obj.rawlocation.location]
+        clean.patents = [obj.patent for obj in clean.__raw__]
+        clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
         clean.patents = list(set(clean.patents))
         clean.locations = list(set(clean.locations))
 
@@ -379,8 +380,8 @@ class RawInventor(Base):
     def unlink(self, session):
         clean = self.__clean__
         clean.__raw__.pop(clean.__raw__.index(self))
-        clean.patents = [obj.patent for obj in clean.rawinventors]
-        clean.locations = [obj.rawlocation.location for obj in clean.rawinventors if obj.rawlocation.location]
+        clean.patents = [obj.patent for obj in clean.__raw__]
+        clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
         clean.patents = list(set(clean.patents))
         clean.locations = list(set(clean.locations))
 
@@ -434,7 +435,7 @@ class RawLawyer(Base):
     def unlink(self, session):
         clean = self.__clean__
         clean.__raw__.pop(clean.__raw__.index(self))
-        clean.patents = [obj.patent for obj in clean.rawlawyers]
+        clean.patents = [obj.patent for obj in clean.__raw__]
         clean.patents = list(set(clean.patents))
 
     # ----------------------------------
