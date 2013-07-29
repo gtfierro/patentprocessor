@@ -32,7 +32,6 @@ Allow local file reading (local-infile must be 1 for security purposes)
 mysql -u [user] -p --local-infile=1 -h [db] [tbl]
 ```
 
-
 Executing sample scripts
 
     sqlite3 alchemy.db < ~/patentprocessor/lib/alchemy/counts.sql
