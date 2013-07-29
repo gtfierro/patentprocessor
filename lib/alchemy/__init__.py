@@ -165,10 +165,7 @@ def unmatch(obj):
     Separate our dataset
     """
     if obj.__tablename__[:3] == "raw":
-        clean = obj.assignee
-        print len(clean.rawassignees)
-        clean.rawassignees.pop(clean.rawassignees.index(obj))
-        print len(clean.rawassignees)
+        obj.unlink(session)
     else:
         session.delete(obj)
     session.commit()

@@ -62,6 +62,11 @@ class TestAlchemy(unittest.TestCase):
         alchemy.match(loc[0:10])
         alchemy.match(loc[10:20])
 
+        alchemy.unmatch(asg[0])
+        self.assertEqual(None, asg[0].assignee)
+        self.assertEqual(19, len(asg[1].assignee.rawassignees))
+        self.assertEqual(19, len(asg[1].assignee.patents))
+
         self.assertEqual(2, session.query(Location).count())
         self.assertEqual(2, session.query(locationassignee).count())
         alchemy.unmatch(loc[0].location)
@@ -71,8 +76,6 @@ class TestAlchemy(unittest.TestCase):
         alchemy.unmatch(loc[10].location)
         self.assertEqual(0, session.query(Location).count())
         self.assertEqual(0, session.query(locationassignee).count())
-
-        alchemy.unmatch(asg[0])
 
     def test_assigneematch(self):
         # blindly assume first 10 are the same
