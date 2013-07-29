@@ -30,8 +30,8 @@ python clean.py
 echo Starting consolidate...
 python consolidate.py
 
-diff test/integration/consolidate/ipg120327.two/disambiguator.csv disambiguator.csv
+diff test/integration/consolidate/ipg120327.18/disambiguator.csv disambiguator.csv
 
 ## clean up after we're done
-
+rm -rf tmp
 make spotless > /dev/null
