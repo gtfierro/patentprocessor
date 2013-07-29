@@ -225,26 +225,25 @@ def add(obj, override=True, temp=False):
         ipc = IPCR(**ipc)
         pat.ipcrs.append(ipc)
 
-    # citations are huge. this dumps them to
-    # a temporary database which we can use for later
-    if temp:
-        cits, refs = obj.citation_list
-        for cit in cits:
-            cit["patent_id"] = obj.pat["number"]
-            cit = TempCitation(**cit)
-            session.add(cit)
-        for ref in refs:
-            ref["patent_id"] = obj.pat["number"]
-            ref = TempOtherReference(**ref)
-            session.add(ref)
-    else:
-        cits, refs = obj.citation_list
-        for cit in cits:
-            cit = Citation(**cit)
-            pat.citations.append(cit)
-        for ref in refs:
-            ref = OtherReference(**ref)
-            pat.otherreferences.append(ref)
+    #+citations
+    cits, refs = obj.citation_list
+    for cit in cits:
+        if cit['country'] == 'US':
+            # granted patent doc number
+            if re.match(r'^[A-Z]+\d+$', cit['number']):
+                cit = USPatentCitation(**cit)
+                pat.uspatentcitations.append(cit)
+            # if not above, it's probably an application
+            else:
+                cit = USApplicationCitation(**cit)
+                pat.usapplicationcitations.append(cit)
+        # if not US, then foreign citation
+        else:
+            cit = ForeignCitation(**cit)
+            pat.foreigncitations.append(cit)
+    for ref in refs:
+        ref = OtherReference(**ref)
+        pat.otherreferences.append(ref)
 
     session.merge(pat)
 
