@@ -22,19 +22,19 @@ class TestAlchemy(unittest.TestCase):
 
     def test_raw_clean(self):
         # add a Clean record to mark something against
-        asg0 = session.query(RawAssignee).limit(10).all()
-        asg1 = session.query(RawAssignee).limit(10).offset(10).all()
+        asg0 = session.query(RawAssignee).limit(10)
+        asg1 = session.query(RawAssignee).limit(10).offset(10)
 
         alchemy.match(asg0, session)
         alchemy.match(asg1, session)
-        alchemy.match([asg0[0], asg1[0].assignee])
+        alchemy.match([asg0[0], asg1[0].assignee], session)
 
     def test_match_all(self):
         alchemy.match(session.query(RawAssignee), session)
 
     def test_set_default(self):
         # create two items
-        loc = session.query(RawLocation).all()
+        loc = session.query(RawLocation)
         alchemy.match(loc, session)
 
         alchemy.match(loc[0], session, {"city": u"Frisco", "state": u"Cali", "country": u"US", "longitude": 10.0, "latitude": 10.0})
@@ -56,8 +56,8 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(10.0, loc[0].location.longitude)
 
     def test_unmatch_asgloc(self):
-        loc = session.query(RawLocation).limit(20).all()
-        asg = session.query(RawAssignee).limit(20).all()
+        loc = session.query(RawLocation).limit(20)
+        asg = session.query(RawAssignee).limit(20)
         alchemy.match(asg, session)
         alchemy.match(loc[0:5], session)
         alchemy.match(loc[5:10], session)
@@ -92,8 +92,8 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(1, session.query(locationassignee).count())
 
     def test_unmatch_invloc(self):
-        loc = session.query(RawLocation).limit(20).all()
-        inv = session.query(RawInventor).limit(20).all()
+        loc = session.query(RawLocation).limit(20)
+        inv = session.query(RawInventor).limit(20)
         alchemy.match(inv, session)
         alchemy.match(loc[0:5], session)
         alchemy.match(loc[5:10], session)
@@ -141,7 +141,7 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(1, session.query(locationinventor).count())
 
     def test_unmatch_lawyer(self):
-        law = session.query(RawLawyer).limit(20).all()
+        law = session.query(RawLawyer).limit(20)
         alchemy.match(law, session)
 
         alchemy.unmatch(law[0], session)
@@ -151,8 +151,8 @@ class TestAlchemy(unittest.TestCase):
 
     def test_assigneematch(self):
         # blindly assume first 10 are the same
-        asg0 = session.query(RawAssignee).limit(10).all()
-        asg1 = session.query(RawAssignee).limit(10).offset(10).all()
+        asg0 = session.query(RawAssignee).limit(10)
+        asg1 = session.query(RawAssignee).limit(10).offset(10)
         asgs = session.query(Assignee)
 
         alchemy.match(asg0, session)
@@ -184,8 +184,8 @@ class TestAlchemy(unittest.TestCase):
 
     def test_inventormatch(self):
         # blindly assume first 10 are the same
-        inv0 = session.query(RawInventor).limit(10).all()
-        inv1 = session.query(RawInventor).limit(10).offset(10).all()
+        inv0 = session.query(RawInventor).limit(10)
+        inv1 = session.query(RawInventor).limit(10).offset(10)
         invs = session.query(Inventor)
 
         alchemy.match(inv0, session)
@@ -207,7 +207,7 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(1, invs.count())
 
         # override the default values provided
-        alchemy.match(inv0[0], {"name_first": u"Kevin", "name_last": u"Yu"}, session)
+        alchemy.match(inv0[0], session, {"name_first": u"Kevin", "name_last": u"Yu"})
         self.assertEqual("Kevin Yu", inv0[0].inventor.name_full)
 
         # determine the most common organization name
@@ -217,8 +217,8 @@ class TestAlchemy(unittest.TestCase):
 
     def test_lawyermatch(self):
         # blindly assume first 10 are the same
-        law0 = session.query(RawLawyer).limit(10).all()
-        law1 = session.query(RawLawyer).limit(10).offset(10).all()
+        law0 = session.query(RawLawyer).limit(10)
+        law1 = session.query(RawLawyer).limit(10).offset(10)
         laws = session.query(Lawyer)
 
         alchemy.match(law0, session)
@@ -241,7 +241,7 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(1, laws.count())
 
         # override the default values provided
-        alchemy.match(law0[0], {"name_first": u"Devin", "name_last": u"Ko"}, session)
+        alchemy.match(law0[0], session, {"name_first": u"Devin", "name_last": u"Ko"})
         self.assertEqual("Devin Ko", law0[0].lawyer.name_full)
 
         # determine the most common organization name
@@ -252,8 +252,8 @@ class TestAlchemy(unittest.TestCase):
 
     def test_locationmatch(self):
         # blindly assume first 10 are the same
-        loc0 = session.query(RawLocation).limit(10).all()
-        loc1 = session.query(RawLocation).limit(10).offset(10).all()
+        loc0 = session.query(RawLocation).limit(10)
+        loc1 = session.query(RawLocation).limit(10).offset(10)
         locs = session.query(Location)
 
         alchemy.match(loc0, session)
@@ -279,7 +279,7 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(None, loc0[0].location.longitude)
 
         # override the default values provided
-        alchemy.match(loc0[0], {"city": u"Frisco", "state": u"Cali", "country": u"US", "longitude": 10.0, "latitude": 10.0}, session)
+        alchemy.match(loc0[0], session, {"city": u"Frisco", "state": u"Cali", "country": u"US", "longitude": 10.0, "latitude": 10.0})
         self.assertEqual("Frisco, Cali, US", loc0[0].location.address)
         self.assertEqual(10.0, loc0[0].location.latitude)
         self.assertEqual(10.0, loc0[0].location.longitude)
@@ -287,8 +287,8 @@ class TestAlchemy(unittest.TestCase):
     def test_assignee_location(self):
         # insert an assignee first.
         # then location. make sure links ok
-        asg = session.query(RawAssignee).limit(20).all()
-        loc = session.query(RawLocation).limit(40).all()
+        asg = session.query(RawAssignee).limit(20)
+        loc = session.query(RawLocation).limit(40)
 
         alchemy.match(asg[0:5], session)
         alchemy.match(asg[5:10], session)
@@ -304,8 +304,8 @@ class TestAlchemy(unittest.TestCase):
     def test_inventor_location(self):
         # insert an assignee first.
         # then location. make sure links ok
-        inv = session.query(RawInventor).limit(20).all()
-        loc = session.query(RawLocation).limit(40).all()
+        inv = session.query(RawInventor).limit(20)
+        loc = session.query(RawLocation).limit(40)
 
         alchemy.match(inv[0:5], session)
         alchemy.match(inv[5:10], session)
@@ -320,8 +320,8 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(1, len(loc[20].location.inventors))
 
     def test_location_assignee(self):
-        asg = session.query(RawAssignee).limit(20).all()
-        loc = session.query(RawLocation).limit(40).all()
+        asg = session.query(RawAssignee).limit(20)
+        loc = session.query(RawLocation).limit(40)
 
         alchemy.match(loc[0:20], session)
         alchemy.match(loc[20:40], session)
@@ -337,8 +337,8 @@ class TestAlchemy(unittest.TestCase):
     def test_location_inventor(self):
         # insert an assignee first.
         # then location. make sure links ok
-        inv = session.query(RawInventor).limit(20).all()
-        loc = session.query(RawLocation).limit(40).all()
+        inv = session.query(RawInventor).limit(20)
+        loc = session.query(RawLocation).limit(40)
 
         alchemy.match(loc[0:20], session)
         alchemy.match(loc[20:40], session)

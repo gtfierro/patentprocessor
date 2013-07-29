@@ -161,7 +161,6 @@ def match(objects, session, override={}, keepdefault=False):
 
     session.merge(relobj)
     session.commit()
-    session.close()
 
 
 def unmatch(objects, session):
