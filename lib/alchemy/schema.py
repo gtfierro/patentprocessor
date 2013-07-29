@@ -79,15 +79,21 @@ class Patent(Base):
     rawinventors = relationship("RawInventor", backref="patent", cascade=cascade)
     rawlawyers = relationship("RawLawyer", backref="patent", cascade=cascade)
 
-    otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
-    citations = relationship(
-        "Citation",
-        primaryjoin="Patent.id == Citation.patent_id",
-        backref="patent", cascade=cascade)
-    citedby = relationship(
-        "Citation",
-        primaryjoin="Patent.id == Citation.citation_id",
-        backref="citation")
+    uspatentcitations = relationship("USPatentCitation",
+                            backref="patent",
+                            primaryjoin="Patent.id == USPatentCitation.citation_id",
+                            cascade=cascade)
+    usapplicationcitations = relationship("USApplicationCitation",
+                            backref="patent",
+                            primaryjoin="Patent.id == USApplicationCitation.citation_id",
+                            cascade=cascade)
+    foreigncitations = relationship("ForeignCitation",
+                            backref="patent",
+                            primaryjoin="Patent.id == ForeignCitation.citation_id",
+                            cascade=cascade)
+    otherreferences = relationship("OtherReference",
+                            backref="patent",
+                            cascade=cascade)
     usreldocs = relationship(
         "USRelDoc",
         primaryjoin="Patent.id == USRelDoc.patent_id",
@@ -104,6 +110,11 @@ class Patent(Base):
         Index("pat_idx1", "type", "number", unique=True),
         Index("pat_idx2", "date"),
     )
+
+    @hybrid_property
+    def citations(self):
+        return self.uspatentcitations + self.usapplicationcitations +\
+                self.foreigncitations + self.otherreferences
 
     def stats(self):
         return {
@@ -545,12 +556,11 @@ class SubClass(Base):
 
 # REFERENCES -----------------------
 
-
-class Citation(Base):
+class USPatentCitation(Base):
     """
-    Two types of citations?
+    US Patent Citation schema
     """
-    __tablename__ = "citation"
+    __tablename__ = "uspatentcitation"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     citation_id = Column(Unicode(20), ForeignKey("patent.id"))
@@ -563,7 +573,45 @@ class Citation(Base):
     sequence = Column(Integer)
 
     def __repr__(self):
-        return "<Citation('{0}, {1}')>".format(self.number, self.date)
+        return "<USPatentCitation('{0}, {1}')>".format(self.number, self.date)
+
+class USApplicationCitation(Base):
+    """
+    US Application Citation schema
+    """
+    __tablename__ = "usapplicationcitation"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    citation_id = Column(Unicode(20), ForeignKey("patent.id"))
+    date = Column(Date)
+    name = Column(Unicode(64))
+    kind = Column(Unicode(10))
+    number = Column(Unicode(64))
+    country = Column(Unicode(10))
+    category = Column(Unicode(20))
+    sequence = Column(Integer)
+
+    def __repr__(self):
+        return "<USApplicationCitation('{0}, {1}')>".format(self.number, self.date)
+
+class ForeignCitation(Base):
+    """
+    Foreign Citation schema
+    """
+    __tablename__ = "foreigncitation"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    citation_id = Column(Unicode(20), ForeignKey("patent.id"))
+    date = Column(Date)
+    name = Column(Unicode(64))
+    kind = Column(Unicode(10))
+    number = Column(Unicode(64))
+    country = Column(Unicode(10))
+    category = Column(Unicode(20))
+    sequence = Column(Integer)
+
+    def __repr__(self):
+        return "<ForeignCitation('{0}, {1}')>".format(self.number, self.date)
 
 
 class OtherReference(Base):
