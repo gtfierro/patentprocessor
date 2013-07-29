@@ -94,8 +94,6 @@ def match(objects, session, default={}, keepexisting=False):
     for obj in objects:
         if obj.__tablename__[:3] == "raw":
             clean = obj.__clean__
-            if clean:
-                print clean
         else:
             clean = obj
             obj = None
@@ -153,7 +151,13 @@ def match(objects, session, default={}, keepexisting=False):
         relobj = clean_main
         relobj.update(**param)
     else:
-        relobj = objects[0].__related__(**param)
+        cleanObj = objects[0].__related__
+        cleanCnt = session.query(cleanObj).filter(cleanObj.id == param["id"])
+        if cleanCnt.count() > 0:
+            relobj = cleanCnt.first()
+            relobj.update(**param)
+        else:
+            relobj = objects[0].__related__(**param)
     # associate the data into the related object
 
     for obj in raw_objects:
