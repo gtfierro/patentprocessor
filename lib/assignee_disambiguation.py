@@ -2,7 +2,7 @@
 """
 Performs a basic assignee disambiguation
 """
-from collections import defaultdict
+from collections import defaultdict, deque
 import uuid
 from collections import Counter
 from Levenshtein import jaro_winkler
@@ -21,8 +21,8 @@ blocks = defaultdict(list)
 id_map = defaultdict(list)
 
 # get all assignees in database
-assignees = [a for a in session.query(RawAssignee).yield_per(1)]
-assignee_dict = dict(zip([a.uuid for a in assignees], assignees))
+assignees = deque(session.query(RawAssignee))
+assignee_dict = {}
 
 
 def get_assignee_id(obj):
@@ -39,19 +39,26 @@ def get_assignee_id(obj):
 
 
 def create_assignee_blocks(list_of_assignees):
+    consumed = defaultdict(int)
     print 'Creating assignee blocks...'
     assignees = []
     for assignee in list_of_assignees:
+        assignee_dict[assignee.uuid] = assignee
         a_id = get_assignee_id(assignee)
         id_map[a_id].append(assignee.uuid)
         assignees.append(a_id)
     num_blocks = 0
     for primary in assignees:
-        assignees.remove(primary)
+        if consumed[primary]: continue
+        consumed[primary] = 1
         blocks[primary].append(primary)
         for secondary in assignees:
+            if consumed[secondary]: continue
+            if primary == secondary:
+                blocks[primary].append(secondary)
+                continue
             if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
-                assignees.remove(secondary)
+                consumed[secondary] = 1
                 blocks[primary].append(secondary)
     print 'Assignee blocks created!'
 
