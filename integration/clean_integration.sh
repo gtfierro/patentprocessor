@@ -49,5 +49,5 @@ do
 done
 
 # clean up after we're done
-
+rm -rf tmp
 make spotless > /dev/null
