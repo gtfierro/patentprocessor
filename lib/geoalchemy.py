@@ -45,13 +45,11 @@ def main():
         matching_location = raw_google_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
         #alchemy.match(instance)
         if(matching_location):
-            #Group by latitude and longitude for now. Round to
-            #encourage a little more overlap
-            sig_figs = 3
-            try:
-                grouping_id = "%s|%s" % (round(matching_location.latitude, sig_figs),
-                                     round(matching_location.longitude, sig_figs))
-            except:
+            if(matching_location.latitude!=''):
+                grouping_id = "%s|%s" % (matching_location.latitude,
+                                     matching_location.longitude)
+            else:
+                grouping_id = "nolocationfound"
                 print matching_location.latitude, matching_location.longitude
             grouped_locations.append({"raw_location":instance, 
                                       "matching_location":matching_location,
@@ -82,4 +80,5 @@ def main():
             
         alchemy.match(match_group, {"latitude":latitude, "longitude":longitude})
         #print "match called"
-    print "matches made"
+    print "Matches made!"
+    print "%s groups formed from %s locations" % (len(grouped_locations), raw_parsed_locations.count())
