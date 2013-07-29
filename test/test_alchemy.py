@@ -64,12 +64,15 @@ class TestAlchemy(unittest.TestCase):
 
         self.assertEqual(2, session.query(Location).count())
         self.assertEqual(2, session.query(locationassignee).count())
-        alchemy.unmatch(loc[0])
+        alchemy.unmatch(loc[0].location)
         self.assertEqual(1, session.query(Location).count())
+
         self.assertEqual(1, session.query(locationassignee).count())
-        alchemy.unmatch(loc[10])
+        alchemy.unmatch(loc[10].location)
         self.assertEqual(0, session.query(Location).count())
         self.assertEqual(0, session.query(locationassignee).count())
+
+        alchemy.unmatch(asg[0])
 
     def test_assigneematch(self):
         # blindly assume first 10 are the same
