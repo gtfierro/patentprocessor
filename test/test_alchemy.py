@@ -20,41 +20,6 @@ class TestAlchemy(unittest.TestCase):
         session.close()
         pass
 
-    def test_merger(self):
-        asg1 = session.query(RawAssignee).limit(10)
-        asg2 = session.query(RawAssignee).limit(10).offset(10)
-        alchemy.match(asg1, session)
-        alchemy.match(asg2, session)
-
-        for x in session.query(Assignee):
-            print ""
-            print x
-            print len(x.patents)
-            print len(x.rawassignees)
-
-        print "xxxx xxxx xxxx"
-        print session.query(Assignee).count()
-        print session.query(patentassignee).count()
-
-        print "-------------------"
-
-
-        #alchemy.match([asg1[0], asg2[0]], session)
-        alchemy.match(session.query(Assignee), session)
-
-        print "-------------------"
-
-        for x in session.query(Assignee):
-            print ""
-            print x
-            print len(x.patents)
-            print len(x.rawassignees)
-
-        print "xxxx xxxx xxxx"
-        print session.query(Assignee).count()
-        print session.query(patentassignee).count()
-
-    """
     def test_raw_clean(self):
         # add a Clean record to mark something against
         asg0 = session.query(RawAssignee).limit(10)
@@ -387,7 +352,6 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(2, len(inv[15].inventor.locations))
         self.assertEqual(4, len(loc[19].location.inventors))
         self.assertEqual(1, len(loc[20].location.inventors))
-    """
 
 if __name__ == '__main__':
     config = alchemy.get_config()

@@ -272,15 +272,23 @@ class Location(Base):
         if obj.__tablename__[:3] == "raw":
             self.assignees.extend([asg.assignee for asg in obj.rawassignees if asg.assignee])
             self.inventors.extend([inv.inventor for inv in obj.rawinventors if inv.inventor])
-            self.rawlocations.append(obj)
+            if obj and obj not in self.__raw__:
+                self.__raw__.append(obj)
+            self.assignees = list(set(self.assignees))
+            self.inventors = list(set(self.inventors))
         else:
-            self.assignees.extend(obj.assignees)
-            self.inventors.extend(obj.inventors)
-            self.rawlocations.extend(obj.rawlocations)
-
-        self.assignees = list(set(self.assignees))
-        self.inventors = list(set(self.inventors))
-        self.rawlocations = list(set(self.rawlocations))
+            session.query(RawLocation).filter(
+                RawLocation.location_id == obj.id).update(
+                    {RawLocation.location_id: self.id},
+                    synchronize_session=False)
+            session.query(locationassignee).filter(
+                locationassignee.c.location_id == obj.id).update(
+                    {locationassignee.c.location_id: self.id},
+                    synchronize_session=False)
+            session.query(locationinventor).filter(
+                locationinventor.c.location_id == obj.id).update(
+                    {locationinventor.c.location_id: self.id},
+                    synchronize_session=False)
 
     def update(self, **kwargs):
         if "city" in kwargs:
@@ -510,18 +518,23 @@ class Assignee(Base):
         if obj.__tablename__[:3] == "raw":
             if obj.rawlocation.location:
                 self.locations.append(obj.rawlocation.location)
-            self.patents.append(obj.patent)
-            self.rawassignees.append(obj)
+            if obj.patent and obj.patent not in self.patents:
+                self.patents.append(obj.patent)
+            if obj and obj not in self.__raw__:
+                self.__raw__.append(obj)
         else:
-            print len(self.patents)
-            self.patents.extend(obj.patents)
-            print len(self.patents)
-            self.locations.extend(obj.locations)
-            self.rawassignees.extend(obj.rawassignees)
-
-        self.patents = list(set(self.patents))
-        self.locations = list(set(self.locations))
-        self.rawassignees = list(set(self.rawassignees))
+            session.query(RawAssignee).filter(
+                RawAssignee.assignee_id == obj.id).update(
+                    {RawAssignee.assignee_id: self.id},
+                    synchronize_session=False)
+            session.query(patentassignee).filter(
+                patentassignee.c.assignee_id == obj.id).update(
+                    {patentassignee.c.assignee_id: self.id},
+                    synchronize_session=False)
+            session.query(locationassignee).filter(
+                locationassignee.c.assignee_id == obj.id).update(
+                    {locationassignee.c.assignee_id: self.id},
+                    synchronize_session=False)
 
     def update(self, **kwargs):
         if "type" in kwargs:
@@ -593,29 +606,23 @@ class Inventor(Base):
         if obj.__tablename__[:3] == "raw":
             if obj.rawlocation.location:
                 self.locations.append(obj.rawlocation.location)
-            self.patents.append(obj.patent)
-            self.rawinventors.append(obj)
+            if obj.patent and obj.patent not in self.patents:
+                self.patents.append(obj.patent)
+            if obj and obj not in self.__raw__:
+                self.__raw__.append(obj)
         else:
-            self.patents.extend(obj.patents)
-            self.locations.extend(obj.locations)
-            self.rawinventors.extend(obj.rawinventors)
-
-        self.patents = list(set(self.patents))
-        self.locations = list(set(self.locations))
-        self.rawinventors = list(set(self.rawinventors))
-
-        #session.query(RawInventor).filter(
-        #    RawInventor.inventor_id == obj.id).update(
-        #        {RawInventor.inventor_id: self.id},
-        #        synchronize_session=False)
-        #session.query(patentinventor).filter(
-        #    patentinventor.c.inventor_id == obj.id).update(
-        #        {patentinventor.c.inventor_id: self.id},
-        #        synchronize_session=False)
-        #session.query(locationinventor).filter(
-        #    locationinventor.c.inventor_id == obj.id).update(
-        #        {locationinventor.c.inventor_id: self.id},
-        #        synchronize_session=False)
+            session.query(RawInventor).filter(
+                RawInventor.inventor_id == obj.id).update(
+                    {RawInventor.inventor_id: self.id},
+                    synchronize_session=False)
+            session.query(patentinventor).filter(
+                patentinventor.c.inventor_id == obj.id).update(
+                    {patentinventor.c.inventor_id: self.id},
+                    synchronize_session=False)
+            session.query(locationinventor).filter(
+                locationinventor.c.inventor_id == obj.id).update(
+                    {locationinventor.c.inventor_id: self.id},
+                    synchronize_session=False)
 
     def update(self, **kwargs):
         if "name_first" in kwargs:
@@ -677,15 +684,19 @@ class Lawyer(Base):
         if obj == self:
             return
         if obj.__tablename__[:3] == "raw":
-            if obj.patent and obj.patent:
+            if obj.patent and obj.patent not in self.patents:
                 self.patents.append(obj.patent)
-            self.rawlawyers.append(obj)
+            if obj and obj not in self.__raw__:
+                self.__raw__.append(obj)
         else:
-            self.patents.extend(obj.patents)
-            self.rawlawyers.extend(obj.rawlawyers)
-
-        self.patents = list(set(self.patents))
-        self.rawlawyers = list(set(self.rawlawyers))
+            session.query(RawLawyer).filter(
+                RawLawyer.lawyer_id == obj.id).update(
+                    {RawLawyer.lawyer_id: self.id},
+                    synchronize_session=False)
+            session.query(patentlawyer).filter(
+                patentlawyer.c.lawyer_id == obj.id).update(
+                    {patentlawyer.c.lawyer_id: self.id},
+                    synchronize_session=False)
 
     def update(self, **kwargs):
         if "name_first" in kwargs:
