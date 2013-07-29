@@ -352,6 +352,8 @@ class RawAssignee(Base):
         clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
         clean.patents = list(set(clean.patents))
         clean.locations = list(set(clean.locations))
+        session.commit()
+
         if len(clean.__raw__) == 0:
             session.delete(clean)
 
