@@ -154,17 +154,7 @@ def match(objects=[], override={}, keepdefault=False):
     # associate the data into the related object
 
     for obj in raw_objects:
-        relobj.__raw__.append(obj)
-        if type(relobj.__many__).__name__ in ("dict"):
-            # if it is a dictionary type, iterate and add
-            for key in relobj.__many__.keys():
-                if type(obj.__single__[key]).__name__ in ('list', 'tuple'):
-                    relobj.__many__[key].extend(set(obj.__single__[key]) - set(relobj.__many__[key]))
-                elif obj.__single__[key] and obj.__single__[key] not in relobj.__many__[key]:
-                    relobj.__many__[key].append(obj.__single__[key])
-        else:
-            if obj.__single__ and obj.__single__ not in relobj.__many__:
-                relobj.__many__.append(obj.__single__)
+        relobj.relink(session, obj)
 
     session.merge(relobj)
     session.commit()
@@ -172,19 +162,16 @@ def match(objects=[], override={}, keepdefault=False):
 
 def unmatch(obj):
     """
-    Separate our a dataset
+    Separate our dataset
     """
-    all_objects = []
-
-    if obj.__tablename__[:3] != "raw":
-        obj = obj.__raw__[0]
-
-    all_objects.append(obj)
-    clean = obj.__clean__
-    if clean:
-        all_objects = clean.__raw__
-        session.delete(clean)
-        session.commit()
+    if obj.__tablename__[:3] == "raw":
+        clean = obj.assignee
+        print len(clean.rawassignees)
+        clean.rawassignees.pop(clean.rawassignees.index(obj))
+        print len(clean.rawassignees)
+    else:
+        session.delete(obj)
+    session.commit()
 
 
 def add(obj, override=True, temp=False):
