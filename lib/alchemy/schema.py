@@ -513,7 +513,9 @@ class Assignee(Base):
             self.patents.append(obj.patent)
             self.rawassignees.append(obj)
         else:
+            print len(self.patents)
             self.patents.extend(obj.patents)
+            print len(self.patents)
             self.locations.extend(obj.locations)
             self.rawassignees.extend(obj.rawassignees)
 
