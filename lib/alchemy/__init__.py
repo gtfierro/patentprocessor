@@ -73,78 +73,123 @@ def fetch_session(db=None):
     session = Session()
     return session
 
-session = fetch_session()
 
-
-def match(objects=[], override={}):
+def match(objects, session, default={}, keepexisting=False):
     """
     Pass in several objects and make them equal
-    Override is specified if there is a desire to override
-    certain fields
 
-    TODO: Add stuff to have a flag so it doesn't search
-    TODO: Add stuff to default to certain variables
-    TODO: Add better linkage of inventor/assignee > location
+    Args:
+        objects: A list of RawObjects like RawAssignee
+          also supports CleanObjects like Assignee
+        keepexisting: Keep the default keyword
+        default: Fields to default the clean variable with
+
+        Default key priority:
+        auto > keepexisting > default
     """
-    if type(objects).__name__ not in ('list', 'tuple'):
+    if type(objects).__name__ in ('list', 'tuple'):
+        objects = list(set(objects))
+    elif type(objects).__name__ not in ('list', 'tuple', 'Query'):
         objects = [objects]
     freq = defaultdict(Counter)
     param = {}
-    all_objects = []
-    all_objects.extend(objects)
+    raw_objects = []
     clean_objects = []
+    clean_cnt = 0
+    clean_main = None
 
-    # we extend our objects and determine the
-    # previously associated items
     for obj in objects:
-        clean = obj.__clean__
-        # keep track of all the "clean" objects
-        if clean:
-            if clean not in clean_objects:
-                clean_objects.append(clean)
-            # add the "raw" objects as we want to
-            # iterate these items
-            for o in clean.__raw__:
-                if o not in all_objects:
-                    all_objects.append(o)
+        if obj.__tablename__[:3] == "raw":
+            clean = obj.__clean__
+        else:
+            clean = obj
+            obj = None
 
-    # this helps us determine items to summarize
-    # ques: how do we indicate most recent?
-    #   like for people and their locations? hrm..
-    for obj in all_objects:
-        for k, v in obj.summarize.iteritems():
-            if v not in (None, ""):
-                freq[k][v] += 1
-        if "id" not in param:
-            param["id"] = obj.uuid
-        param["id"] = min(param["id"], obj.uuid)
+        if clean and clean not in clean_objects:
+            clean_objects.append(clean)
+            if len(clean.__raw__) > clean_cnt:
+                clean_cnt = len(clean.__raw__)
+                clean_main = clean
+            # figures out the most frequent items
+            if not keepexisting:
+                for k in clean.__related__.summarize:
+                    freq[k] += Counter(dict(clean.__rawgroup__(session, k)))
+        elif obj and obj not in raw_objects:
+            raw_objects.append(obj)
+
+    exist_param = {}
+    if clean_main:
+        exist_param = clean_main.summarize
+
+    if keepexisting:
+        param = exist_param
+    else:
+        param = exist_param
+        for obj in raw_objects:
+            for k, v in obj.summarize.iteritems():
+                if k not in default:
+                    freq[k][v] += 1
+            if "id" not in exist_param:
+                if "id" not in param:
+                    param["id"] = obj.uuid
+                param["id"] = min(param["id"], obj.uuid)
 
     # create parameters based on most frequent
     for k in freq:
-        param[k] = freq[k].most_common(1)[0][0]
-    param.update(override)
+        if None in freq[k]:
+            freq[k].pop(None)
+        if "" in freq[k]:
+            freq[k].pop("")
+        if freq[k]:
+            param[k] = freq[k].most_common(1)[0][0]
+    param.update(default)
 
     # remove all clean objects
     for obj in clean_objects:
-        session.delete(obj)
+        clean_main.relink(session, obj)
     session.commit()  # commit necessary
 
-    relobj = objects[0].__related__(**param)
+    # for some reason you need to delete this after the initial commit
+    for obj in clean_objects:
+        if obj != clean_main:
+            session.delete(obj)
+
+    if clean_main:
+        relobj = clean_main
+        relobj.update(**param)
+    else:
+        cleanObj = objects[0].__related__
+        cleanCnt = session.query(cleanObj).filter(cleanObj.id == param["id"])
+        if cleanCnt.count() > 0:
+            relobj = cleanCnt.first()
+            relobj.update(**param)
+        else:
+            relobj = objects[0].__related__(**param)
     # associate the data into the related object
 
-    for obj in all_objects:
-        relobj.__raw__.append(obj)
-        if type(relobj.__many__).__name__ in ("dict"):
-            # if it is a dictionary type, iterate and add
-            for key in relobj.__many__.keys():
-                if type(obj.__single__[key]).__name__ in ('list', 'tuple'):
-                    relobj.__many__[key].extend(set(obj.__single__[key]) - set(relobj.__many__[key]))
-                elif obj.__single__[key] not in relobj.__many__[key]:
-                    relobj.__many__[key].append(obj.__single__[key])
-        else:
-            if obj.__single__ and obj.__single__ not in relobj.__many__:
-                relobj.__many__.append(obj.__single__)
+    for obj in raw_objects:
+        relobj.relink(session, obj)
+
     session.merge(relobj)
+    session.commit()
+
+
+def unmatch(objects, session):
+    """
+    Separate our dataset
+    # TODO. THIS NEEDS TO BE FIGURED OUT
+    # Unlinking doesn't seem to be working
+    # properly if a LOCATION is added
+    """
+    if type(objects).__name__ in ('list', 'tuple'):
+        objects = list(set(objects))
+    elif type(objects).__name__ not in ('list', 'tuple', 'Query'):
+        objects = [objects]
+    for obj in objects:
+        if obj.__tablename__[:3] == "raw":
+            obj.unlink(session)
+        else:
+            session.delete(obj)
     session.commit()
 
 
@@ -254,3 +299,6 @@ def commit():
     except Exception, e:
         session.rollback()
         print str(e)
+
+
+session = fetch_session()
