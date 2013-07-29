@@ -154,7 +154,7 @@ def add(obj, override=True, temp=False):
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
 
     Case Sensitivity and Table Reflection
-spr0us    MySQL has inconsistent support for case-sensitive identifier names,
+    MySQL has inconsistent support for case-sensitive identifier names,
     basing support on specific details of the underlying operating system.
     However, it has been observed that no matter what case sensitivity
     behavior is present, the names of tables in foreign key declarations
