@@ -6,7 +6,7 @@ a dump CSV file with the appropriate columns as needed for the disambiguation:
   patent doc number, main class, sub class, inventor first name, inventor middle name, inventor last name,
   city, state, zipcode, country, assignee
 """
-
+import codecs
 from lib import alchemy
 from lib.assignee_disambiguation import get_assignee_id
 from lib.handlers.xml_util import normalize_utf8
@@ -22,7 +22,7 @@ insert_rows = []
 
 for patent in patents:
     # create common dict for this patent
-    loc = patent.rawinventors[0].rawlocation
+    loc = patent.rawinventors[0].rawlocation.location
     row = {'number': patent.number,
            'mainclass': patent.classes[0].mainclass_id,
            'subclass': patent.classes[0].subclass_id,
@@ -47,6 +47,6 @@ for patent in patents:
         newrow = normalize_utf8(ROW(tmprow))
         insert_rows.append(newrow)
 
-with open('disambiguator.csv', 'wb') as csv:
+with codecs.open('disambiguator.csv', 'wb', encoding='utf-8') as csv:
     for row in insert_rows:
         csv.write(row)

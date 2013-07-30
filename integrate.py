@@ -26,7 +26,7 @@ def integrate(filename):
         blocks[unique_inventor_id].extend(rawinventors)
     pickle.dump(blocks, open('integrate.db', 'wb'))
     for block in blocks.itervalues():
-        alchemy.match(block)
+        alchemy.match(block, alchemy.session)
 
 def main():
     if len(sys.argv) <= 1:
