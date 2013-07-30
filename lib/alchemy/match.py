@@ -52,7 +52,9 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
             raw_objects.append(obj)
 
     if class_type:
-        class_type.fetch(session, default)
+        fetched = class_type.fetch(session, default)
+        if fetched:
+            clean_main = fetched
 
     exist_param = {}
     if clean_main:
@@ -96,13 +98,7 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
         relobj = clean_main
         relobj.update(**param)
     else:
-        cleanObj = raw_objects[0].__related__
-        cleanCnt = session.query(cleanObj).filter(cleanObj.id == param["id"])
-        if cleanCnt.count() > 0:
-            relobj = cleanCnt.first()
-            relobj.update(**param)
-        else:
-            relobj = cleanObj(**param)
+        relobj = class_type(**param)
     # associate the data into the related object
 
     for obj in raw_objects:
