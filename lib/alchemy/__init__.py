@@ -194,7 +194,7 @@ def unmatch(objects, session):
             session.commit()
 
 
-def add(obj, override=True, temp=False):
+def add(obj, override=False, temp=False):
     """
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
