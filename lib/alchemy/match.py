@@ -1,6 +1,5 @@
 from collections import defaultdict
 from collections import Counter
-import datetime
 
 
 def match(objects, session, default={}, keepexisting=False, commit=True):
