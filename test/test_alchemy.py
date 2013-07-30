@@ -18,7 +18,6 @@ class TestAlchemy(unittest.TestCase):
     def tearDown(self):
         # we keep this to tidy up our database if it fails
         session.close()
-        pass
 
     def test_raw_clean(self):
         # add a Clean record to mark something against
@@ -31,9 +30,6 @@ class TestAlchemy(unittest.TestCase):
 
     def test_match_all(self):
         alchemy.match(session.query(RawAssignee), session)
-
-    def test_location_exist(self):
-        print Location.exist(session)
 
     def test_set_default(self):
         # create two items
