@@ -58,21 +58,23 @@ def main():
                 grouping_id = "%s|%s" % (matching_location.latitude, matching_location.longitude)
             else:
                 grouping_id = "nolocationfound"
-                print matching_location.latitude, matching_location.longitude
+                if matching_location.latitude:
+                    print matching_location.latitude, matching_location.longitude
             grouped_locations.append({"raw_location": instance,
                                       "matching_location": matching_location,
                                       "grouping_id": grouping_id})
     print "grouped_locations created", datetime.datetime.now() - t
+    t = datetime.datetime.now()
     #We now have a list of all locations in the file, along with their
     #matching locations and the id used to group them
     #Sort the list by the grouping_id
     keyfunc = lambda x: x['grouping_id']
     grouped_locations.sort(key=keyfunc)
     print "grouped_locations sorted", datetime.datetime.now() - t
+    t = datetime.datetime.now()
     #Group by the grouping_id
-    i = 0
-    for key, grouping in itertools.groupby(grouped_locations, keyfunc):
-        i += 1
+    for i, item in enumerate(itertools.groupby(grouped_locations, keyfunc)):
+        key, grouping = item
         #match_group is the list of RawLocation objects which we call match on
         #We need to get only the RawLocation objects back from the dict
         match_group = []
@@ -85,8 +87,17 @@ def main():
             default = {}
         for grouped_location in grouping:
             match_group.append(grouped_location["raw_location"])
+
+        # determine most frequent if list of match_group
+        most_freq = 0
+        if len(match_group) > 1:
+            for loc in match_group:
+                if alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.id == loc.id).count() > most_freq:
+                    default.update(loc.summarize)
+
         alchemy.match(match_group, alchemy.session, default, commit=False)
-        if i % config.get("location").get("frequency") == 0:
+        if (i + 1) % config.get("location").get("frequency") == 0:
+            print " *", (i + 1), datetime.datetime.now() - t
             alchemy.session.commit()
     alchemy.session.commit()
 
