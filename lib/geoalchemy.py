@@ -53,7 +53,7 @@ def main():
         #Find the location from the raw_google database that matches this input
         matching_location = raw_google_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
         #alchemy.match(instance)
-        if(matching_location):
+        if matching_location:
             if(matching_location.latitude != ''):
                 grouping_id = "%s|%s" % (matching_location.latitude, matching_location.longitude)
             else:
@@ -69,23 +69,26 @@ def main():
     keyfunc = lambda x: x['grouping_id']
     grouped_locations.sort(key=keyfunc)
     print "grouped_locations sorted", datetime.datetime.now() - t
-    #Group by the grouping_id    
+    #Group by the grouping_id
+    i = 0
     for key, grouping in itertools.groupby(grouped_locations, keyfunc):
+        i += 1
         #match_group is the list of RawLocation objects which we call match on
         #We need to get only the RawLocation objects back from the dict
         match_group = []
         #Get the latitude and longitude for the group
         splitkey = key.split('|')
         #The length should be 2
-        if(len(splitkey) == 2):
-            latitude = splitkey[0]
-            longitude = splitkey[1]
+        if len(splitkey) == 2:
+            default = {"latitude": splitkey[0], "longitude": splitkey[1]}
         else:
-            latitude = 0
-            longitude = 0
+            default = {}
         for grouped_location in grouping:
             match_group.append(grouped_location["raw_location"])
-        alchemy.match(match_group, alchemy.session, {"latitude": latitude, "longitude": longitude})
+        alchemy.match(match_group, alchemy.session, default, commit=False)
+        if i % config.get("location").get("frequency") == 0:
+            alchemy.session.commit()
+    alchemy.session.commit()
 
     print "Matches made!", datetime.datetime.now() - t
     print "%s groups formed from %s locations" % (len(grouped_locations), raw_parsed_locations.count())
