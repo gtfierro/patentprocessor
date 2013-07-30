@@ -7,8 +7,8 @@ import os
 import datetime
 
 import alchemy
-config = alchemy.get_config()
-
+alchemy_config = alchemy.get_config()
+alchemy_session = alchemy.fetch_session()
 base = declarative.declarative_base()
 
 
@@ -33,8 +33,8 @@ class RawGoogle(base):
 
 
 raw_google_dbpath = os.path.join(
-    config.get("location").get('path'),
-    config.get("location").get('database'))
+    alchemy_config.get("location").get('path'),
+    alchemy_config.get("location").get('database'))
 raw_google_engine = sqlalchemy.create_engine('sqlite:///%s' % raw_google_dbpath)
 raw_google_session_class = orm.sessionmaker(bind=raw_google_engine)
 raw_google_session = raw_google_session_class()
@@ -42,8 +42,9 @@ raw_google_session = raw_google_session_class()
 
 def main():
     t = datetime.datetime.now()
+    print "geocoding started", t
     #Get all of the raw locations from the XML parsing
-    raw_parsed_locations = alchemy.session.query(alchemy.RawLocation)
+    raw_parsed_locations = alchemy_session.query(alchemy.RawLocation)
     #raw_google_locations = raw_google_session.query(RawGoogle)
     grouped_locations = []
     for instance in raw_parsed_locations:
@@ -85,7 +86,7 @@ def main():
             longitude = 0
         for grouped_location in grouping:
             match_group.append(grouped_location["raw_location"])
-        alchemy.match(match_group, alchemy.session, {"latitude": latitude, "longitude": longitude})
+        alchemy.match(match_group, alchemy_session, {"latitude": latitude, "longitude": longitude})
 
     print "Matches made!", datetime.datetime.now() - t
     print "%s groups formed from %s locations" % (len(grouped_locations), raw_parsed_locations.count())
