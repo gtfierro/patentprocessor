@@ -4,6 +4,7 @@ import ConfigParser
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import exists
 from collections import defaultdict
 from collections import Counter
 from schema import *
@@ -214,9 +215,12 @@ def add(obj, override=False, temp=False):
     """
 
     # if a patent exists, remove it so we can replace it
-    pat_query = session.query(Patent).filter(Patent.number == obj.patent)
-    if pat_query.count():
+    (patent_exists, ), = session.query(exists().where(Patent.number == obj.patent))
+    #pat_query = session.query(Patent).filter(Patent.number == obj.patent)
+    #if pat_query.count():
+    if patent_exists:
         if override:
+            pat_query = session.query(Patent).filter(Patent.number == obj.patent)
             session.delete(pat_query.one())
         else:
             return
