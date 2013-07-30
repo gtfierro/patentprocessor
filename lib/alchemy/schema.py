@@ -600,6 +600,13 @@ class Assignee(Base):
         if "nationality" in kwargs:
             self.nationality = kwargs["nationality"]
 
+    @classmethod
+    def fetch(self, session, default={}):
+        return schema_func.fetch(
+            Assignee,
+            [["id"]],
+            session, default)
+
     # ----------------------------------
 
     def __repr__(self):
@@ -682,6 +689,13 @@ class Inventor(Base):
         if "nationality" in kwargs:
             self.nationality = kwargs["nationality"]
 
+    @classmethod
+    def fetch(self, session, default={}):
+        return schema_func.fetch(
+            Inventor,
+            [["id"]],
+            session, default)
+
     # ----------------------------------
 
     def __repr__(self):
@@ -757,6 +771,15 @@ class Lawyer(Base):
             self.organization = kwargs["organization"]
         if "country" in kwargs:
             self.country = kwargs["country"]
+
+    @classmethod
+    def fetch(self, session, default={}):
+        return schema_func.fetch(
+            Lawyer,
+            [["id"],
+             ["organization"],
+             ["name_first", "name_last"]],
+            session, default)
 
     # ----------------------------------
 
