@@ -227,12 +227,10 @@ def add(obj, override=False, temp=False):
     if len(obj.pat["number"]) < 3:
         return
 
-    #add
-    # lots of abstracts seem to be missing. why?
-
     pat = Patent(**obj.pat)
     pat.application = Application(**obj.app)
     
+    # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
 
     session.merge(pat)
