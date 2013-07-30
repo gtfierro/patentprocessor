@@ -32,6 +32,9 @@ class TestAlchemy(unittest.TestCase):
     def test_match_all(self):
         alchemy.match(session.query(RawAssignee), session)
 
+    def test_location_exist(self):
+        print Location.exist(session)
+
     def test_set_default(self):
         # create two items
         loc = session.query(RawLocation)
