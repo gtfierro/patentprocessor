@@ -87,9 +87,11 @@ class TestAlchemy(unittest.TestCase):
         alchemy.unmatch(loc[5].location, session)
         self.assertEqual(2, session.query(Location).count())
         self.assertEqual(2, session.query(locationassignee).count())
+
+        alchemy.unmatch(asg[3:20], session)
         alchemy.unmatch(loc[10].location, session)
         self.assertEqual(1, session.query(Location).count())
-        self.assertEqual(1, session.query(locationassignee).count())
+        self.assertEqual(0, session.query(locationassignee).count())
 
     def test_unmatch_invloc(self):
         loc = session.query(RawLocation).limit(20)
@@ -136,9 +138,10 @@ class TestAlchemy(unittest.TestCase):
         self.assertEqual(2, session.query(Location).count())
         self.assertEqual(2, session.query(locationinventor).count())
 
+        alchemy.unmatch(inv[3:20], session)
         alchemy.unmatch(loc[10].location, session)
         self.assertEqual(1, session.query(Location).count())
-        self.assertEqual(1, session.query(locationinventor).count())
+        self.assertEqual(0, session.query(locationinventor).count())
 
     def test_unmatch_lawyer(self):
         law = session.query(RawLawyer).limit(20)

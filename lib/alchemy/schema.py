@@ -202,6 +202,8 @@ class RawLocation(Base):
         return Location
 
     def unlink(self, session):
+        # TODO: probably need to rebuild this
+        # hrm (see others for examples)
         clean = self.__clean__
         clean.__raw__.pop(clean.__raw__.index(self))
         clean.assignees = []
@@ -358,15 +360,23 @@ class RawAssignee(Base):
 
     def unlink(self, session):
         clean = self.__clean__
-        clean.__raw__.pop(clean.__raw__.index(self))
-        clean.patents = [obj.patent for obj in clean.__raw__]
-        clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
-        clean.patents = list(set(clean.patents))
-        clean.locations = list(set(clean.locations))
-        session.commit()
-
+        pats = [obj.patent_id for obj in clean.__raw__ if obj.patent_id == self.patent_id]
+        locs = [obj.rawlocation.location_id for obj in clean.__raw__ if obj.rawlocation.location_id == self.rawlocation.location_id]
+        if len(pats) == 1:
+            session.query(patentassignee).filter(
+                patentassignee.c.patent_id == self.patent_id).delete(
+                    synchronize_session=False)
+        if len(locs) == 1:
+            session.query(locationassignee).filter(
+                locationassignee.c.location_id == self.rawlocation.location_id).delete(
+                    synchronize_session=False)
+        session.query(RawAssignee).filter(
+            RawAssignee.uuid == self.uuid).update(
+                {RawAssignee.assignee_id: None},
+                synchronize_session=False)
         if len(clean.__raw__) == 0:
             session.delete(clean)
+        session.commit()
 
     # ----------------------------------
 
@@ -408,13 +418,23 @@ class RawInventor(Base):
 
     def unlink(self, session):
         clean = self.__clean__
-        clean.__raw__.pop(clean.__raw__.index(self))
-        clean.patents = [obj.patent for obj in clean.__raw__]
-        clean.locations = [obj.rawlocation.location for obj in clean.__raw__ if obj.rawlocation.location]
-        clean.patents = list(set(clean.patents))
-        clean.locations = list(set(clean.locations))
+        pats = [obj.patent_id for obj in clean.__raw__ if obj.patent_id == self.patent_id]
+        locs = [obj.rawlocation.location_id for obj in clean.__raw__ if obj.rawlocation.location_id == self.rawlocation.location_id]
+        if len(pats) == 1:
+            session.query(patentinventor).filter(
+                patentinventor.c.patent_id == self.patent_id).delete(
+                    synchronize_session=False)
+        if len(locs) == 1:
+            session.query(locationinventor).filter(
+                locationinventor.c.location_id == self.rawlocation.location_id).delete(
+                    synchronize_session=False)
+        session.query(RawInventor).filter(
+            RawInventor.uuid == self.uuid).update(
+                {RawInventor.inventor_id: None},
+                synchronize_session=False)
         if len(clean.__raw__) == 0:
             session.delete(clean)
+        session.commit()
 
     # ----------------------------------
 
@@ -465,11 +485,18 @@ class RawLawyer(Base):
 
     def unlink(self, session):
         clean = self.__clean__
-        clean.__raw__.pop(clean.__raw__.index(self))
-        clean.patents = [obj.patent for obj in clean.__raw__]
-        clean.patents = list(set(clean.patents))
+        pats = [obj.patent_id for obj in clean.__raw__ if obj.patent_id == self.patent_id]
+        if len(pats) == 1:
+            session.query(patentlawyer).filter(
+                patentlawyer.c.patent_id == self.patent_id).delete(
+                    synchronize_session=False)
+        session.query(RawLawyer).filter(
+            RawLawyer.uuid == self.uuid).update(
+                {RawLawyer.lawyer_id: None},
+                synchronize_session=False)
         if len(clean.__raw__) == 0:
             session.delete(clean)
+        session.commit()
 
     # ----------------------------------
 
