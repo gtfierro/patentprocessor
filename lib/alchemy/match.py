@@ -26,13 +26,18 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
     clean_objects = []
     clean_cnt = 0
     clean_main = None
+    class_type = None
 
     for obj in objects:
         if obj.__tablename__[:3] == "raw":
             clean = obj.__clean__
+            if not class_type:
+                class_type = obj.__related__
         else:
             clean = obj
             obj = None
+            if not class_type:
+                class_type = clean.__class__
 
         if clean and clean not in clean_objects:
             clean_objects.append(clean)
@@ -45,6 +50,9 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
                     freq[k] += Counter(dict(clean.__rawgroup__(session, k)))
         elif obj and obj not in raw_objects:
             raw_objects.append(obj)
+
+    if class_type:
+        class_type.fetch(session, default)
 
     exist_param = {}
     if clean_main:

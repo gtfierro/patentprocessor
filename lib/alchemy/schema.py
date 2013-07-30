@@ -315,7 +315,7 @@ class Location(Base):
             self.longitude = kwargs["longitude"]
 
     @classmethod
-    def fetch(self, session, exist_param={}):
+    def fetch(self, session, default={}):
         return schema_func.fetch(
             Location,
             [["id"],
@@ -323,7 +323,7 @@ class Location(Base):
              ["city", "state"],
              ["city", "country"],
              ["longitude", "latitude"]],
-            session, exist_param)
+            session, default)
 
     # ----------------------------------
 
