@@ -78,7 +78,7 @@ def main():
         for grouped_location in grouping:
             match_group.append(grouped_location["raw_location"])
             
-        alchemy.match(match_group, {"latitude":latitude, "longitude":longitude})
+        alchemy.match(match_group, alchemy.session, {"latitude":latitude, "longitude":longitude})
         #print "match called"
     print "Matches made!"
     print "%s groups formed from %s locations" % (len(grouped_locations), raw_parsed_locations.count())
