@@ -145,14 +145,15 @@ def match(objects, session, default={}, keepexisting=False):
     param.update(default)
 
     # remove all clean objects
-    for obj in clean_objects:
-        clean_main.relink(session, obj)
-    session.commit()  # commit necessary
+    if len(clean_objects) > 1:
+        for obj in clean_objects:
+            clean_main.relink(session, obj)
+        session.commit()  # commit necessary
 
-    # for some reason you need to delete this after the initial commit
-    for obj in clean_objects:
-        if obj != clean_main:
-            session.delete(obj)
+        # for some reason you need to delete this after the initial commit
+        for obj in clean_objects:
+            if obj != clean_main:
+                session.delete(obj)
 
     if clean_main:
         relobj = clean_main
@@ -190,7 +191,7 @@ def unmatch(objects, session):
             obj.unlink(session)
         else:
             session.delete(obj)
-    session.commit()
+            session.commit()
 
 
 def add(obj, override=True, temp=False):
