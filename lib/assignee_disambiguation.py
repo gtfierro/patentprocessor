@@ -73,7 +73,7 @@ def create_assignee_table():
         ra_ids = (id_map[ra] for ra in blocks[assignee])
         for block in ra_ids:
           rawassignees = [assignee_dict[ra_id] for ra_id in block]
-          match(rawassignees)
+          match(rawassignees, session)
 
 def examine():
     assignees = s.query(Assignee).all()

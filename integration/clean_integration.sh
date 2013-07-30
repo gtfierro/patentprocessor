@@ -10,7 +10,7 @@ mkdir -p tmp/integration/ipg120327.one
 ./parse.py -p test/fixtures/xml/ -x ipg120327.one.xml -o .
 ./clean.py
 
-for table in assignee
+for table in assignee location
 do
   echo $table 'diffs...'
   sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.one/${table}.csv
@@ -25,7 +25,7 @@ mkdir -p tmp/integration/ipg120327.two
 ./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml -o .
 ./clean.py
 
-for table in assignee
+for table in assignee location
 do
   echo $table 'diffs...'
   sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.two/${table}.csv
@@ -39,7 +39,7 @@ mkdir -p tmp/integration/ipg120327.18
 ./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml -o .
 ./clean.py
 
-for table in assignee
+for table in assignee location
 do
   echo $table 'diffs...'
   sqlite3 -csv alchemy.db "select * from ${table}"  > tmp/integration/ipg120327.18/${table}.csv
@@ -49,5 +49,5 @@ do
 done
 
 # clean up after we're done
-
+rm -rf tmp
 make spotless > /dev/null
