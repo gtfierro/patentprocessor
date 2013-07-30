@@ -8,6 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from unidecode import unidecode
 
 from sqlalchemy import Table
+import schema_func
 
 # Extend the Base >>>>>>
 Base = declarative_base()
@@ -93,9 +94,7 @@ class Patent(Base):
                             backref="patent",
                             primaryjoin="Patent.id == ForeignCitation.citation_id",
                             cascade=cascade)
-    otherreferences = relationship("OtherReference",
-                            backref="patent",
-                            cascade=cascade)
+    otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
     usreldocs = relationship(
         "USRelDoc",
         primaryjoin="Patent.id == USRelDoc.patent_id",
@@ -314,6 +313,17 @@ class Location(Base):
             self.latitude = kwargs["latitude"]
         if "longitude" in kwargs:
             self.longitude = kwargs["longitude"]
+
+    @classmethod
+    def fetch(self, session, exist_param={}):
+        return schema_func.fetch(
+            Location,
+            [["id"],
+             ["city", "state", "country"],
+             ["city", "state"],
+             ["city", "country"],
+             ["longitude", "latitude"]],
+            session, exist_param)
 
     # ----------------------------------
 
