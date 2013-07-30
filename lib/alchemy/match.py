@@ -88,7 +88,7 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
         relobj = clean_main
         relobj.update(**param)
     else:
-        cleanObj = objects[0].__related__
+        cleanObj = raw_objects[0].__related__
         cleanCnt = session.query(cleanObj).filter(cleanObj.id == param["id"])
         if cleanCnt.count() > 0:
             relobj = cleanCnt.first()
