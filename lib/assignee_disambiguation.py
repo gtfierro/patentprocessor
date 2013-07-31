@@ -37,29 +37,27 @@ def get_assignee_id(obj):
     except:
         return ''
 
-
-def create_assignee_blocks(list_of_assignees):
-    consumed = defaultdict(int)
-    print 'Creating assignee blocks...'
-    assignees = []
+def clean_assignees(list_of_assignees):
+    """
+    Removes the following stop words from each assignee:
+    the, of, and, a, an, at
+    Then, blocks the assignee with other assignees that start
+    with the same letter. Returns a list of these blocks
+    """
+    stoplist = ['the', 'of', 'and', 'a', 'an', 'at']
+    alpha_blocks = defaultdict(list)
+    print 'Removing stop words, blocking by first letter...'
     for assignee in list_of_assignees:
         assignee_dict[assignee.uuid] = assignee
         a_id = get_assignee_id(assignee)
         id_map[a_id].append(assignee.uuid)
-        assignees.append(a_id)
-    num_blocks = 0
-    for primary in assignees:
-        if consumed[primary]: continue
-        consumed[primary] = 1
-        blocks[primary].append(primary)
-        for secondary in assignees:
-            if consumed[secondary]: continue
-            if primary == secondary:
-                blocks[primary].append(secondary)
-                continue
-            if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
-                consumed[secondary] = 1
-                blocks[primary].append(secondary)
+        # removes stop words, then rejoins the string
+        assignee = ' '.join(filter(lambda x:
+                            x.lower() not in stoplist,
+                            a_id.split(' ')))
+        alpha_blocks[assignee[0]].append(assignee)
+    print 'Alpha blocks created!'
+    return alpha_blocks.itervalues()
     print 'Assignee blocks created!'
 
 
