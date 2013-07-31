@@ -8,6 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from unidecode import unidecode
 
 from sqlalchemy import Table
+import schema_func
 
 # Extend the Base >>>>>>
 Base = declarative_base()
@@ -93,9 +94,7 @@ class Patent(Base):
                             backref="patent",
                             primaryjoin="Patent.id == ForeignCitation.citation_id",
                             cascade=cascade)
-    otherreferences = relationship("OtherReference",
-                            backref="patent",
-                            cascade=cascade)
+    otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
     usreldocs = relationship(
         "USRelDoc",
         primaryjoin="Patent.id == USRelDoc.patent_id",
@@ -314,6 +313,15 @@ class Location(Base):
             self.latitude = kwargs["latitude"]
         if "longitude" in kwargs:
             self.longitude = kwargs["longitude"]
+
+    @classmethod
+    def fetch(self, session, default={}):
+        return schema_func.fetch(
+            Location,
+            [["id"],
+             ["city", "state", "country"],
+             ["longitude", "latitude"]],
+            session, default)
 
     # ----------------------------------
 
@@ -590,6 +598,13 @@ class Assignee(Base):
         if "nationality" in kwargs:
             self.nationality = kwargs["nationality"]
 
+    @classmethod
+    def fetch(self, session, default={}):
+        return schema_func.fetch(
+            Assignee,
+            [["id"]],
+            session, default)
+
     # ----------------------------------
 
     def __repr__(self):
@@ -672,6 +687,13 @@ class Inventor(Base):
         if "nationality" in kwargs:
             self.nationality = kwargs["nationality"]
 
+    @classmethod
+    def fetch(self, session, default={}):
+        return schema_func.fetch(
+            Inventor,
+            [["id"]],
+            session, default)
+
     # ----------------------------------
 
     def __repr__(self):
@@ -747,6 +769,15 @@ class Lawyer(Base):
             self.organization = kwargs["organization"]
         if "country" in kwargs:
             self.country = kwargs["country"]
+
+    @classmethod
+    def fetch(self, session, default={}):
+        return schema_func.fetch(
+            Lawyer,
+            [["id"],
+             ["organization"],
+             ["name_first", "name_last"]],
+            session, default)
 
     # ----------------------------------
 
