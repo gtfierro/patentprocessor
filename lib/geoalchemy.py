@@ -8,7 +8,6 @@ import datetime
 
 import alchemy
 alchemy_config = alchemy.get_config()
-alchemy_session = alchemy.fetch_session()
 base = declarative.declarative_base()
 
 
@@ -74,10 +73,19 @@ def main(limit=10000, offset=0):
     #Sort the list by the grouping_id
     keyfunc = lambda x: x['grouping_id']
     grouped_locations.sort(key=keyfunc)
+    grouped_locations_enum = enumerate(itertools.groupby(grouped_locations, keyfunc))
     print "grouped_locations sorted", datetime.datetime.now() - t
     t = datetime.datetime.now()
+    match_grouped_locations(grouped_locations_enum)
     #Group by the grouping_id
-    for i, item in enumerate(itertools.groupby(grouped_locations, keyfunc)):
+    
+    alchemy.session.commit()
+
+    print "Matches made!", datetime.datetime.now() - t
+    print "%s groups formed from %s locations" % (len(grouped_locations), raw_parsed_locations.count())
+    
+def match_grouped_locations(grouped_locations_enum):
+    for i, item in grouped_locations_enum:
         key, grouping = item
         #match_group is the list of RawLocation objects which we call match on
         #We need to get only the RawLocation objects back from the dict
@@ -92,18 +100,14 @@ def main(limit=10000, offset=0):
         for grouped_location in grouping:
             match_group.append(grouped_location["raw_location"])
 
-        # determine most frequent if list of match_group
-        most_freq = 0
         if len(match_group) > 1:
+            # determine most frequent if list of match_group
+            most_freq = 0
             for loc in match_group:
                 if alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.id == loc.id).count() > most_freq:
                     default.update(loc.summarize)
 
         alchemy.match(match_group, alchemy.session, default, commit=False)
         if (i + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
-            print " *", (i + 1), datetime.datetime.now() - t
+            #print " *", (i + 1), datetime.datetime.now() - t
             alchemy.session.commit()
-    alchemy.session.commit()
-
-    print "Matches made!", datetime.datetime.now() - t
-    print "%s groups formed from %s locations" % (len(grouped_locations), raw_parsed_locations.count())
