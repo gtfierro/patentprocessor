@@ -4,6 +4,7 @@ Performs a basic assignee disambiguation
 """
 from collections import defaultdict, deque
 import uuid
+import cPickle as pickle
 from collections import Counter
 from Levenshtein import jaro_winkler
 from alchemy import session, get_config, match
@@ -81,6 +82,7 @@ def create_jw_blocks(list_of_assignees):
                 if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
                     consumed[secondary] = 1
                     blocks[primary].append(secondary)
+    pickle.dump(blocks, open('assignee.pickle', 'wb'))
     print 'Assignee blocks created!'
 
 
