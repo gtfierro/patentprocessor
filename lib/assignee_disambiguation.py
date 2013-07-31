@@ -121,7 +121,8 @@ def printall():
 
 
 def run_disambiguation():
-    create_assignee_blocks(assignees)
+    assignee_alpha_blocks = clean_assignees(assignees)
+    create_jw_blocks(assignee_alpha_blocks)
     create_assignee_table()
 
 
