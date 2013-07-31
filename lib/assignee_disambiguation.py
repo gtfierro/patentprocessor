@@ -58,6 +58,29 @@ def clean_assignees(list_of_assignees):
         alpha_blocks[assignee[0]].append(assignee)
     print 'Alpha blocks created!'
     return alpha_blocks.itervalues()
+
+
+def create_jw_blocks(list_of_assignees):
+    """
+    Receives list of blocks, where a block is a list of assignees
+    that all begin with the same letter. Within each block, does
+    a pairwise jaro winkler comparison to block assignees together
+    """
+    consumed = defaultdict(int)
+    print 'Creating assignee blocks...'
+    for alphablock in list_of_assignees:
+        for primary in alphablock:
+            if consumed[primary]: continue
+            consumed[primary] = 1
+            blocks[primary].append(primary)
+            for secondary in alphablock:
+                if consumed[secondary]: continue
+                if primary == secondary:
+                    blocks[primary].append(secondary)
+                    continue
+                if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
+                    consumed[secondary] = 1
+                    blocks[primary].append(secondary)
     print 'Assignee blocks created!'
 
 
