@@ -114,7 +114,7 @@ def database_commit(patobjects):
     to be use sequentially to account for db concurrency
     """
     for patobj in patobjects:
-        alchemy.add(patobj, temp=False)
+        alchemy.add(patobj)
     alchemy.commit()
 
 # TODO: this should only move alchemy.sqlite3
