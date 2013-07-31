@@ -33,11 +33,14 @@ mysql -u [user] -p --local-infile=1 -h [db] [tbl]
 ```
 
 ```
+sudo apt-get install -y p7zip-full
+
 sudo apt-get install -y git
 sudo apt-get install -y python-pip
 sudo apt-get install -y python-zmq
 sudo apt-get install -y python-mysqldb
 sudo apt-get install -y python-Levenshtein
+sudo apt-get install 7z
 sudo pip install -r requirements.txt
 ```
 
