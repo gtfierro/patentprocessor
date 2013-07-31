@@ -320,8 +320,6 @@ class Location(Base):
             Location,
             [["id"],
              ["city", "state", "country"],
-             ["city", "state"],
-             ["city", "country"],
              ["longitude", "latitude"]],
             session, default)
 

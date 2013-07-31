@@ -44,6 +44,10 @@ def main():
     t = datetime.datetime.now()
     #Get all of the raw locations from the XML parsing
     raw_parsed_locations = alchemy.session.query(alchemy.RawLocation)
+    #raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.location_id == None)
+
+    if raw_parsed_locations.count() == 0:
+        print "No RawLocations needed to parse"
     #raw_google_locations = raw_google_session.query(RawGoogle)
     grouped_locations = []
     for instance in raw_parsed_locations:
