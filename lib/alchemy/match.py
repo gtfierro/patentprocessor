@@ -50,7 +50,8 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
         elif obj and obj not in raw_objects:
             raw_objects.append(obj)
 
-    if class_type:
+    # this function does create some slow down
+    if class_type and default:
         fetched = class_type.fetch(session, default)
         if fetched:
             clean_main = fetched
