@@ -10,7 +10,6 @@ import alchemy
 alchemy_config = alchemy.get_config()
 base = declarative.declarative_base()
 
-
 class RawGoogle(base):
     __tablename__ = 'raw_google'
     id = sqlalchemy.Column("rowid", sqlalchemy.Integer, primary_key=True)
@@ -30,13 +29,31 @@ class RawGoogle(base):
     def __repr__(self):
         return "<RawGoogle('%s','%s','%s','%s','%s')>" % (self.input_address, self.output_address, self.hierarchy, self.latitude, self.longitude)
 
+class ParsedGoogle(base):
+    __tablename__ = 'parsed_google'
+    id = sqlalchemy.Column("rowid", sqlalchemy.Integer, primary_key=True)
+    input_address = sqlalchemy.Column(sqlalchemy.String)
+    city = sqlalchemy.Column(sqlalchemy.String)
+    region = sqlalchemy.Column(sqlalchemy.String)
+    country = sqlalchemy.Column(sqlalchemy.String)
+    latitude = sqlalchemy.Column(sqlalchemy.REAL)
+    longitude = sqlalchemy.Column(sqlalchemy.REAL)
+    
+    def __init__(self, input_address, city, region, country, latitude, longitude):
+        self.input_address = input_address
+        self.city = city
+        self.region = region
+        self.country = country
+        self.latitude = latitude
+        self.longitude = longitude
 
-raw_google_dbpath = os.path.join(
+
+google_data_dbpath = os.path.join(
     alchemy_config.get("location").get('path'),
     alchemy_config.get("location").get('database'))
-raw_google_engine = sqlalchemy.create_engine('sqlite:///%s' % raw_google_dbpath)
-raw_google_session_class = orm.sessionmaker(bind=raw_google_engine)
-raw_google_session = raw_google_session_class()
+google_data_engine = sqlalchemy.create_engine('sqlite:///%s' % google_data_dbpath)
+google_data_session_class = orm.sessionmaker(bind=google_data_engine)
+google_data_session = google_data_session_class()
 
 
 def main(limit=10000, offset=0):
@@ -47,14 +64,14 @@ def main(limit=10000, offset=0):
     if raw_parsed_locations.count() == 0:
         return False
     # raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.location_id == None)
-    #raw_google_locations = raw_google_session.query(RawGoogle)
+    #raw_google_locations = google_data_session.query(RawGoogle)
     grouped_locations = []
     for instance in raw_parsed_locations:
         #Convert the location into a string that matches the Google format
         parsed_raw_location = geoalchemy_util.concatenate_location(instance.city, instance.state, instance.country)
         cleaned_location = geoalchemy_util.clean_raw_location(parsed_raw_location)
         #Find the location from the raw_google database that matches this input
-        matching_location = raw_google_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
+        matching_location = google_data_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
         #alchemy.match(instance)
         if matching_location:
             if(matching_location.latitude != ''):
