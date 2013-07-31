@@ -42,25 +42,26 @@ raw_google_session = raw_google_session_class()
 
 def run_geo_match(key, default, match_group, counter, runtime):
     most_freq = 0
-    if len(match_group) > 1:
-        # if key exists, look at the frequency of each item
-        # to determine the default summarization
-        clean = alchemy_session.query(alchemy.Location).filter(alchemy.Location.id == key).first()
-        if clean:
-            for loc in clean.rawlocations:
+    if key != "nolocationfound":
+        if len(match_group) > 1:
+            # if key exists, look at the frequency of each item
+            # to determine the default summarization
+            clean = alchemy_session.query(alchemy.Location).filter(alchemy.Location.id == key).first()
+            if clean:
+                for loc in clean.rawlocations:
+                    freq = len(loc.rawassignees) + len(loc.rawinventors)
+                    if freq > most_freq:
+                        default.update(loc.summarize)
+                        most_freq = freq
+
+            # took a look at the frequency of the items in the match_group
+            for loc in match_group:
                 freq = len(loc.rawassignees) + len(loc.rawinventors)
                 if freq > most_freq:
                     default.update(loc.summarize)
                     most_freq = freq
 
-        # took a look at the frequency of the items in the match_group
-        for loc in match_group:
-            freq = len(loc.rawassignees) + len(loc.rawinventors)
-            if freq > most_freq:
-                default.update(loc.summarize)
-                most_freq = freq
-
-    alchemy.match(match_group, alchemy_session, default, commit=False)
+        alchemy.match(match_group, alchemy_session, default, commit=False)
     if (counter + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
         print " *", (counter + 1), datetime.datetime.now() - runtime
         alchemy_session.commit()
