@@ -107,8 +107,21 @@ def add(obj, override=True, temp=False):
 
     pat = Patent(**obj.pat)
     pat.application = Application(**obj.app)
+    
+    add_all_fields(obj, pat)
 
-    #+asg
+    session.merge(pat)
+    
+def add_all_fields(obj, pat):
+    add_asg(obj, pat)
+    add_inv(obj, pat)
+    add_law(obj, pat)
+    add_usreldoc(obj, pat)
+    add_classes(obj, pat)
+    add_ipcr(obj, pat)
+    add_citations(obj, pat)
+    
+def add_asg(obj, pat):
     for asg, loc in obj.assignee_list:
         asg = RawAssignee(**asg)
         loc = RawLocation(**loc)
@@ -116,7 +129,7 @@ def add(obj, override=True, temp=False):
         asg.rawlocation = loc
         pat.rawassignees.append(asg)
 
-    #+inv
+def add_inv(obj, pat):
     for inv, loc in obj.inventor_list:
         inv = RawInventor(**inv)
         loc = RawLocation(**loc)
@@ -124,17 +137,17 @@ def add(obj, override=True, temp=False):
         inv.rawlocation = loc
         pat.rawinventors.append(inv)
 
-    #+law
+def add_law(obj, pat):
     for law in obj.lawyer_list:
         law = RawLawyer(**law)
         pat.rawlawyers.append(law)
-
-    #+usreldoc
+        
+def add_usreldoc(obj, pat):
     for usr in obj.us_relation_list:
         usr = USRelDoc(**usr)
         pat.usreldocs.append(usr)
-
-    #+classes
+        
+def add_classes(obj, pat):
     for uspc, mc, sc in obj.us_classifications:
         uspc = USPC(**uspc)
         mc = MainClass(**mc)
@@ -144,13 +157,13 @@ def add(obj, override=True, temp=False):
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
-
-    #+ipcr
+        
+def add_ipcr(obj, pat):
     for ipc in obj.ipcr_classifications:
         ipc = IPCR(**ipc)
         pat.ipcrs.append(ipc)
-
-    #+citations
+        
+def add_citations(obj, pat):
     cits, refs = obj.citation_list
     for cit in cits:
         if cit['country'] == 'US':
@@ -169,9 +182,6 @@ def add(obj, override=True, temp=False):
     for ref in refs:
         ref = OtherReference(**ref)
         pat.otherreferences.append(ref)
-
-    session.merge(pat)
-
 
 def commit():
     try:
