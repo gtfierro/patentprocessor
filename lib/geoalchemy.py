@@ -57,8 +57,9 @@ def run_geo_match(key, default, match_group, counter, runtime):
                     .filter(alchemy.RawLocation.state == param["state"])\
                     .filter(alchemy.RawLocation.country == param["country"])\
                     .first()
-                most_freq = len(loc.rawassignees) + len(loc.rawinventors)
-                default.update(param)
+                if loc:
+                    most_freq = len(loc.rawassignees) + len(loc.rawinventors)
+                    default.update(param)
 
             # took a look at the frequency of the items in the match_group
             for loc in match_group:
