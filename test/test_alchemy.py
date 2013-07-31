@@ -18,7 +18,6 @@ class TestAlchemy(unittest.TestCase):
     def tearDown(self):
         # we keep this to tidy up our database if it fails
         session.close()
-        pass
 
     def test_raw_clean(self):
         # add a Clean record to mark something against
