@@ -44,15 +44,21 @@ def run_geo_match(key, default, match_group, counter, runtime):
     most_freq = 0
     if key != "nolocationfound":
         if len(match_group) > 1:
-            # if key exists, look at the frequency of each item
+            # if key exists, look at the frequency
             # to determine the default summarization
             clean = alchemy_session.query(alchemy.Location).filter(alchemy.Location.id == key).first()
             if clean:
-                for loc in clean.rawlocations:
-                    freq = len(loc.rawassignees) + len(loc.rawinventors)
-                    if freq > most_freq:
-                        default.update(loc.summarize)
-                        most_freq = freq
+                param = clean.summarize
+                param.pop("id")
+                param.pop("latitude")
+                param.pop("longitude")
+                loc = alchemy_session.query(alchemy.RawLocation)\
+                    .filter(alchemy.RawLocation.city == param["city"])\
+                    .filter(alchemy.RawLocation.state == param["state"])\
+                    .filter(alchemy.RawLocation.country == param["country"])\
+                    .first()
+                most_freq = len(loc.rawassignees) + len(loc.rawinventors)
+                default.update(param)
 
             # took a look at the frequency of the items in the match_group
             for loc in match_group:
