@@ -98,7 +98,7 @@ def main():
                     default.update(loc.summarize)
 
         alchemy.match(match_group, alchemy.session, default, commit=False)
-        if (i + 1) % config.get("location").get("commit_frequency") == 0:
+        if (i + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
             print " *", (i + 1), datetime.datetime.now() - t
             alchemy.session.commit()
     alchemy.session.commit()
