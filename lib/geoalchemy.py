@@ -5,6 +5,7 @@ import geoalchemy_util
 import itertools
 import os
 import datetime
+import re
 
 import alchemy
 alchemy_config = alchemy.get_config()
@@ -47,14 +48,12 @@ class ParsedGoogle(base):
         self.latitude = latitude
         self.longitude = longitude
 
-
-google_data_dbpath = os.path.join(
+geo_data_dbpath = os.path.join(
     alchemy_config.get("location").get('path'),
     alchemy_config.get("location").get('database'))
-google_data_engine = sqlalchemy.create_engine('sqlite:///%s' % google_data_dbpath)
-google_data_session_class = orm.sessionmaker(bind=google_data_engine)
-google_data_session = google_data_session_class()
-
+geo_data_engine = sqlalchemy.create_engine('sqlite:///%s' % geo_data_dbpath)
+geo_data_session_class = orm.sessionmaker(bind=geo_data_engine)
+geo_data_session = geo_data_session_class()
 
 def main(limit=10000, offset=0):
     t = datetime.datetime.now()
@@ -64,14 +63,14 @@ def main(limit=10000, offset=0):
     if raw_parsed_locations.count() == 0:
         return False
     # raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.location_id == None)
-    #raw_google_locations = google_data_session.query(RawGoogle)
+    #raw_google_locations = geo_data_session.query(RawGoogle)
     grouped_locations = []
     for instance in raw_parsed_locations:
         #Convert the location into a string that matches the Google format
         parsed_raw_location = geoalchemy_util.concatenate_location(instance.city, instance.state, instance.country)
         cleaned_location = geoalchemy_util.clean_raw_location(parsed_raw_location)
         #Find the location from the raw_google database that matches this input
-        matching_location = google_data_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
+        matching_location = geo_data_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
         #alchemy.match(instance)
         if matching_location:
             if(matching_location.latitude != ''):
@@ -128,3 +127,30 @@ def match_grouped_locations(grouped_locations_enum):
         if (i + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
             #print " *", (i + 1), datetime.datetime.now() - t
             alchemy.session.commit()
+
+def parse_raw_google_data():
+    #Get a list of all RawGoogle objects
+    raw_google_list = geo_data_session.query(RawGoogle).limit(10)
+    #Pattern for matching any non-numerical text. Used to identify text-only entries
+    for raw_google in raw_google_list:
+        #Split the RawGoogle object into the list of individual features
+        #from the output_address 
+        feature_list = raw_google.output_address.split(',')
+        print raw_google.input_address, raw_google.output_address.encode('utf8')
+        #print raw_google.input_address, identify_locations(feature_list)
+        
+not_digit_pattern = re.compile(r'[^\d]')
+
+#Take a list of features from output_address
+#Now we have to identify what locations these features correspond to
+#We focus on identifying city, state/region, and country
+def identify_locations(feature_list):
+    #Strip away excess whitespace for each location in the list
+    feature_list = [feature.strip() for feature in feature_list]
+    #Remove purely numerical locations
+    feature_list = [feature for feature in feature_list if not_digit_pattern.search(feature)]
+    return feature_list
+    
+    
+    
+    
