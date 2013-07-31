@@ -40,11 +40,11 @@ raw_google_session_class = orm.sessionmaker(bind=raw_google_engine)
 raw_google_session = raw_google_session_class()
 
 
-def main():
+def main(limit=10000, offset=0):
     t = datetime.datetime.now()
     print "geocoding started", t
     #Get all of the raw locations from the XML parsing
-    raw_parsed_locations = alchemy.session.query(alchemy.RawLocation)
+    raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).limit(limit).offset(offset)
     # raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.location_id == None)
     #raw_google_locations = raw_google_session.query(RawGoogle)
     grouped_locations = []
