@@ -67,7 +67,7 @@ def create_jw_blocks(list_of_assignees):
     a pairwise jaro winkler comparison to block assignees together
     """
     consumed = defaultdict(int)
-    print 'Creating assignee blocks...'
+    print 'Doing pairwise Jaro-Winkler...'
     for alphablock in list_of_assignees:
         for primary in alphablock:
             if consumed[primary]: continue
