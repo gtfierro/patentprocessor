@@ -45,6 +45,8 @@ def main(limit=10000, offset=0):
     print "geocoding started", t
     #Get all of the raw locations from the XML parsing
     raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).limit(limit).offset(offset)
+    if raw_parsed_locations.count() == 0:
+        return False
     # raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.location_id == None)
     #raw_google_locations = raw_google_session.query(RawGoogle)
     grouped_locations = []
