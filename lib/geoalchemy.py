@@ -10,6 +10,12 @@ import re
 import alchemy
 alchemy_config = alchemy.get_config()
 alchemy_session = alchemy.fetch_session()
+geo_data_dbpath = os.path.join(
+    alchemy_config.get("location").get('path'),
+    alchemy_config.get("location").get('database'))
+geo_data_engine = sqlalchemy.create_engine('sqlite:///%s' % geo_data_dbpath)
+geo_data_session_class = orm.sessionmaker(bind=geo_data_engine)
+geo_data_session = geo_data_session_class()
 base = declarative.declarative_base()
 
 class RawGoogle(base):
@@ -64,13 +70,6 @@ class AllCities(base):
         self.country = country
         self.latitude = latitude
         self.longitude = longitude
-
-geo_data_dbpath = os.path.join(
-    alchemy_config.get("location").get('path'),
-    alchemy_config.get("location").get('database'))
-geo_data_engine = sqlalchemy.create_engine('sqlite:///%s' % geo_data_dbpath)
-geo_data_session_class = orm.sessionmaker(bind=geo_data_engine)
-geo_data_session = geo_data_session_class()
 
 def run_geo_match(key, default, match_group, counter, runtime):
     most_freq = 0
@@ -190,7 +189,4 @@ def identify_locations(feature_list):
     #Remove purely numerical locations
     feature_list = [feature for feature in feature_list if not_digit_pattern.search(feature)]
     return feature_list
-    
-    
-    
-    
+
