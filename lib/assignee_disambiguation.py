@@ -51,12 +51,12 @@ def clean_assignees(list_of_assignees):
     for assignee in list_of_assignees:
         assignee_dict[assignee.uuid] = assignee
         a_id = get_assignee_id(assignee)
-        id_map[a_id].append(assignee.uuid)
         # removes stop words, then rejoins the string
-        assignee = ' '.join(filter(lambda x:
+        a_id = ' '.join(filter(lambda x:
                             x.lower() not in stoplist,
                             a_id.split(' ')))
-        alpha_blocks[assignee[0]].append(assignee)
+        id_map[a_id].append(assignee.uuid)
+        alpha_blocks[a_id[0]].append(a_id)
     print 'Alpha blocks created!'
     return alpha_blocks.itervalues()
 
