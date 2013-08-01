@@ -47,6 +47,22 @@ class ParsedGoogle(base):
         self.country = country
         self.latitude = latitude
         self.longitude = longitude
+        
+class AllCities(base):
+    __tablename__ = 'all_cities'
+    id = sqlalchemy.Column("rowid", sqlalchemy.Integer, primary_key=True)
+    city = sqlalchemy.Column(sqlalchemy.String)
+    region = sqlalchemy.Column(sqlalchemy.String)
+    country = sqlalchemy.Column(sqlalchemy.String)
+    latitude = sqlalchemy.Column(sqlalchemy.REAL)
+    longitude = sqlalchemy.Column(sqlalchemy.REAL)
+    
+    def __init__(self, city, region, country, latitude, longitude):
+        self.city = city
+        self.region = region
+        self.country = country
+        self.latitude = latitude
+        self.longitude = longitude
 
 geo_data_dbpath = os.path.join(
     alchemy_config.get("location").get('path'),
