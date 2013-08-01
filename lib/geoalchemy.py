@@ -9,6 +9,7 @@ import re
 
 import alchemy
 alchemy_config = alchemy.get_config()
+alchemy_session = alchemy.fetch_session()
 base = declarative.declarative_base()
 
 class RawGoogle(base):
@@ -71,11 +72,45 @@ geo_data_engine = sqlalchemy.create_engine('sqlite:///%s' % geo_data_dbpath)
 geo_data_session_class = orm.sessionmaker(bind=geo_data_engine)
 geo_data_session = geo_data_session_class()
 
+def run_geo_match(key, default, match_group, counter, runtime):
+    most_freq = 0
+    if key != "nolocationfound":
+        if len(match_group) > 1:
+            # if key exists, look at the frequency
+            # to determine the default summarization
+            clean = alchemy_session.query(alchemy.Location).filter(alchemy.Location.id == key).first()
+            if clean:
+                param = clean.summarize
+                param.pop("id")
+                param.pop("latitude")
+                param.pop("longitude")
+                loc = alchemy_session.query(alchemy.RawLocation)\
+                    .filter(alchemy.RawLocation.city == param["city"])\
+                    .filter(alchemy.RawLocation.state == param["state"])\
+                    .filter(alchemy.RawLocation.country == param["country"])\
+                    .first()
+                if loc:
+                    most_freq = len(loc.rawassignees) + len(loc.rawinventors)
+                    default.update(param)
+
+            # took a look at the frequency of the items in the match_group
+            for loc in match_group:
+                freq = len(loc.rawassignees) + len(loc.rawinventors)
+                if freq > most_freq:
+                    default.update(loc.summarize)
+                    most_freq = freq
+
+        alchemy.match(match_group, alchemy_session, default, commit=False)
+    if (counter + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
+        print " *", (counter + 1), datetime.datetime.now() - runtime
+        alchemy_session.commit()
+
+
 def main(limit=10000, offset=0):
     t = datetime.datetime.now()
     print "geocoding started", t
     #Get all of the raw locations from the XML parsing
-    raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).limit(limit).offset(offset)
+    raw_parsed_locations = alchemy_session.query(alchemy.RawLocation).limit(limit).offset(offset)
     if raw_parsed_locations.count() == 0:
         return False
     # raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.location_id == None)
@@ -90,13 +125,12 @@ def main(limit=10000, offset=0):
         #alchemy.match(instance)
         if matching_location:
             if(matching_location.latitude != ''):
-                grouping_id = "%s|%s" % (matching_location.latitude, matching_location.longitude)
+                grouping_id = u"%s|%s" % (matching_location.latitude, matching_location.longitude)
             else:
-                grouping_id = "nolocationfound"
-                if matching_location.latitude:
-                    print matching_location.latitude, matching_location.longitude
+                grouping_id = u"nolocationfound"
             grouped_locations.append({"raw_location": instance,
                                       "matching_location": matching_location,
+
                                       "grouping_id": grouping_id})
     print "grouped_locations created", datetime.datetime.now() - t
     t = datetime.datetime.now()
@@ -108,15 +142,15 @@ def main(limit=10000, offset=0):
     grouped_locations_enum = enumerate(itertools.groupby(grouped_locations, keyfunc))
     print "grouped_locations sorted", datetime.datetime.now() - t
     t = datetime.datetime.now()
-    match_grouped_locations(grouped_locations_enum)
+    match_grouped_locations(grouped_locations_enum, t)
     #Group by the grouping_id
     
-    alchemy.session.commit()
+    alchemy_session.commit()
 
     print "Matches made!", datetime.datetime.now() - t
     print "%s groups formed from %s locations" % (len(grouped_locations), raw_parsed_locations.count())
     
-def match_grouped_locations(grouped_locations_enum):
+def match_grouped_locations(grouped_locations_enum, t):
     for i, item in grouped_locations_enum:
         key, grouping = item
         #match_group is the list of RawLocation objects which we call match on
@@ -124,25 +158,15 @@ def match_grouped_locations(grouped_locations_enum):
         match_group = []
         #Get the latitude and longitude for the group
         splitkey = key.split('|')
+
         #The length should be 2
+        default = {"id": key}
         if len(splitkey) == 2:
-            default = {"latitude": splitkey[0], "longitude": splitkey[1]}
-        else:
-            default = {}
+            default.update({"latitude": splitkey[0], "longitude": splitkey[1]})
         for grouped_location in grouping:
             match_group.append(grouped_location["raw_location"])
-
-        if len(match_group) > 1:
-            # determine most frequent if list of match_group
-            most_freq = 0
-            for loc in match_group:
-                if alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.id == loc.id).count() > most_freq:
-                    default.update(loc.summarize)
-
-        alchemy.match(match_group, alchemy.session, default, commit=False)
-        if (i + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
-            #print " *", (i + 1), datetime.datetime.now() - t
-            alchemy.session.commit()
+        # determine most frequent if list of match_group
+        run_geo_match(key, default, match_group, i, t)
 
 def parse_raw_google_data():
     #Get a list of all RawGoogle objects
