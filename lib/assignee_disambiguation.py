@@ -4,6 +4,7 @@ Performs a basic assignee disambiguation
 """
 from collections import defaultdict, deque
 import uuid
+import cPickle as pickle
 from collections import Counter
 from Levenshtein import jaro_winkler
 from alchemy import session, get_config, match
@@ -37,29 +38,51 @@ def get_assignee_id(obj):
     except:
         return ''
 
-
-def create_assignee_blocks(list_of_assignees):
-    consumed = defaultdict(int)
-    print 'Creating assignee blocks...'
-    assignees = []
+def clean_assignees(list_of_assignees):
+    """
+    Removes the following stop words from each assignee:
+    the, of, and, a, an, at
+    Then, blocks the assignee with other assignees that start
+    with the same letter. Returns a list of these blocks
+    """
+    stoplist = ['the', 'of', 'and', 'a', 'an', 'at']
+    alpha_blocks = defaultdict(list)
+    print 'Removing stop words, blocking by first letter...'
     for assignee in list_of_assignees:
         assignee_dict[assignee.uuid] = assignee
         a_id = get_assignee_id(assignee)
+        # removes stop words, then rejoins the string
+        a_id = ' '.join(filter(lambda x:
+                            x.lower() not in stoplist,
+                            a_id.split(' ')))
         id_map[a_id].append(assignee.uuid)
-        assignees.append(a_id)
-    num_blocks = 0
-    for primary in assignees:
-        if consumed[primary]: continue
-        consumed[primary] = 1
-        blocks[primary].append(primary)
-        for secondary in assignees:
-            if consumed[secondary]: continue
-            if primary == secondary:
-                blocks[primary].append(secondary)
-                continue
-            if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
-                consumed[secondary] = 1
-                blocks[primary].append(secondary)
+        alpha_blocks[a_id[0]].append(a_id)
+    print 'Alpha blocks created!'
+    return alpha_blocks.itervalues()
+
+
+def create_jw_blocks(list_of_assignees):
+    """
+    Receives list of blocks, where a block is a list of assignees
+    that all begin with the same letter. Within each block, does
+    a pairwise jaro winkler comparison to block assignees together
+    """
+    consumed = defaultdict(int)
+    print 'Doing pairwise Jaro-Winkler...'
+    for alphablock in list_of_assignees:
+        for primary in alphablock:
+            if consumed[primary]: continue
+            consumed[primary] = 1
+            blocks[primary].append(primary)
+            for secondary in alphablock:
+                if consumed[secondary]: continue
+                if primary == secondary:
+                    blocks[primary].append(secondary)
+                    continue
+                if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
+                    consumed[secondary] = 1
+                    blocks[primary].append(secondary)
+    pickle.dump(blocks, open('assignee.pickle', 'wb'))
     print 'Assignee blocks created!'
 
 
@@ -100,7 +123,8 @@ def printall():
 
 
 def run_disambiguation():
-    create_assignee_blocks(assignees)
+    assignee_alpha_blocks = clean_assignees(assignees)
+    create_jw_blocks(assignee_alpha_blocks)
     create_assignee_table()
 
 
