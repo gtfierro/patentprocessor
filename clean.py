@@ -7,13 +7,6 @@ import datetime
 
 t1 = datetime.datetime.now()
 
-## run geocoding
-#print "START: geocode", t1
-#import lib.geocode
-##print "   - Loc Merge", "\n   -", datetime.datetime.now()-t1
-#print"DONE: geocode"
-#print "   -", datetime.datetime.now()-t1
-
 # run assignee disambiguation and populate the Assignee table
 assignee_disambiguation.run_disambiguation()
 
