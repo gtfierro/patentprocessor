@@ -77,6 +77,15 @@ manual_dict = generate_manual_patterns_and_replacements()
 manual_patterns = manual_dict['patterns']
 manual_replacements = manual_dict['replacements']
 quickfix_patterns = generate_quickfix_patterns()
+postal_pattern = re.compile(ur'(- )?[A-Z\-#\(]*\d+[\)A-Z]*')
+foreign_postal_pattern = re.compile(ur'[A-Z\d]{3,4}[ ]?[A-Z\d]{3}')
+england_pattern = re.compile(ur', EN')
+germany_pattern = re.compile(ur', DT')
+
+unnecessary_symbols_pattern = re.compile(ur'[#\(?<!.\)]')
+excess_whitespace = re.compile(ur'[ ]+')
+whitespace_around_commas_pattern = re.compile(ur'[ ]*,+[ ]*,*[ ]*')
+start_of_line_pattern = re.compile(ur'^[-,]+[ ]*', re.MULTILINE)
 
 #Input: a raw location from the parse of the patent data
 def clean_raw_location(text):
@@ -88,16 +97,20 @@ def clean_raw_location(text):
     #Perform all the quickfix replacements
     text = quickfix_patterns['curly'].sub(get_chars_in_parentheses, text)
     
-    #Strip out extra spaces
-    text = re.sub(ur'[ ]*\|[ ]*','|',text)
-    text = re.sub(ur'[ ]*\r?\n','\n',text)
-    text = re.sub(ur'(?<!.) ','',text)
+    text = foreign_postal_pattern.sub('', text)
+    text = postal_pattern.sub('', text)
+    
+    text = unnecessary_symbols_pattern.sub('', text)
+    #around commas
+    text = whitespace_around_commas_pattern.sub(', ', text)
+    #Remove start-of-line [-,] and extra whitespace
+    text = start_of_line_pattern.sub('', text)
+    text = excess_whitespace.sub(' ', text)
+    text = england_pattern.sub(', GB', text)
+    text = germany_pattern.sub(', DE', text)
     
     #Turn accents into unicode
     soup = BeautifulSoup(text)
     souptext = unicode(soup.get_text())
     souptext =  unicodedata.normalize('NFC', souptext)
-    
-    #Convert to lowercase
-    souptext = souptext.lower()
     return souptext
