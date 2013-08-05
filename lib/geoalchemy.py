@@ -1,6 +1,7 @@
 import sqlalchemy
 import sqlalchemy.orm as orm
 import sqlalchemy.ext.declarative as declarative
+import sqlalchemy.sql.expression as expression
 import geoalchemy_util
 import itertools
 import os
@@ -29,29 +30,6 @@ class RawGoogle(base):
     longitude = sqlalchemy.Column(sqlalchemy.REAL)
     confidence = sqlalchemy.Column(sqlalchemy.REAL)
 
-    def __init__(self, input_address, city, region, country, hierarchy, latitude, longitude):
-        self.input_address = input_address
-        self.city = city
-        self.region = region
-        self.country = country
-        self.hierarchy = hierarchy
-        self.latitude = latitude
-        self.longitude = longitude
-
-    def __repr__(self):
-        return "<RawGoogle('%s','%s','%s','%s','%s')>" % (self.input_address, self.output_address, self.hierarchy, self.latitude, self.longitude)
-
-class ParsedGoogle(base):
-    __tablename__ = 'parsed_google'
-    id = sqlalchemy.Column("rowid", sqlalchemy.Integer, primary_key=True)
-    input_address = sqlalchemy.Column(sqlalchemy.String)
-    city = sqlalchemy.Column(sqlalchemy.String)
-    region = sqlalchemy.Column(sqlalchemy.String)
-    country = sqlalchemy.Column(sqlalchemy.String)
-    latitude = sqlalchemy.Column(sqlalchemy.REAL)
-    longitude = sqlalchemy.Column(sqlalchemy.REAL)
-    confidence = sqlalchemy.Column(sqlalchemy.REAL)
-    
     def __init__(self, input_address, city, region, country, latitude, longitude, confidence):
         self.input_address = input_address
         self.city = city
@@ -60,6 +38,9 @@ class ParsedGoogle(base):
         self.latitude = latitude
         self.longitude = longitude
         self.confidence = confidence
+
+    def __repr__(self):
+        return "<RawGoogle('%s','%s','%s','%s','%s')>" % (self.input_address, self.city, self.region, self.country, self.latitude, self.longitude, self.confidence)
         
 class AllCities(base):
     __tablename__ = 'all_cities'
@@ -77,6 +58,72 @@ class AllCities(base):
         self.latitude = latitude
         self.longitude = longitude
 
+def main(limit=10000, offset=0):
+    t = datetime.datetime.now()
+    print "geocoding started", t
+    construct_valid_input_address_list()
+    #Get all of the raw locations from the XML parsing
+    raw_parsed_locations = alchemy_session.query(alchemy.RawLocation).limit(limit).offset(offset)
+    if raw_parsed_locations.count() == 0:
+        return False
+    print 'List of all parsed locations constructed with', raw_parsed_locations.count(), 'items'
+    # raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.location_id == None)
+    #raw_google_locations = geo_data_session.query(RawGoogle)
+    grouped_locations = []
+    for instance in raw_parsed_locations:
+        #Convert the location into a string that matches the Google format
+        parsed_raw_location = geoalchemy_util.concatenate_location(instance.city, instance.state, instance.country)
+        cleaned_location = geoalchemy_util.clean_raw_location(parsed_raw_location)
+        #print cleaned_location
+        #alchemy.match(instance)
+        if input_address_exists(cleaned_location):
+            #Find the location from the raw_google database that matches this input
+            matching_location = geo_data_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
+            grouping_id = u"{0}|{1}|{2}".format(matching_location.city, matching_location.region, matching_location.country)
+        else:
+            matching_location = RawGoogle(cleaned_location, '', '', '', '', '', -1)
+            grouping_id = u"nolocationfound"
+        grouped_locations.append({"raw_location": instance,
+                                  "matching_location": matching_location,
+                                  "grouping_id": grouping_id})
+    print "grouped_locations created", datetime.datetime.now() - t
+    
+    t = datetime.datetime.now()
+    #We now have a list of all locations in the file, along with their
+    #matching locations and the id used to group them
+    #Sort the list by the grouping_id
+    keyfunc = lambda x: x['grouping_id']
+    grouped_locations.sort(key=keyfunc)
+    grouped_locations_enum = enumerate(itertools.groupby(grouped_locations, keyfunc))
+    print "grouped_locations sorted", datetime.datetime.now() - t
+    t = datetime.datetime.now()
+    match_grouped_locations(grouped_locations_enum, t)
+    #Group by the grouping_id
+    
+    alchemy_session.commit()
+
+    print "Matches made!", datetime.datetime.now() - t
+    unique_group_count = alchemy_session.query(expression.func.count(sqlalchemy.distinct(alchemy.Location.id))).all()
+    print "%s groups formed from %s locations" % (unique_group_count, raw_parsed_locations.count())
+    
+def match_grouped_locations(grouped_locations_enum, t):
+    for i, item in grouped_locations_enum:
+        key, grouping = item
+        #match_group is the list of RawLocation objects which we call match on
+        #We need to get only the RawLocation objects back from the dict
+        match_group = []
+        #Get the latitude and longitude for the group
+        splitkey = key.split('|')
+
+        #The length should be 2
+        default = {"id": key}
+        if len(splitkey) == 2:
+            default.update({"latitude": splitkey[0], "longitude": splitkey[1]})
+        for grouped_location in grouping:
+            match_group.append(grouped_location["raw_location"])
+        # determine most frequent if list of match_group
+        run_geo_match(key, default, match_group, i, t)
+        
 def run_geo_match(key, default, match_group, counter, runtime):
     most_freq = 0
     if key != "nolocationfound":
@@ -110,70 +157,6 @@ def run_geo_match(key, default, match_group, counter, runtime):
         print " *", (counter + 1), datetime.datetime.now() - runtime
         alchemy_session.commit()
 
-
-def main(limit=10000, offset=0):
-    t = datetime.datetime.now()
-    print "geocoding started", t
-    #Get all of the raw locations from the XML parsing
-    raw_parsed_locations = alchemy_session.query(alchemy.RawLocation).limit(limit).offset(offset)
-    if raw_parsed_locations.count() == 0:
-        return False
-    # raw_parsed_locations = alchemy.session.query(alchemy.RawLocation).filter(alchemy.RawLocation.location_id == None)
-    #raw_google_locations = geo_data_session.query(RawGoogle)
-    grouped_locations = []
-    for instance in raw_parsed_locations:
-        #Convert the location into a string that matches the Google format
-        parsed_raw_location = geoalchemy_util.concatenate_location(instance.city, instance.state, instance.country)
-        cleaned_location = geoalchemy_util.clean_raw_location(parsed_raw_location)
-        #print cleaned_location
-        #Find the location from the raw_google database that matches this input
-        matching_location = geo_data_session.query(RawGoogle).filter_by(input_address=cleaned_location).first()
-        #alchemy.match(instance)
-        if matching_location:
-            if(matching_location.latitude != ''):
-                grouping_id = u"%s|%s" % (matching_location.latitude, matching_location.longitude)
-            else:
-                grouping_id = u"nolocationfound"
-            grouped_locations.append({"raw_location": instance,
-                                      "matching_location": matching_location,
-
-                                      "grouping_id": grouping_id})
-    print "grouped_locations created", datetime.datetime.now() - t
-    t = datetime.datetime.now()
-    #We now have a list of all locations in the file, along with their
-    #matching locations and the id used to group them
-    #Sort the list by the grouping_id
-    keyfunc = lambda x: x['grouping_id']
-    grouped_locations.sort(key=keyfunc)
-    grouped_locations_enum = enumerate(itertools.groupby(grouped_locations, keyfunc))
-    print "grouped_locations sorted", datetime.datetime.now() - t
-    t = datetime.datetime.now()
-    match_grouped_locations(grouped_locations_enum, t)
-    #Group by the grouping_id
-    
-    alchemy_session.commit()
-
-    print "Matches made!", datetime.datetime.now() - t
-    print "%s groups formed from %s locations" % (len(grouped_locations), raw_parsed_locations.count())
-    
-def match_grouped_locations(grouped_locations_enum, t):
-    for i, item in grouped_locations_enum:
-        key, grouping = item
-        #match_group is the list of RawLocation objects which we call match on
-        #We need to get only the RawLocation objects back from the dict
-        match_group = []
-        #Get the latitude and longitude for the group
-        splitkey = key.split('|')
-
-        #The length should be 2
-        default = {"id": key}
-        if len(splitkey) == 2:
-            default.update({"latitude": splitkey[0], "longitude": splitkey[1]})
-        for grouped_location in grouping:
-            match_group.append(grouped_location["raw_location"])
-        # determine most frequent if list of match_group
-        run_geo_match(key, default, match_group, i, t)
-
 def parse_raw_google_data():
     #Get a list of all latitude and longitudes from raw_google
     raw_google_location_list = geo_data_session.query(RawGoogle.latitude, RawGoogle.longitude).order_by(RawGoogle.id).all()
@@ -205,3 +188,44 @@ def clean_raw_locations_from_file(inputfilename, outputfilename):
         line = geoalchemy_util.clean_raw_location(line)
         line = line.encode('utf8')
         outputfile.write(line)
+        
+def analyze_input_addresses(inputfilename):
+    valid_input_address_list= set()
+    input_address_objects = geo_data_session.query(RawGoogle).filter(RawGoogle.confidence>0)\
+                            .filter((RawGoogle.city!='') | (RawGoogle.region!='')).all()
+    for row in input_address_objects:
+        valid_input_address_list.add(row.input_address)
+    print 'valid input address list constructed with ', len(valid_input_address_list), ' items'
+    print datetime.datetime.now()
+    inputfile = open(inputfilename, 'r')
+    #We will assume the file is sorted and use a shortcut
+    line_count=0
+    good_count=0
+    not_found_file = open('not_found.txt', 'w+')
+    for line in inputfile:
+        line = line.decode('utf8')
+        input_address = geoalchemy_util.remove_eol_pattern.sub('', line)
+        if (input_address in valid_input_address_list):
+            good_count+=1
+        else:
+            not_found_file.write('{0}\n'.format(input_address.encode('utf8')))
+        line_count+=1
+    print 'All lines compared!'
+    print '% good:', good_count*1.0/line_count
+    print datetime.datetime.now()
+
+valid_input_address_list = set()
+def construct_valid_input_address_list():
+    temp = geo_data_session.query(RawGoogle.input_address).filter(RawGoogle.confidence>0)\
+                                .filter((RawGoogle.city!='') | (RawGoogle.region!='')).all()
+    temp = [x.input_address for x in temp]
+    for input_address in temp:
+        valid_input_address_list.add(input_address)
+    print 'List of all valid Google input_address values constructed with', len(valid_input_address_list), 'items'
+
+def input_address_exists(input_address):
+    if valid_input_address_list:
+        return input_address in valid_input_address_list
+    else:
+        print 'Error: list of valid input addresses not constructed'
+        return False
