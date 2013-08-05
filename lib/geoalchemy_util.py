@@ -14,6 +14,8 @@ def concatenate_location(city, state, country):
     location = ", ".join(location_list)
     return location
 
+remove_eol_pattern = re.compile(ur'[\r\n]+')
+
 #Many accent references are difficult to idenity programmatically.
 #These are handled by manually replacing each entry.
 #The replacements are stored in lib/manual_replacement_library.txt
@@ -27,7 +29,7 @@ def generate_manual_patterns_and_replacements():
         #allow # to be a comment
         if(line[0]=='#' or line=='\n'):
             continue
-        line_without_newline = re.sub('[\r\n]+','',line)
+        line_without_newline = remove_eol_pattern.sub('',line)
         line_split = line_without_newline.split("|")
         #An individual re can only hold 100 entities. So split if necessary.
         if(replacement_count<99):
@@ -83,12 +85,15 @@ england_pattern = re.compile(ur', EN', re.UNICODE)
 germany_pattern = re.compile(ur', DT', re.UNICODE)
 
 separator_pattern = re.compile(ur'\|', re.UNICODE)
-unnecessary_symbols_pattern = re.compile(ur'[#\(?<!.\)]', re.UNICODE)
-excess_whitespace = re.compile(ur' [ ]+', re.UNICODE)
-whitespace_around_commas_pattern = re.compile(ur'(( )*,( )*)+', re.UNICODE)
-start_of_line_pattern = re.compile(ur'^[-,]*[ ]*', re.MULTILINE)
 
-#Input: a raw location from the parse of the patent data
+#Remove unnecessary symbols|whitespace in excess of one space|
+#start of line symbols
+unnecessary_symbols_pattern = re.compile(ur'[#\(?<!.\)]')
+excess_whitespace_pattern = re.compile(ur'(?<= )( )+')
+start_of_line_removal_pattern = re.compile(ur'^(late of)?[-,/:;_& ]*', re.MULTILINE)
+extra_commas_pattern = re.compile(ur'(( )*,( )*)+')
+
+#Input: a raw location from the parse of trhe patent data
 def clean_raw_location(text):
     text = separator_pattern.sub(', ', text)
     #Perform all of the manual replacements
@@ -104,14 +109,15 @@ def clean_raw_location(text):
     text = unicode(soup.get_text())
     text =  unicodedata.normalize('NFC', text)
     
-    text = unnecessary_symbols_pattern.sub('', text)
     text = foreign_postal_pattern.sub('', text)
     text = postal_pattern.sub('', text)
-    #Remove start-of-line [-,] and extra whitespace
-    text = start_of_line_pattern.sub('', text)
-    text = excess_whitespace.sub(' ', text)
+    
+    text = unnecessary_symbols_pattern.sub('', text)
+    text = excess_whitespace_pattern.sub('', text)
+    text = start_of_line_removal_pattern.sub('', text)
+    text = extra_commas_pattern.sub(', ', text)
     #around commas
-    text = whitespace_around_commas_pattern.sub(', ', text)
     text = england_pattern.sub(', GB', text)
     text = germany_pattern.sub(', DE', text)
     return text
+    
