@@ -22,14 +22,18 @@ class RawGoogle(base):
     __tablename__ = 'raw_google'
     id = sqlalchemy.Column("rowid", sqlalchemy.Integer, primary_key=True)
     input_address = sqlalchemy.Column(sqlalchemy.String)
-    output_address = sqlalchemy.Column(sqlalchemy.String)
+    city = sqlalchemy.Column(sqlalchemy.String)
+    region = sqlalchemy.Column(sqlalchemy.String)
+    country = sqlalchemy.Column(sqlalchemy.String)
     latitude = sqlalchemy.Column(sqlalchemy.REAL)
     longitude = sqlalchemy.Column(sqlalchemy.REAL)
     confidence = sqlalchemy.Column(sqlalchemy.REAL)
 
-    def __init__(self, input_address, output_address, hierarchy, latitude, longitude):
+    def __init__(self, input_address, city, region, country, hierarchy, latitude, longitude):
         self.input_address = input_address
-        self.output_address = output_address
+        self.city = city
+        self.region = region
+        self.country = country
         self.hierarchy = hierarchy
         self.latitude = latitude
         self.longitude = longitude
@@ -180,46 +184,6 @@ def parse_raw_google_data():
 not_digit_pattern = re.compile(ur'[^\d]')
 digit_pattern = re.compile(ur'\d')
 
-def analyze_raw_google_data():
-    error_dump_file = open('error_dump.txt', 'w+')
-    mislabeled_dump_file = open('mislabeled_dump.txt','w+')
-    raw_google = geo_data_session.query(RawGoogle).order_by(RawGoogle.id)
-    bad_count=0;
-    for i, address_tuple in enumerate(raw_google):
-        address = address_tuple.output_address
-        feature_list = address.split(',')
-        is_good=True
-        if len(feature_list)==3:
-            city = feature_list[0]
-            region = feature_list[1]
-            country = feature_list[2]
-            if city!='':
-                parsed_location = ParsedGoogle(input_address=address_tuple.input_address,
-                                       city=city, region=region, country=country,
-                                       latitude=address_tuple.latitude,
-                                       longitude=address_tuple.longitude,
-                                       confidence=address_tuple.confidence)
-                geo_data_session.add(parsed_location)
-            else:
-                is_good=False
-        else:
-            is_good=False
-        if not is_good:
-            if address_tuple.confidence>=0:
-                outputfile = mislabeled_dump_file
-            else:
-                outputfile = error_dump_file
-            outputfile.write("{0}|{1}|{2}|{3}|{4}\n".format(address_tuple.input_address.encode('utf8'), 
-                                                  address_tuple.output_address.encode('utf8'),
-                                                  address_tuple.latitude,
-                                                  address_tuple.longitude,
-                                                  address_tuple.confidence))
-            bad_count+=1
-    print 'Partly done - now committing'
-    geo_data_session.commit()
-    print 'Commits done!'
-    print '% bad: ', bad_count/(raw_google.count()*1.0)
-
 #Take a list of features from output_address
 #Now we have to identify what locations these features correspond to
 #We focus on identifying city, state/region, and country
@@ -232,12 +196,12 @@ def identify_locations(feature_list):
 
 def clean_raw_locations_from_file(inputfilename, outputfilename):
     inputfile = open(inputfilename, 'r')
-    comparefile = open('%scompare.txt' % outputfilename, 'w+')
+    #comparefile = open('%scompare.txt' % outputfilename, 'w+')
     outputfile = open(outputfilename, 'w+')
     for line in inputfile:
         line = line.decode('utf8')
         #line = re.sub('\|[^\r\n]*','', line)
-        comparefile.write(line.encode('utf8'))
+        #comparefile.write(line.encode('utf8'))
         line = geoalchemy_util.clean_raw_location(line)
         line = line.encode('utf8')
         outputfile.write(line)
