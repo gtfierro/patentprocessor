@@ -1,6 +1,7 @@
 import re
 from bs4 import BeautifulSoup
 import unicodedata
+import Levenshtein as leven
 
 #Return a ", " separated string of the location
 def concatenate_location(city, state, country):
@@ -81,8 +82,6 @@ manual_replacements = manual_dict['replacements']
 quickfix_patterns = generate_quickfix_patterns()
 postal_pattern = re.compile(ur'(- )?[A-Z\-#\(]*\d+[\)A-Z]*', re.UNICODE)
 foreign_postal_pattern = re.compile(ur'[A-Z\d]{3,4}[ ]?[A-Z\d]{3}', re.UNICODE)
-england_pattern = re.compile(ur', EN', re.UNICODE)
-germany_pattern = re.compile(ur', DT', re.UNICODE)
 
 separator_pattern = re.compile(ur'\|', re.UNICODE)
 
@@ -90,11 +89,20 @@ separator_pattern = re.compile(ur'\|', re.UNICODE)
 #start of line symbols
 unnecessary_symbols_pattern = re.compile(ur'[#\(?<!.\)]')
 excess_whitespace_pattern = re.compile(ur'(?<= )( )+')
-start_of_line_removal_pattern = re.compile(ur'^(late of)?[-,/:;_& ]*', re.MULTILINE)
+start_of_line_removal_pattern = re.compile(ur'^(late of|LATE OF)?[\-,/:;_& ]*', re.MULTILINE)
+#A single letter followed by non-letters is unlikely to be useful information
+#More likely, it is what remains of other removals, such as streets and addresses
+start_of_line_letter_removal_pattern = re.compile(ur'^( )*[A-Za-z][\-, ]+', re.MULTILINE)
 extra_commas_pattern = re.compile(ur'(( )*,( )*)+')
 
-#Input: a raw location from the parse of trhe patent data
+england_pattern = re.compile(ur', EN')
+germany_pattern = re.compile(ur', DT')
+japan_pattern = re.compile(ur', JA')
+russia_pattern = re.compile(ur', SU')
+
+#Input: a raw location from the parse of the patent data
 def clean_raw_location(text):
+    text = remove_eol_pattern.sub('', text)
     text = separator_pattern.sub(', ', text)
     #Perform all of the manual replacements
     i=0
@@ -115,9 +123,35 @@ def clean_raw_location(text):
     text = unnecessary_symbols_pattern.sub('', text)
     text = excess_whitespace_pattern.sub('', text)
     text = start_of_line_removal_pattern.sub('', text)
+    text = start_of_line_letter_removal_pattern.sub('', text)
     text = extra_commas_pattern.sub(', ', text)
     #around commas
     text = england_pattern.sub(', GB', text)
     text = germany_pattern.sub(', DE', text)
+    text = japan_pattern.sub(', JP', text)
+    text = russia_pattern.sub(', RU', text)
     return text
+
+
+def get_closest_match_leven(text, comparison_list, minimum_match_value):
+    closest_match = ''
+    closest_match_value=0
+    for comparison_text in comparison_list:
+        temp_match_value = leven.jaro(text, comparison_text)
+        if temp_match_value>closest_match_value:
+            closest_match = comparison_text
+            closest_match_value = temp_match_value
+    if closest_match_value>minimum_match_value:
+        return closest_match
+    else:
+        return '' 
     
+#Parse the country from a cleaned location
+def get_country_from_cleaned(text):
+    text_split = text.split(',')
+    country = text_split[-1].strip()
+    return country
+
+capital_pattern = re.compile(r'[A-Z]')
+def region_is_a_state(region):
+    return capital_pattern.match(region)
