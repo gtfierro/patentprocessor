@@ -71,7 +71,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8):
     print "geocoding started", t
     #Construct a list of all addresses which Google was capable of identifying
     #Making this now allows it to be referenced quickly later
-    construct_valid_input_address_list(force_lowercase=True)
+    construct_valid_input_address_list()
     #Get all of the raw locations in alchemy.db that were parsed from XML
     raw_parsed_locations = alchemy_session.query(alchemy.RawLocation).limit(limit).offset(offset)
     #If there are no locations, there is no point in continuing
@@ -92,10 +92,9 @@ def main(limit=None, offset=0, minimum_match_value=0.8):
         cleaned_location = geoalchemy_util.clean_raw_location(parsed_raw_location)
         #If the cleaned location has a match in the raw_google database,
         #we use that to classify it
-        if input_address_exists(cleaned_location, force_lowercase=True):
+        if input_address_exists(cleaned_location):
             matching_location = geo_data_session.query(RawGoogle).filter(
-                                    sqlalchemy.func.lower(RawGoogle.input_address)==
-                                    sqlalchemy.func.lower(cleaned_location)).first()
+                                     RawGoogle.input_address==cleaned_location).first()
             grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
             identified_grouped_locations.append({"raw_location": instance,
                                   "matching_location": matching_location,
@@ -168,18 +167,17 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
             #If no match was found or only the trivial match
             if closest_match=='' or closest_match==country:
                 continue
-            if input_address_exists(closest_match, force_lowercase=True):
+            if input_address_exists(closest_match):
                 matching_location = geo_data_session.query(RawGoogle).filter(
-                                    sqlalchemy.func.lower(RawGoogle.input_address)==
-                                    sqlalchemy.func.lower(closest_match)).first()
+                                         RawGoogle.input_address==closest_match).first()
                 grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
                 raw_location = grouped_location["raw_location"]
                 identified_grouped_locations.append({"raw_location": raw_location,
                                   "matching_location": matching_location,
                                   "grouping_id": grouping_id})
-                print 'all_cities found additional match for', cleaned_location, ':', closest_match
+                print 'all_cities found additional match for', cleaned_location.encode('utf8'), ':', closest_match
             else:
-                print 'raw_google cannot find real city:', closest_match
+                print 'raw_google cannot find real city:', closest_match.encode('utf8')
     
 def match_grouped_locations(identified_grouped_locations_enum, t):
     for i, item in identified_grouped_locations_enum:
@@ -277,20 +275,16 @@ def analyze_input_addresses(inputfilename):
     print datetime.datetime.now()
 
 valid_input_address_list = set()
-def construct_valid_input_address_list(force_lowercase=False):
+def construct_valid_input_address_list():
     temp = geo_data_session.query(RawGoogle.input_address).filter(RawGoogle.confidence>0)\
                                 .filter((RawGoogle.city!='') | (RawGoogle.region!=''))
     for row in temp:
         input_address = row.input_address
-        if force_lowercase:
-            input_address = input_address.lower()
         valid_input_address_list.add(input_address)
     print 'List of all valid Google input_address values constructed with', len(valid_input_address_list), 'items'
 
-def input_address_exists(input_address, force_lowercase=False):
+def input_address_exists(input_address):
     if valid_input_address_list:
-        if force_lowercase:
-            input_address = input_address.lower()
         return input_address in valid_input_address_list
     else:
         print 'Error: list of valid input addresses not constructed'

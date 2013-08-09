@@ -132,6 +132,17 @@ Vaster{s|Västerås
 {umlaut over ( )}|
 {acute over (&#xe6;)}|æ
 &#x201c;A&#x201d;-Cdad. de|
+all of|
+all Of|
+All of|
+al of |
+Both of|
+BOTH OF|
+both of|
+bot of |
+both ot|
+late of |
+LATE OF |
 #       greek
 &agr;|α
 &bgr;|β
@@ -156,4 +167,3 @@ Vaster{s|Västerås
 <CUSTOM-CHARACTER FILE=US06710218-20040323-P00701.TIF ALT=custom character HE=20 WI=20 ID=CUSTOM-CHARACTER-00006/>|ș
 #Note: should be º, but this is not a valid character so ignore it
 <?img id=CUSTOM-CHARACTER-00001 he=2.46mm wi=2.12mm file=US07406752-20080805-P00001.TIF alt=custom character img-content=character img-format=tif ?>|
-#       Regex
