@@ -1,6 +1,7 @@
 import re
 from bs4 import BeautifulSoup
 import unicodedata
+import Levenshtein as leven
 
 #Return a ", " separated string of the location
 def concatenate_location(city, state, country):
@@ -14,6 +15,8 @@ def concatenate_location(city, state, country):
     location = ", ".join(location_list)
     return location
 
+remove_eol_pattern = re.compile(ur'[\r\n]+')
+
 #Many accent references are difficult to idenity programmatically.
 #These are handled by manually replacing each entry.
 #The replacements are stored in lib/manual_replacement_library.txt
@@ -25,9 +28,9 @@ def generate_manual_patterns_and_replacements():
     replacement_count=0
     for line in manual_replacement_file:
         #allow # to be a comment
-        if(line[0]=='#'):
+        if(line[0]=='#' or line=='\n'):
             continue
-        line_without_newline = re.sub('[\r\n]','',line)
+        line_without_newline = remove_eol_pattern.sub('',line)
         line_split = line_without_newline.split("|")
         #An individual re can only hold 100 entities. So split if necessary.
         if(replacement_count<99):
@@ -77,9 +80,30 @@ manual_dict = generate_manual_patterns_and_replacements()
 manual_patterns = manual_dict['patterns']
 manual_replacements = manual_dict['replacements']
 quickfix_patterns = generate_quickfix_patterns()
+postal_pattern = re.compile(ur'(- )?[A-Z\-#\(]*\d+[\)A-Z]*', re.UNICODE)
+foreign_postal_pattern = re.compile(ur'[A-Z\d]{3,4}[ ]?[A-Z\d]{3}', re.UNICODE)
+
+separator_pattern = re.compile(ur'\|', re.UNICODE)
+
+#Remove unnecessary symbols|whitespace in excess of one space|
+#start of line symbols
+unnecessary_symbols_pattern = re.compile(ur'[#\(?<!.\)]')
+excess_whitespace_pattern = re.compile(ur'(?<= )( )+')
+start_of_line_removal_pattern = re.compile(ur'^(late of|LATE OF)?[\-,/:;_& ]*', re.MULTILINE)
+#A single letter followed by non-letters is unlikely to be useful information
+#More likely, it is what remains of other removals, such as streets and addresses
+start_of_line_letter_removal_pattern = re.compile(ur'^( )*[A-Za-z][\-, ]+', re.MULTILINE)
+extra_commas_pattern = re.compile(ur'(( )*,( )*)+')
+
+england_pattern = re.compile(ur', EN')
+germany_pattern = re.compile(ur', DT')
+japan_pattern = re.compile(ur', JA')
+russia_pattern = re.compile(ur', SU')
 
 #Input: a raw location from the parse of the patent data
 def clean_raw_location(text):
+    text = remove_eol_pattern.sub('', text)
+    text = separator_pattern.sub(', ', text)
     #Perform all of the manual replacements
     i=0
     while i<len(manual_patterns):
@@ -88,16 +112,46 @@ def clean_raw_location(text):
     #Perform all the quickfix replacements
     text = quickfix_patterns['curly'].sub(get_chars_in_parentheses, text)
     
-    #Strip out extra spaces
-    text = re.sub(ur'[ ]*\|[ ]*','|',text)
-    text = re.sub(ur'[ ]*\r?\n','\n',text)
-    text = re.sub(ur'(?<!.) ','',text)
-    
     #Turn accents into unicode
     soup = BeautifulSoup(text)
-    souptext = unicode(soup.get_text())
-    souptext =  unicodedata.normalize('NFC', souptext)
+    text = unicode(soup.get_text())
+    text =  unicodedata.normalize('NFC', text)
     
-    #Convert to lowercase
-    souptext = souptext.lower()
-    return souptext
+    text = foreign_postal_pattern.sub('', text)
+    text = postal_pattern.sub('', text)
+    
+    text = unnecessary_symbols_pattern.sub('', text)
+    text = excess_whitespace_pattern.sub('', text)
+    text = start_of_line_removal_pattern.sub('', text)
+    text = start_of_line_letter_removal_pattern.sub('', text)
+    text = extra_commas_pattern.sub(', ', text)
+    #around commas
+    text = england_pattern.sub(', GB', text)
+    text = germany_pattern.sub(', DE', text)
+    text = japan_pattern.sub(', JP', text)
+    text = russia_pattern.sub(', RU', text)
+    return text
+
+
+def get_closest_match_leven(text, comparison_list, minimum_match_value):
+    closest_match = ''
+    closest_match_value=0
+    for comparison_text in comparison_list:
+        temp_match_value = leven.jaro(text, comparison_text)
+        if temp_match_value>closest_match_value:
+            closest_match = comparison_text
+            closest_match_value = temp_match_value
+    if closest_match_value>minimum_match_value:
+        return closest_match
+    else:
+        return '' 
+    
+#Parse the country from a cleaned location
+def get_country_from_cleaned(text):
+    text_split = text.split(',')
+    country = text_split[-1].strip()
+    return country
+
+capital_pattern = re.compile(r'[A-Z]')
+def region_is_a_state(region):
+    return capital_pattern.match(region)

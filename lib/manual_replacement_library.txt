@@ -6,7 +6,8 @@
 &angst;|Å
 {dot over (A)}|Å
 {dot over (a)}|å
-{hacek over (a)}|ǎ
+#Inaccurate, but too many possibilities - this should be easier to debug
+{hacek over (a)}|a
 .circle.|Å
 {overscore (A)}|Ä
 #Inaccurate, but too many possibilities - this should be easier to debug
@@ -120,6 +121,7 @@ Gro{burgwedel|Großburgwedel
 B{umlaut over (j)}rringbro|Bjerringbro
 B{acute over (j)}&#xe1;rred|Bjärred
 Defreggerstra{e|Defreggerstraße
+Vaster{s|Västerås
 #       other
 .cent.|
 #&compfn;|&#x02218;
@@ -129,6 +131,18 @@ Defreggerstra{e|Defreggerstraße
 & Engraving;|& Engraving
 {umlaut over ( )}|
 {acute over (&#xe6;)}|æ
+&#x201c;A&#x201d;-Cdad. de|
+all of|
+all Of|
+All of|
+al of |
+Both of|
+BOTH OF|
+both of|
+bot of |
+both ot|
+late of |
+LATE OF |
 #       greek
 &agr;|α
 &bgr;|β
@@ -151,4 +165,5 @@ Defreggerstra{e|Defreggerstraße
 <CUSTOM-CHARACTER FILE=US06710218-20040323-P00701.TIF ALT=custom character HE=20 WI=20 ID=CUSTOM-CHARACTER-00002/>|ș
 <CUSTOM-CHARACTER FILE=US06710218-20040323-P00701.TIF ALT=custom character HE=20 WI=20 ID=CUSTOM-CHARACTER-00003/>|ș
 <CUSTOM-CHARACTER FILE=US06710218-20040323-P00701.TIF ALT=custom character HE=20 WI=20 ID=CUSTOM-CHARACTER-00006/>|ș
-<?img id=CUSTOM-CHARACTER-00001 he=2.46mm wi=2.12mm file=US07406752-20080805-P00001.TIF alt=custom character img-content=character img-format=tif ?>|º
+#Note: should be º, but this is not a valid character so ignore it
+<?img id=CUSTOM-CHARACTER-00001 he=2.46mm wi=2.12mm file=US07406752-20080805-P00001.TIF alt=custom character img-content=character img-format=tif ?>|

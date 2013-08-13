@@ -4,6 +4,7 @@ import ConfigParser
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import exists
 from collections import defaultdict
 from schema import *
 from match import *
@@ -93,21 +94,22 @@ def add(obj, override=True, temp=False):
     """
 
     # if a patent exists, remove it so we can replace it
-    pat_query = session.query(Patent).filter(Patent.number == obj.patent)
-    if pat_query.count():
+    (patent_exists, ), = session.query(exists().where(Patent.number == obj.patent))
+    #pat_query = session.query(Patent).filter(Patent.number == obj.patent)
+    #if pat_query.count():
+    if patent_exists:
         if override:
+            pat_query = session.query(Patent).filter(Patent.number == obj.patent)
             session.delete(pat_query.one())
         else:
             return
     if len(obj.pat["number"]) < 3:
         return
 
-    #add
-    # lots of abstracts seem to be missing. why?
-
     pat = Patent(**obj.pat)
     pat.application = Application(**obj.app)
     
+    # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
 
     session.merge(pat)
