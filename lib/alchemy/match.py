@@ -11,13 +11,35 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
           also supports CleanObjects like Assignee
         keepexisting: Keep the default keyword
         default: Fields to default the clean variable with
-        commit: if True, commits the matched objects when 'match' is called.
-                if False, does not commit the matched objects, keeping them
-                in an intermediary state within the session object. Useful for
-                bulk updates (e.g. 'commit' the session every X calls to 'match')
+        commit: specifies whether we should commit each
+          new match call. turning commit off and committing
+          at a frequency is useful for bulk updates
+
+        commit: if True, commits the matched objects when
+            `match` is called.
+
+            if False, does not commit the matched objects,
+            keeping them in an intermediary state within the
+            session object. Useful for bulk updates
+            (e.g. `commit` the session after every X calls of `match`)
 
         Default key priority:
         auto > keepexisting > default
+
+        --- code to add later ---
+        meant to improve the detection of an item
+
+        raw_objects.append(obj)
+
+        # TODO
+        # this function does create some slow down
+        # there seems to be something wrong here!
+        # if class_type and default:
+        #    fetched = class_type.fetch(session, default)
+        #    if fetched:
+        #        clean_main = fetched
+
+        exist_param = {}
     """
     if not objects: return
     if type(objects).__name__ in ('list', 'tuple'):
@@ -54,13 +76,6 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
                     freq[k] += Counter(dict(clean.__rawgroup__(session, k)))
         elif obj and obj not in raw_objects:
             raw_objects.append(obj)
-
-    # this function does create some slow down
-    # there seems to be something wrong here!
-    # if class_type and default:
-    #    fetched = class_type.fetch(session, default)
-    #    if fetched:
-    #        clean_main = fetched
 
     exist_param = {}
     if clean_main:
@@ -124,9 +139,11 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
 def unmatch(objects, session):
     """
     Separate our dataset
-    # TODO. THIS NEEDS TO BE FIGURED OUT
+
+    # TODO
     # Unlinking doesn't seem to be working
-    # properly if a LOCATION is added
+    # properly if a LOCATION is added to items
+    # such as Assignee/Lawyer
     """
     if type(objects).__name__ in ('list', 'tuple'):
         objects = list(set(objects))
