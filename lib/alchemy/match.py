@@ -41,6 +41,7 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
 
         exist_param = {}
     """
+    if not objects: return
     if type(objects).__name__ in ('list', 'tuple'):
         objects = list(set(objects))
     elif type(objects).__name__ not in ('list', 'tuple', 'Query'):
