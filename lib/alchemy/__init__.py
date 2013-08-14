@@ -151,6 +151,7 @@ def add_law(obj, pat):
 
 def add_usreldoc(obj, pat):
     for usr in obj.us_relation_list:
+        usr["rel_id"] = usr["number"]
         usr = USRelDoc(**usr)
         pat.usreldocs.append(usr)
 
