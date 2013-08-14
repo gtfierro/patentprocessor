@@ -74,6 +74,7 @@ def fetch_session(db=None):
     session = Session()
     return session
 
+
 def add(obj, override=True, temp=False):
     """
     PatentGrant Object converting to tables via SQLAlchemy
@@ -108,12 +109,12 @@ def add(obj, override=True, temp=False):
 
     pat = Patent(**obj.pat)
     pat.application = Application(**obj.app)
-    
     # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
 
     session.merge(pat)
-    
+
+
 def add_all_fields(obj, pat):
     add_asg(obj, pat)
     add_inv(obj, pat)
@@ -122,7 +123,8 @@ def add_all_fields(obj, pat):
     add_classes(obj, pat)
     add_ipcr(obj, pat)
     add_citations(obj, pat)
-    
+
+
 def add_asg(obj, pat):
     for asg, loc in obj.assignee_list:
         asg = RawAssignee(**asg)
@@ -130,6 +132,7 @@ def add_asg(obj, pat):
         session.merge(loc)
         asg.rawlocation = loc
         pat.rawassignees.append(asg)
+
 
 def add_inv(obj, pat):
     for inv, loc in obj.inventor_list:
@@ -139,16 +142,19 @@ def add_inv(obj, pat):
         inv.rawlocation = loc
         pat.rawinventors.append(inv)
 
+
 def add_law(obj, pat):
     for law in obj.lawyer_list:
         law = RawLawyer(**law)
         pat.rawlawyers.append(law)
-        
+
+
 def add_usreldoc(obj, pat):
     for usr in obj.us_relation_list:
         usr = USRelDoc(**usr)
         pat.usreldocs.append(usr)
-        
+
+
 def add_classes(obj, pat):
     for uspc, mc, sc in obj.us_classifications:
         uspc = USPC(**uspc)
@@ -159,22 +165,26 @@ def add_classes(obj, pat):
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
-        
+
+
 def add_ipcr(obj, pat):
     for ipc in obj.ipcr_classifications:
         ipc = IPCR(**ipc)
         pat.ipcrs.append(ipc)
-        
+
+
 def add_citations(obj, pat):
     cits, refs = obj.citation_list
     for cit in cits:
         if cit['country'] == 'US':
             # granted patent doc number
             if re.match(r'^[A-Z]*\d+$', cit['number']):
+                cit['citation_id'] = cit['number']
                 cit = USPatentCitation(**cit)
                 pat.uspatentcitations.append(cit)
             # if not above, it's probably an application
             else:
+                cit['application_id'] = cit['number']
                 cit = USApplicationCitation(**cit)
                 pat.usapplicationcitations.append(cit)
         # if not US, then foreign citation
@@ -184,6 +194,7 @@ def add_citations(obj, pat):
     for ref in refs:
         ref = OtherReference(**ref)
         pat.otherreferences.append(ref)
+
 
 def commit():
     try:
