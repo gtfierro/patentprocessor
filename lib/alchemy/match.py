@@ -11,17 +11,10 @@ def match(objects, session, default={}, keepexisting=False, commit=True):
           also supports CleanObjects like Assignee
         keepexisting: Keep the default keyword
         default: Fields to default the clean variable with
-        commit: specifies whether we should commit each
-          new match call. turning commit off and committing
-          at a frequency is useful for bulk updates
-
-        commit: if True, commits the matched objects when
-            `match` is called.
-
-            if False, does not commit the matched objects,
-            keeping them in an intermediary state within the
-            session object. Useful for bulk updates
-            (e.g. `commit` the session after every X calls of `match`)
+        commit: if True, commits the matched objects when 'match' is called.
+                if False, does not commit the matched objects, keeping them
+                in an intermediary state within the session object. Useful for
+                bulk updates (e.g. 'commit' the session every X calls to 'match')
 
         Default key priority:
         auto > keepexisting > default
