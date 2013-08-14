@@ -58,12 +58,12 @@ class PatentGrant(object):
             "claims": self.clm_num
         }
         self.app = {
-            "uuid": str(uuid.uuid1()),
             "type": self.code_app,
             "number": self.patent_app,
             "country": self.country_app,
             "date": self._fix_date(self.date_app)
         }
+        self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
 
     def _invention_title(self):
         original = self.xml.contents_of('invention_title', upper=False)[0]
