@@ -81,19 +81,16 @@ class Patent(Base):
     rawassignees = relationship("RawAssignee", backref="patent", cascade=cascade)
     rawinventors = relationship("RawInventor", backref="patent", cascade=cascade)
     rawlawyers = relationship("RawLawyer", backref="patent", cascade=cascade)
-
     uspatentcitations = relationship("USPatentCitation",
-                            backref="patent",
-                            primaryjoin="Patent.id == USPatentCitation.citation_id",
-                            cascade=cascade)
-    usapplicationcitations = relationship("USApplicationCitation",
-                            backref="patent",
-                            primaryjoin="Patent.id == USApplicationCitation.citation_id",
-                            cascade=cascade)
-    foreigncitations = relationship("ForeignCitation",
-                            backref="patent",
-                            primaryjoin="Patent.id == ForeignCitation.citation_id",
-                            cascade=cascade)
+        backref="patent",
+        primaryjoin="Patent.id == USPatentCitation.patent_id",
+        cascade=cascade)
+    uspatentcitedby = relationship("USPatentCitation",
+        backref="citation",
+        primaryjoin="Patent.id == USPatentCitation.citation_id",
+        cascade=cascade)
+    usapplicationcitations = relationship("USApplicationCitation", backref="patent", cascade=cascade)
+    foreigncitations = relationship("ForeignCitation", backref="patent", cascade=cascade)
     otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
     usreldocs = relationship(
         "USRelDoc",
@@ -137,19 +134,20 @@ class Patent(Base):
 
 class Application(Base):
     __tablename__ = "application"
-    uuid = Column(Unicode(36), primary_key=True)
+    id = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     type = Column(Unicode(20))
     number = Column(Unicode(64))
     country = Column(Unicode(20))
     date = Column(Date)
+    usapplicationcitations = relationship("USApplicationCitation", backref="application", cascade=cascade)
     __table_args__ = (
         Index("app_idx1", "type", "number"),
         Index("app_idx2", "date"),
     )
 
     def __repr__(self):
-        return "<Application('{0}, {1}')>".format(self.number, self.date)
+        return "<Application('{0}')>".format(self.id)
 
 
 # SUPPORT --------------------------
@@ -864,7 +862,7 @@ class USPatentCitation(Base):
     sequence = Column(Integer)
 
     def __repr__(self):
-        return "<USPatentCitation('{0}, {1}')>".format(self.number, self.date)
+        return "<USPatentCitation('{0} {1}, {2}')>".format(self.patent_id, self.citation_id, self.date)
 
 class USApplicationCitation(Base):
     """
@@ -873,7 +871,7 @@ class USApplicationCitation(Base):
     __tablename__ = "usapplicationcitation"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    citation_id = Column(Unicode(20), ForeignKey("patent.id"))
+    application_id = Column(Unicode(20), ForeignKey("application.id"))
     date = Column(Date)
     name = Column(Unicode(64))
     kind = Column(Unicode(10))
@@ -883,7 +881,7 @@ class USApplicationCitation(Base):
     sequence = Column(Integer)
 
     def __repr__(self):
-        return "<USApplicationCitation('{0}, {1}')>".format(self.number, self.date)
+        return "<USApplicationCitation('{0} {1}, {2}')>".format(self.patent_id, self.application_id, self.date)
 
 class ForeignCitation(Base):
     """
@@ -892,7 +890,6 @@ class ForeignCitation(Base):
     __tablename__ = "foreigncitation"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    citation_id = Column(Unicode(20), ForeignKey("patent.id"))
     date = Column(Date)
     name = Column(Unicode(64))
     kind = Column(Unicode(10))
@@ -902,7 +899,7 @@ class ForeignCitation(Base):
     sequence = Column(Integer)
 
     def __repr__(self):
-        return "<ForeignCitation('{0}, {1}')>".format(self.number, self.date)
+        return "<ForeignCitation('{0} {1}, {2}')>".format(self.patent_id, self.number, self.date)
 
 
 class OtherReference(Base):
