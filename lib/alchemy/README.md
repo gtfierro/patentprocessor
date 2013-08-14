@@ -18,6 +18,11 @@ After git clone:
 sudo pip install -r requirements.txt
 ```
 
+```
+git fetch upstream
+git merge upstream\sqlalchemy
+```
+
 #### Some MySQL recipes specific to AWS:
 
 Export files into CSV
