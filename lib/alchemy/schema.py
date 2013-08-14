@@ -81,11 +81,13 @@ class Patent(Base):
     rawassignees = relationship("RawAssignee", backref="patent", cascade=cascade)
     rawinventors = relationship("RawInventor", backref="patent", cascade=cascade)
     rawlawyers = relationship("RawLawyer", backref="patent", cascade=cascade)
-    uspatentcitations = relationship("USPatentCitation",
+    uspatentcitations = relationship(
+        "USPatentCitation",
         backref="patent",
         primaryjoin="Patent.id == USPatentCitation.patent_id",
         cascade=cascade)
-    uspatentcitedby = relationship("USPatentCitation",
+    uspatentcitedby = relationship(
+        "USPatentCitation",
         backref="citation",
         primaryjoin="Patent.id == USPatentCitation.citation_id",
         cascade=cascade)
@@ -122,8 +124,10 @@ class Patent(Base):
             "rawinventors": len(self.rawinventors),
             "rawlawyers": len(self.rawlawyers),
             "otherreferences": len(self.otherreferences),
-            "citations": len(self.citations),
-            "citedby": len(self.citedby),
+            "uspatentcitations": len(self.uspatentcitations),
+            "usapplicationcitations": len(self.usapplicationcitations),
+            "foreigncitations": len(self.foreigncitations),
+            "uspatentcitedby": len(self.uspatentcitedby),
             "usreldocs": len(self.usreldocs),
             "relpatents": len(self.relpatents),
         }
