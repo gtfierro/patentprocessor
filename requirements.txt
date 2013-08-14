@@ -4,3 +4,5 @@ unidecode
 MySQL-python
 pyzmq
 beautifulsoup4
+scipy
+python-Levenshtein
