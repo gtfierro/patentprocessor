@@ -17,6 +17,7 @@ regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s
 xmlhandlers = get_xml_handlers('process.cfg')
 logfile = "./" + 'xml-parsing.log'
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
+commit_frequency = alchemy.get_config().get('parse').get('commit_frequency')
 
 class Patobj(object): pass
 
@@ -107,15 +108,24 @@ def parse_patents(xmltuples):
     if not xmltuples: return []
     return map(parse_patent, xmltuples)
 
-def database_commit(patobjects):
+def database_commit(patobjects, commit_frequency=commit_frequency):
     """
-    takes in a list of Patent objects (from parse_patents above)
-    and commits them to the database. This method is designed
-    to be use sequentially to account for db concurrency
+    takes in a list of Patent objects (from parse_patents above) and commits
+    them to the database. This method is designed to be used sequentially to
+    account for db concurrency.  The optional argument `commit_frequency`
+    determines the frequency with which we commit the objects to the database.
+    If set to 0, it will commit after all patobjects have been added.  Setting
+    `commit_frequency` to be low (but not 0) is helpful for low memory machines.
     """
+    i = 0
+    num_objs = len(patobjects) # compute this once
     for patobj in patobjects:
+        i += 1
         alchemy.add(patobj)
-    alchemy.commit()
+        if commit_frequency and (i % commit_frequency == 0 or i == num_objs):
+            alchemy.commit()
+    if not commit_frequency:
+        alchemy.commit()
 
 # TODO: this should only move alchemy.sqlite3
 def move_tables(output_directory):
