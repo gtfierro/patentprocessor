@@ -11,7 +11,6 @@ import lib.alchemy as alchemy
 import shutil
 from lib.config_parser import get_xml_handlers
 
-regex = re.compile(r"""([<][?]xml version.*?[>]\s*[<][!]DOCTYPE\s+([A-Za-z-]+)\s+.*?/\2[>])""", re.S+re.I)
 xmlhandlers = get_xml_handlers('process.cfg')
 logfile = "./" + 'xml-parsing.log'
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
