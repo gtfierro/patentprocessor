@@ -4,8 +4,6 @@ import logging
 import os
 import datetime
 import re
-import mmap
-import contextlib
 import itertools
 import sys
 import lib.argconfig_parse as argconfig_parse
@@ -56,19 +54,24 @@ def _get_parser(date):
 
 def extract_xml_strings(filename):
     """
-    Given a [filename], opens the file using mmap and returns a list of tuples.
-    Each tuple is of format (year, xml doc string). A tuple is returned for
-    every valid XML doc in [filename]
+    Given a string [filename], opens the file and returns a generator
+    that yields tuples. A tuple is of format (year, xmldoc string). A tuple
+    is returned for every valid XML doc in [filename]
     """
-    if not filename: return
-    parsed_xmls = []
-    size = os.stat(filename).st_size
-    logging.debug("Parsing file: {0}".format(filename))
+    # search for terminating XML tag
+    endtag_regex = re.compile('^<!DOCTYPE (.*) SYSTEM')
+    endtag = ''
     with open(filename, 'r') as f:
-        with contextlib.closing(mmap.mmap(f.fileno(), size, access=mmap.ACCESS_READ)) as m:
-            res = [(_get_date(filename), x[0]) for x in regex.findall(m)]
-            parsed_xmls.extend(res)
-    return parsed_xmls
+        doc = '' # (re)initialize current XML doc to empty string
+        for line in f:
+            doc += line
+            endtag = endtag_regex.findall(line) if not endtag else endtag
+            if not endtag: continue
+            terminate = re.compile('^</{0}>'.format(endtag[0]))
+            if terminate.findall(line):
+                yield (_get_date(filename), doc)
+                endtag = ''
+                doc = ''
 
 def parse_files(filelist):
     """
