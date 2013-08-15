@@ -144,7 +144,7 @@ class PatentGrant(object):
             for tag in ['city', 'state', 'country']:
                 loc[tag] = assignee.contents_of(tag, as_string=True, upper=False)
             #this is created because of MySQL foreign key case sensitivities
-            loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
+            loc['id'] = unidecode(u"|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(asg.values()) or any(loc.values()):
                 asg['sequence'] = i
                 asg['uuid'] = str(uuid.uuid1())
