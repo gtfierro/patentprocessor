@@ -31,7 +31,6 @@ Base.__init__ = init
 # Base.update = update
 # <<<<<<
 
-
 # ASSOCIATION ----------------------
 
 patentassignee = Table(
@@ -83,14 +82,13 @@ class Patent(Base):
     rawlawyers = relationship("RawLawyer", backref="patent", cascade=cascade)
     uspatentcitations = relationship(
         "USPatentCitation",
-        backref="patent",
         primaryjoin="Patent.id == USPatentCitation.patent_id",
-        cascade=cascade)
+        backref="patent", cascade=cascade)
     uspatentcitedby = relationship(
         "USPatentCitation",
-        backref="citation",
         primaryjoin="Patent.id == USPatentCitation.citation_id",
-        cascade=cascade)
+        foreign_keys="USPatentCitation.citation_id",
+        backref="citation", cascade=cascade)
     usapplicationcitations = relationship("USApplicationCitation", backref="patent", cascade=cascade)
     foreigncitations = relationship("ForeignCitation", backref="patent", cascade=cascade)
     otherreferences = relationship("OtherReference", backref="patent", cascade=cascade)
@@ -101,7 +99,8 @@ class Patent(Base):
     relpatents = relationship(
         "USRelDoc",
         primaryjoin="Patent.id == USRelDoc.rel_id",
-        backref="relpatent")
+        foreign_keys="USRelDoc.rel_id",
+        backref="relpatent", cascade=cascade)
     assignees = relationship("Assignee", secondary=patentassignee, backref="patents")
     inventors = relationship("Inventor", secondary=patentinventor, backref="patents")
     lawyers = relationship("Lawyer", secondary=patentlawyer, backref="patents")
@@ -144,7 +143,11 @@ class Application(Base):
     number = Column(Unicode(64))
     country = Column(Unicode(20))
     date = Column(Date)
-    usapplicationcitations = relationship("USApplicationCitation", backref="application", cascade=cascade)
+    usapplicationcitations = relationship(
+        "USApplicationCitation",
+        primaryjoin="Application.id == USApplicationCitation.application_id",
+        foreign_keys="USApplicationCitation.application_id",
+        backref="application", cascade=cascade)
     __table_args__ = (
         Index("app_idx1", "type", "number"),
         Index("app_idx2", "date"),
@@ -856,7 +859,7 @@ class USPatentCitation(Base):
     __tablename__ = "uspatentcitation"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    citation_id = Column(Unicode(20), ForeignKey("patent.id"))
+    citation_id = Column(Unicode(20), index=True)
     date = Column(Date)
     name = Column(Unicode(64))
     kind = Column(Unicode(10))
@@ -875,7 +878,7 @@ class USApplicationCitation(Base):
     __tablename__ = "usapplicationcitation"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    application_id = Column(Unicode(20), ForeignKey("application.id"))
+    application_id = Column(Unicode(20), index=True)
     date = Column(Date)
     name = Column(Unicode(64))
     kind = Column(Unicode(10))
@@ -921,7 +924,7 @@ class USRelDoc(Base):
     __tablename__ = "usreldoc"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    rel_id = Column(Unicode(20), ForeignKey("patent.id"))
+    rel_id = Column(Unicode(20), index=True)
     doctype = Column(Unicode(64), index=True)
     status = Column(Unicode(20))
     date = Column(Date, index=True)
