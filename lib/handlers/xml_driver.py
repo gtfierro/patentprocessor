@@ -88,7 +88,7 @@ class XMLElement(object):
             if res and type(res[0]).__name__ in ('list', 'tuples'):
                 return ''
             else:
-                return ' '.join(res)
+                return ' '.join(filter(lambda x: x, res))
         return res
 
     def get_content(self, upper=True):
