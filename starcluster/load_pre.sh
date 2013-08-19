@@ -13,7 +13,7 @@ for i in `ls *.xml`
 
     cd /home/sgeadmin/patentprocessor
     echo " - python"
-    python parse_sq.py -p /mnt/sgeadmin --xmlregex $i
+    python parse.py -p /mnt/sgeadmin -x $i
     echo " - mysqldump"
     mysqldump -root uspto -T /var/lib/mysql/uspto
 

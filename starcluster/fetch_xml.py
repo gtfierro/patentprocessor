@@ -21,22 +21,8 @@ def fetch():
         if not os.path.exists("{0}.xml".format(fname)):
             os.system("wget {0}".format(f))
             os.system("unzip {0}.zip".format(fname))
-    #         os.chdir(master)
-    #         os.system("python parse_sq.py -p {0} --xmlregex {1} >> tar/{2}.log".format(node, fname, ids))
-    #         os.system("mysqldump -root uspto -T /var/lib/mysql/uspto")
-    #         os.chdir("/var/lib/mysql/uspto")
-    #         os.system("tar -czf {0}.tar.gz *.txt".format(fname))
-    #         for txts in glob.glob("*.txt"):
-    #             os.system("cat {0} >> {0}.full".format(txts))
-    #         os.system("rm *.txt")
-    #         os.system("scp {0}.tar.gz {1}/tar".format(fname, master))
 
-    # os.chdir("/var/lib/mysql/uspto")
-    # os.system("tar -czf {0}.tar.gz *.txt.full".format(ids))
-    # os.system("mv {0}.tar.gz {1}/tar".format(ids, master))
-
-
-fname = open("{0}/urls.pickle".format(config.get('directory', 'sqlalchemy')), "rb")
+fname = open("urls.pickle", "rb")
 urls = pickle.load(fname)
 
 master = config.get('directory', 'home')
@@ -51,6 +37,3 @@ for year in urls.keys():
     full.extend(urls[year])
 dview.scatter("files", full)
 fetch()
-
-#sudo apt-get install -y python-mysqldb python-pip sqlite3
-#sudo pip install unidecode sqlalchemy
