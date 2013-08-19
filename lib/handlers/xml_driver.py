@@ -85,10 +85,14 @@ class XMLElement(object):
         else:
             res = default
         if as_string:
-            if res and type(res[0]).__name__ in ('list', 'tuples'):
+            if not res:
                 return ''
-            else:
-                return ' '.join(filter(lambda x: x, res))
+            # handle corner case of [['content', 'here']]
+            elif isinstance(res, list)\
+                 and len(res) == 1\
+                 and isinstance(res[0], list):
+                res = res[0]
+            return ' '.join(filter(lambda x: x, res))
         return res
 
     def get_content(self, upper=True):
