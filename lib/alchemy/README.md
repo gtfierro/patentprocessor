@@ -76,3 +76,4 @@ mysql -u [user] -p --local-infile=1 -h [db] [tbl]
 
   * [Adding Indices to SQLAlchemy](http://stackoverflow.com/questions/6626810/multiple-columns-index-when-using-the-declarative-orm-extension-of-sqlalchemy)
   * [Ignoring Files in GIT](https://help.github.com/articles/ignoring-files)
+  * [Permanently removing files in GIT](http://dalibornasevic.com/posts/2-permanently-remove-files-and-folders-from-a-git-repository)
