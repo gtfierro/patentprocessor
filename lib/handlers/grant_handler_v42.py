@@ -8,11 +8,13 @@ from patent grant documents
 from cStringIO import StringIO
 from datetime import datetime
 from unidecode import unidecode
+import re
 import uuid
 import xml.sax
 import xml_util
 import xml_driver
 
+claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
 class PatentGrant(object):
 
@@ -28,7 +30,7 @@ class PatentGrant(object):
             parser.parse(StringIO(xml_string))
         else:
             parser.parse(xml_string)
-        self.xml = xh.root.us_patent_grant.us_bibliographic_data_grant
+        self.xml = xh.root.us_patent_grant
 
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
         self.patent = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
@@ -55,7 +57,7 @@ class PatentGrant(object):
             "abstract": self.abstract,
             "title": self.invention_title,
             "kind": self.kind,
-            "claims": self.clm_num
+            "num_claims": self.clm_num
         }
         self.app = {
             "type": self.code_app,
@@ -391,4 +393,30 @@ class PatentGrant(object):
                 data['sequence'] = i
                 data['uuid'] = str(uuid.uuid1())
                 res.append(data)
+        return res
+
+    @property
+    def claims(self):
+        """
+        Returns list of dictionaries representing claims
+        claim:
+          text
+          dependent -- -1 if an independent claim, else this is the number
+                       of the claim this one is dependent on
+          sequence
+        """
+        claims = self.xml.claim
+        res = []
+        for i, claim in enumerate(claims):
+            data = {}
+            data['text'] = claim.contents_of('claim_text', as_string=True, upper=False)
+            # remove leading claim num from text
+            data['text'] = claim_num_regex.sub('', data['text'])
+            data['sequence'] = i+1 # claims are 1-indexed
+            if claim.claim_ref:
+                # claim_refs are 'claim N', so we extract the N
+                data['dependent'] = int(claim.contents_of('claim_ref',\
+                                        as_string=True).split(' ')[-1])
+            data['uuid'] = str(uuid.uuid1())
+            res.append(data)
         return res
