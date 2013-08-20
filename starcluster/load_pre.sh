@@ -10,6 +10,7 @@ for i in `ls *.xml`
     cd /home/sgeadmin/patentprocessor
     echo " - drop database"
     mysql -root uspto < starcluster/load_drop.sql
+    mysql -root uspto < starcluster/load_drop.sql
 
     cd /home/sgeadmin/patentprocessor
     echo " - python"
