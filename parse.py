@@ -106,6 +106,7 @@ def parse_files(filelist):
                 alchemy.commit()
                 print " *", (i+1), datetime.datetime.now()
         alchemy.commit()
+        print " *", "Complete", datetime.datetime.now()
 
 
 def parse_patent(xmltuple):
