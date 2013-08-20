@@ -16,6 +16,7 @@ drop table otherreference;
 drop table foreigncitation;
 drop table uspatentcitation;
 drop table usapplicationcitation;
+drop table claim;
 drop table uspc;
 drop table usreldoc;
 drop table patent;
