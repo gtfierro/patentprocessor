@@ -26,8 +26,8 @@ There are two ways to get started:
   `consolidate.py` to obtain a full set of tables.
 
 To run the `clean.py` script, the
-[location](https://s3.amazonaws.com/funginstitute/geolocation_data.sqlite3)
-table must exist in the `patentprocessor/lib` directory.
+[location](https://s3.amazonaws.com/fungpatdownloads/geolocation_data.7z)
+table must exist in the `patentprocessor/lib` directory. File requires [7zip](http://www.7-zip.org/) to unpack.
 
 ## Configuring the Preprocessing Environment
 
