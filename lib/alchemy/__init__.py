@@ -123,6 +123,7 @@ def add_all_fields(obj, pat):
     add_classes(obj, pat)
     add_ipcr(obj, pat)
     add_citations(obj, pat)
+    add_claims(obj, pat)
 
 
 def add_asg(obj, pat):
@@ -195,6 +196,12 @@ def add_citations(obj, pat):
     for ref in refs:
         ref = OtherReference(**ref)
         pat.otherreferences.append(ref)
+
+def add_claims(obj, pat):
+    claims = obj.claims
+    for claim in claims:
+        clm = Claim(**claim)
+        pat.claims.append(clm)
 
 
 def commit():
