@@ -71,7 +71,7 @@ class Patent(Base):
     abstract = deferred(Column(UnicodeText))
     title = deferred(Column(UnicodeText))
     kind = Column(Unicode(10))
-    claims = Column(Integer)
+    num_claims = Column(Integer)
 
     application = relationship("Application", uselist=False, backref="patent", cascade=cascade)
     classes = relationship("USPC", backref="patent", cascade=cascade)
@@ -80,6 +80,7 @@ class Patent(Base):
     rawassignees = relationship("RawAssignee", backref="patent", cascade=cascade)
     rawinventors = relationship("RawInventor", backref="patent", cascade=cascade)
     rawlawyers = relationship("RawLawyer", backref="patent", cascade=cascade)
+    claims = relationship("Claim", backref="patent", cascade=cascade)
     uspatentcitations = relationship(
         "USPatentCitation",
         primaryjoin="Patent.id == USPatentCitation.patent_id",
@@ -936,3 +937,14 @@ class USRelDoc(Base):
 
     def __repr__(self):
         return "<USRelDoc('{0}, {1}')>".format(self.number, self.date)
+
+class Claim(Base):
+    __tablename__ = 'claim'
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey('patent.id'))
+    text = deferred(Column(UnicodeText))
+    dependent = Column(Integer) # if -1, independent
+    sequence = Column(Integer, index=True)
+
+    def __repr__(self):
+        return "<Claim('{0}')>".format(self.text)
