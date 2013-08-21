@@ -10,7 +10,6 @@ from unidecode import unidecode
 from sqlalchemy import Table
 import schema_func
 
-# Extend the Base >>>>>>
 Base = declarative_base()
 cascade = "all, delete, delete-orphan"
 
@@ -29,7 +28,6 @@ def init(self, *args, **kwargs):
 
 Base.__init__ = init
 # Base.update = update
-# <<<<<<
 
 # ASSOCIATION ----------------------
 
