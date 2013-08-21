@@ -14,4 +14,5 @@ The StarCluster machines are configured to replicate the environment necessary t
   4.  `cd /home/sgeadmin/patentprocessor/starcluster; sh load_pre.sh > ../tar/[num].log` execute the shell script
   5.  Transfer the tar files to a separate location (or server) to begin the MySQL ingestion process.
   6. Execute `build_tsv.py` and specify the location of the `tar.gz` files. This builds several text files which can be later ingested.
-  7. Log into mysql. If it is a remote server, such as on Amazon RDS, `mysql -u [user] -p --local-infile=1 -h [db] [tbl]` and execute `source load.sql`. The default database is assumed to be `uspto_new` so if this should be something else, please make the appropriate adjustments.
+  7. Modify `config.ini` file and set the proper credentials to the desired database. `from lib import alchemy` so the schema is fully updated.
+  8. Log into mysql. If it is a remote server, such as on Amazon RDS, `mysql -u [user] -p --local-infile=1 -h [db] [tbl]` and execute `source load.sql`. The default database is assumed to be `uspto_new` so if this should be something else, please make the appropriate adjustments.
