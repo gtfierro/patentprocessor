@@ -12,4 +12,4 @@ The StarCluster machines are configured to replicate the environment necessary t
   2.  Login to the starcluster using root
   3.  Point the `config.ini` file so it points to the MySQL database
   4.  `cd /home/sgeadmin/patentprocessor/starcluster; sh load_pre.sh > ../tar/[num].log` execute the shell script
-  5.  Transfer the 
+  5.  Concatenate the 
