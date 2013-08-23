@@ -937,7 +937,7 @@ class USRelDoc(Base):
         return "<USRelDoc('{0}, {1}')>".format(self.number, self.date)
 
 class Claim(Base):
-    __tablename__ = 'claim'
+    __tablename__ = "claim"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey('patent.id'))
     text = deferred(Column(UnicodeText))
@@ -946,3 +946,29 @@ class Claim(Base):
 
     def __repr__(self):
         return "<Claim('{0}')>".format(self.text)
+
+class FutureCitationRank(Base):
+    """
+    This table contains the rank of each patent by number of future citations
+    in each year.  A row in this table will read something like "Patent Number
+    X got Y future citations in year Z. It was the Nth most cited patent that
+    year"
+    """
+    __tablename__ = "futurecitationrank"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey('patent.id'))
+    num_citations = Column(Integer)
+    citation_year = Column(Integer)
+    rank = Column(Integer)
+
+class InventorRank(Base):
+    """
+    This table contains the rank of each inventor by how many patents they
+    have been granted in a given year.
+    """
+    __tablename__ = "inventorrank"
+    uuid = Column(Unicode(36), primary_key=True)
+    inventor_id = Column(Unicode(36), ForeignKey('inventor.id'))
+    num_patents = Column(Integer)
+    patent_year = Column(Integer)
+    rank = Column(Integer)
