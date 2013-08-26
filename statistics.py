@@ -56,6 +56,30 @@ def insert_future_citation_rank(years):
     alchemy.commit()
     print 'Finished inserting records', datetime.now()
 
+def insert_cited_by(years):
+    """
+    Accepts as input the dictionary returned from compute_future_citation_rank:
+        years[YEAR][PATENT_ID] = number of times PATENT_ID was cited in YEAR
+    Inserts records into CitedBy table
+    """
+    deleted = alchemy.session.query(alchemy.CitedBy).delete()
+    print 'Removed {0} rows from FutureCitationRank'.format(deleted)
+    print 'Inserting records in order...', datetime.now()
+    for year in years.iterkeys():
+        for i, record in enumerate(years[year].iteritems()):
+            row = {'uuid': str(uuid.uuid1()),
+                   'patent_id': record[0],
+                   'year': year}
+            for citation in record[1]:
+                row.update({'citation_id': citation})
+                dbrow = alchemy.CitedBy(**row)
+                alchemy.session.merge(dbrow)
+            if (i+1) % 1000 == 0:
+                alchemy.commit()
+    alchemy.commit()
+    print 'Finished inserting records', datetime.now()
+
+
 
 def compute_inventor_rank():
     """
@@ -107,6 +131,7 @@ def insert_inventor_rank(years):
 if __name__=='__main__':
     years = compute_future_citation_rank()
     insert_future_citation_rank(years)
+    insert_cited_by(years)
 
     years = compute_inventor_rank()
     insert_inventor_rank(years)
