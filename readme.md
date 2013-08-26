@@ -39,24 +39,16 @@ If you have [`pip`](http://www.pip-installer.org/en/latest/index.html)
 installed, you can simplify the installation process by just running `sudo pip
 install -r requirements.txt` from within the patentprocessor directory.
 
-* Python 2.7.3
-* scipy package for Python
-* sqlite3 --> Note: you need version 3.7.15.1 or higher
-* IPython
-* pyzmq
-* sqlalchemy
-* python-Levenshtein
-* python-mysqldb
-* More? Please [file an
-  issue](https://github.com/funginstitute/patentprocessor/issues) if you find another dependency.
+Please [file an issue](https://github.com/funginstitute/patentprocessor/issues) if you find another dependency.
 
-For Ubuntu, apt-get install the following packages
+### Ubuntu
 
 ```
-sudo apt-get install -y python-Levenshtein
-sudo apt-get install -y python-mysqldb
-sudo apt-get install -y python-pip
-sudo apt-get install -y python-pyzmq
+sudo apt-get update
+sudo apt-get install python-dev
+sudo apt-get install python-setuptools
+sudo easy_install -U distribute
+sudo apt-get install -y python-Levenshtein make libmysqlclient-dev python-mysqldb python-pip python-zmq python-numpy gfortran libopenblas-dev liblapack-dev g++ sqlite3 libsqlite3-dev python-sqlite
 sudo pip install -r requirements.txt
 ```
 
