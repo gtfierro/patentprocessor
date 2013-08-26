@@ -958,7 +958,7 @@ class FutureCitationRank(Base):
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey('patent.id'))
     num_citations = Column(Integer)
-    citation_year = Column(Integer)
+    year = Column(Integer)
     rank = Column(Integer)
 
 class InventorRank(Base):
@@ -970,5 +970,16 @@ class InventorRank(Base):
     uuid = Column(Unicode(36), primary_key=True)
     inventor_id = Column(Unicode(36), ForeignKey('inventor.id'))
     num_patents = Column(Integer)
-    patent_year = Column(Integer)
+    year = Column(Integer)
     rank = Column(Integer)
+
+class CitedBy(Base):
+    """
+    Table contains direct mapping of patent_id to all citation_ids that cite that patent.
+    Takes place of the much slower foreign key relation in the Patent table
+    """
+    __tablename__ = "citedby"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20))
+    citation_id = Column(Unicode(36))
+    year = Column(Integer)
