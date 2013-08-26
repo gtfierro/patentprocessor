@@ -13,16 +13,16 @@ def compute_future_citation_rank():
     """
     Ranks each patent by number of future citations in a given year
     Returns nested dictionary:
-        years[YEAR][PATENT_ID] = number of times PATENT_ID was cited in YEAR
+        years[YEAR][PATENT_ID] = list of Citation.number that cited PATENT_ID in YEAR
     """
     citations = (c for c in alchemy.session.query(alchemy.USPatentCitation).yield_per(1))
-    years = defaultdict(Counter)
+    years = defaultdict(lambda: defaultdict(list))
     print "Counting citations...", datetime.now()
     for cit in citations:
       if cit.date:
         year = cit.date.year
         patid = cit.patent_id
-        years[year][patid] += 1
+        years[year][patid].append(cit.number)
     print "Finished counting citations", datetime.now()
     return years
 
@@ -40,14 +40,14 @@ def insert_future_citation_rank(years):
         rank = 0
         prev_num_cits = float('inf')
         commit_counter = 0
-        for i, record in enumerate(years[year].most_common()):
+        for i, record in enumerate(years[year].iteritems()):
             if record[1] < prev_num_cits:
-                prev_num_cits = record[1]
+                prev_num_cits = len(record[1])
                 rank += 1
             row = {'uuid': str(uuid.uuid1()),
                    'patent_id': record[0],
-                   'num_citations': record[1],
-                   'citation_year': year,
+                   'num_citations': len(record[1]),
+                   'year': year,
                    'rank': rank}
             dbrow = alchemy.FutureCitationRank(**row)
             alchemy.session.merge(dbrow)
