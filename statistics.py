@@ -118,7 +118,7 @@ def insert_inventor_rank(years):
             row = {'uuid': str(uuid.uuid1()),
                    'inventor_id': record[0],
                    'num_patents': record[1],
-                   'patent_year': year,
+                   'year': year,
                    'rank': rank}
             dbrow = alchemy.InventorRank(**row)
             alchemy.session.merge(dbrow)
