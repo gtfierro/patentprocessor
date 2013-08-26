@@ -18,7 +18,7 @@ There are two ways to get started:
   `[process]` section will be used to determine which data is parsed, which
   steps are run, and where the data will be located after the process finishes.
   This process requires [`IPython`](http://ipython.org/install.html) to be
-  installed.
+  installed. **Note: this is currently broken and is in the process of being fixed**
 
 * run `parse.py` directly to customize which directories are processed and
   which regex is used to process the files. Run `parse.py -h` to see the
