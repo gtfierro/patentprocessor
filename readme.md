@@ -96,15 +96,7 @@ Pull requests are especially welcome. Here are a few pointers which will make ev
 
 ### Coding style
 
-Start with [PEP8](http://www.python.org/dev/peps/pep-0008/). A very
-large number of extremely intelligent software engineers working at the
-wealthiest corporations on the planet have more or less agreed on a
-standard set of conventions allowing J. Random Coder (that's you and I)
-to read and write Python like the Big Boys and Girls (PyLadies!).
-It *highly* unlikely we can improve on these guidelines.
-
-That said, rules are rules and exists to broken once in a while.
-So, optimize for readability.  Specifically:
+Use [PEP8](http://www.python.org/dev/peps/pep-0008/) with the following modifications:
 
 * Use vowels, not secret shorthand 1337 cmptr cd fr nmng vrbls.
 * Line length to 80 characters, no more.
