@@ -27,18 +27,12 @@ print "Finish setup for geocoding: ", datetime.datetime.now()
 # executed as `python lib/geocode.py`
 #exit()
 
-
-
-# TODO: Unit test extensively.
-def table_temp1_has_rows(cursor):
-    return cursor.execute("SELECT count(*) FROM temp1").fetchone()[0] > 0
-
 def replace_loc(script):
 
     c.execute("DROP TABLE IF EXISTS temp1")
     c.execute("CREATE TEMPORARY TABLE temp1 (jaro_match_value FLOAT, count INTEGER, \
         cityA TEXT, stateA TEXT, countryA TEXT, ncity TEXT, nstate TEXT, ncountry TEXT, nlat FLOAT, nlong FLOAT);")
-    c.execute("INSERT OR REPLACE INTO temp1 %s" % script)
+    c.execute("INSERT OR REPLACE INTO temp1 %s;" % script)
 
     #print_table_info(c)
 
@@ -49,27 +43,32 @@ def replace_loc(script):
 
     conn.commit()
 
+# TODO: Unit test extensively.
+def table_temp1_has_rows(cursor):
+    return cursor.execute("SELECT count(*) FROM temp1").fetchone()[0] > 0
 
-# Prefixed tablename (loc) with with dbname (also loc)
-print "Loc =", c.execute("select count(*) from loctbl.loc").fetchone()[0]
+
+print "Loc =", c.execute("select count(*) from loc").fetchone()[0]
 
 # TODO: Refactor the range call into it's own function, unit test
 # that function extensively.
-# TODO: Figure out what these hardcoded parameters mean.
-for scnt in range(-1, c.execute("select max(separator_count(city)) from loctbl.loc").fetchone()[0]+1):
 
-    sep = scnt
-    print "------", scnt, "------"
-    replace_loc(geocode_replace_loc.domestic_sql()                     % (sep, scnt))
-    replace_loc(geocode_replace_loc.domestic_block_remove_sql()        % (sep, scnt))
-    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, geocode_setup.get_jaro_required('domestic_first3'), scnt))
-    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('domestic_last4'), scnt))
-    replace_loc(geocode_replace_loc.foreign_full_name_1_sql()          % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_full_name_2_sql()          % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_short_form_sql()           % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_block_split_sql()          % (sep, scnt))
-    replace_loc(geocode_replace_loc.foreign_first3_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('foreign_first3'), scnt))
-    replace_loc(geocode_replace_loc.foreign_last4_jaro_winkler_sql()   % (sep, sep, geocode_setup.get_jaro_required('foreign_last4'), scnt))
+# Each city is split using , and | as separators. This for loop goes through
+# each segment of each city and attempts to match it to a location.  
+for separator_count in range(-1, c.execute("select max(separator_count(city)) from loc").fetchone()[0]+1):
+
+    sep = separator_count
+    print "------", separator_count, "------"
+    replace_loc(geocode_replace_loc.domestic_sql()                     % (sep, separator_count))
+    replace_loc(geocode_replace_loc.domestic_block_remove_sql()        % (sep, separator_count))
+    replace_loc(geocode_replace_loc.domestic_first3_jaro_winkler_sql() % (sep, sep, geocode_setup.get_jaro_required('domestic_first3'), separator_count))
+    replace_loc(geocode_replace_loc.domestic_last4_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('domestic_last4'), separator_count))
+    replace_loc(geocode_replace_loc.foreign_full_name_1_sql()          % (sep, separator_count))
+    replace_loc(geocode_replace_loc.foreign_full_name_2_sql()          % (sep, separator_count))
+    replace_loc(geocode_replace_loc.foreign_short_form_sql()           % (sep, separator_count))
+    replace_loc(geocode_replace_loc.foreign_block_split_sql()          % (sep, separator_count))
+    replace_loc(geocode_replace_loc.foreign_first3_jaro_winkler_sql()  % (sep, sep, geocode_setup.get_jaro_required('foreign_first3'), separator_count))
+    replace_loc(geocode_replace_loc.foreign_last4_jaro_winkler_sql()   % (sep, sep, geocode_setup.get_jaro_required('foreign_last4'), separator_count))
 
 ### End of for loop
 
