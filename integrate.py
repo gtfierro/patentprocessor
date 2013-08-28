@@ -19,7 +19,7 @@ def integrate(filename):
     for line in read_file(filename):
         patent_number, name_first, name_last, unique_inventor_id = line
         patent_number = normalize_document_identifier(patent_number)
-        rawinventors = alchemy.session.query(alchemy.RawInventor).filter_by(
+        rawinventors = alchemy.session.query(alchemy.grant.RawInventor).filter_by(
                                 patent_id = patent_number,
                                 name_first = name_first,
                                 name_last = name_last).all()
