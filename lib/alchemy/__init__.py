@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import exists
 from collections import defaultdict
-from schema import *
+import grant_schema as grant
 from match import *
 
 
@@ -43,9 +43,13 @@ def get_config(localfile="config.ini", default_file=True):
     return config
 
 
-def fetch_session(db=None):
+def fetch_session(db=None, dbtype='grant'):
     """
     Read from config.ini file and load appropriate database
+
+    @db: string describing database, e.g. "sqlite" or "mysql"
+    @dbtype: string indicating if we are fetching the session for
+             the grant database or the application database
     """
     config = get_config()
     echo = config.get('global').get('echo')
@@ -54,14 +58,15 @@ def fetch_session(db=None):
     if db[:6] == "sqlite":
         sqlite_db_path = os.path.join(
             config.get(db).get('path'),
+            config.get(db).get('{0}-database'.format(dbtype)))
         engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
     else:
         engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
             config.get(db).get('user'),
             config.get(db).get('password'),
             config.get(db).get('host'),
-            config.get(db).get('database')), echo=echo)
-    Base.metadata.create_all(engine)
+            config.get(db).get('{0}-database'.format(dbtype)), echo=echo))
+    grant.Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
     return session
@@ -87,20 +92,20 @@ def add(obj, override=True, temp=False):
     """
 
     # if a patent exists, remove it so we can replace it
-    (patent_exists, ), = session.query(exists().where(Patent.number == obj.patent))
+    (patent_exists, ), = session.query(exists().where(grant.Patent.number == obj.patent))
     #pat_query = session.query(Patent).filter(Patent.number == obj.patent)
     #if pat_query.count():
     if patent_exists:
         if override:
-            pat_query = session.query(Patent).filter(Patent.number == obj.patent)
+            pat_query = session.query(grant.Patent).filter(grant.Patent.number == obj.patent)
             session.delete(pat_query.one())
         else:
             return
     if len(obj.pat["number"]) < 3:
         return
 
-    pat = Patent(**obj.pat)
-    pat.application = Application(**obj.app)
+    pat = grant.Patent(**obj.pat)
+    pat.application = grant.Application(**obj.app)
     # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
 
@@ -120,8 +125,8 @@ def add_all_fields(obj, pat):
 
 def add_asg(obj, pat):
     for asg, loc in obj.assignee_list:
-        asg = RawAssignee(**asg)
-        loc = RawLocation(**loc)
+        asg = grant.RawAssignee(**asg)
+        loc = grant.RawLocation(**loc)
         session.merge(loc)
         asg.rawlocation = loc
         pat.rawassignees.append(asg)
@@ -129,8 +134,8 @@ def add_asg(obj, pat):
 
 def add_inv(obj, pat):
     for inv, loc in obj.inventor_list:
-        inv = RawInventor(**inv)
-        loc = RawLocation(**loc)
+        inv = grant.RawInventor(**inv)
+        loc = grant.RawLocation(**loc)
         session.merge(loc)
         inv.rawlocation = loc
         pat.rawinventors.append(inv)
@@ -138,22 +143,22 @@ def add_inv(obj, pat):
 
 def add_law(obj, pat):
     for law in obj.lawyer_list:
-        law = RawLawyer(**law)
+        law = grant.RawLawyer(**law)
         pat.rawlawyers.append(law)
 
 
 def add_usreldoc(obj, pat):
     for usr in obj.us_relation_list:
         usr["rel_id"] = usr["number"]
-        usr = USRelDoc(**usr)
+        usr = grant.USRelDoc(**usr)
         pat.usreldocs.append(usr)
 
 
 def add_classes(obj, pat):
     for uspc, mc, sc in obj.us_classifications:
-        uspc = USPC(**uspc)
-        mc = MainClass(**mc)
-        sc = SubClass(**sc)
+        uspc = grant.USPC(**uspc)
+        mc = grant.MainClass(**mc)
+        sc = grant.SubClass(**sc)
         session.merge(mc)
         session.merge(sc)
         uspc.mainclass = mc
@@ -163,7 +168,7 @@ def add_classes(obj, pat):
 
 def add_ipcr(obj, pat):
     for ipc in obj.ipcr_classifications:
-        ipc = IPCR(**ipc)
+        ipc = grant.IPCR(**ipc)
         pat.ipcrs.append(ipc)
 
 
@@ -174,25 +179,25 @@ def add_citations(obj, pat):
             # granted patent doc number
             if re.match(r'^[A-Z]*\d+$', cit['number']):
                 cit['citation_id'] = cit['number']
-                cit = USPatentCitation(**cit)
+                cit = grant.USPatentCitation(**cit)
                 pat.uspatentcitations.append(cit)
             # if not above, it's probably an application
             else:
                 cit['application_id'] = cit['number']
-                cit = USApplicationCitation(**cit)
+                cit = grant.USApplicationCitation(**cit)
                 pat.usapplicationcitations.append(cit)
         # if not US, then foreign citation
         else:
-            cit = ForeignCitation(**cit)
+            cit = grant.ForeignCitation(**cit)
             pat.foreigncitations.append(cit)
     for ref in refs:
-        ref = OtherReference(**ref)
+        ref = grant.OtherReference(**ref)
         pat.otherreferences.append(ref)
 
 def add_claims(obj, pat):
     claims = obj.claims
     for claim in claims:
-        clm = Claim(**claim)
+        clm = grant.Claim(**claim)
         pat.claims.append(clm)
 
 
