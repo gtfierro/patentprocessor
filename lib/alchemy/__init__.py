@@ -72,7 +72,7 @@ def fetch_session(db=None, dbtype='grant'):
     return session
 
 
-def add(obj, override=True, temp=False):
+def add_grant(obj, override=True, temp=False):
     """
     PatentGrant Object converting to tables via SQLAlchemy
     Necessary to convert dates to datetime because of SQLite (OK on MySQL)
