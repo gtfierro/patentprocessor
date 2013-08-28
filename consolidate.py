@@ -12,7 +12,7 @@ from lib.assignee_disambiguation import get_assignee_id
 from lib.handlers.xml_util import normalize_utf8
 
 # get patents as iterator to save memory
-patents = (p for p in alchemy.session.query(alchemy.Patent).yield_per(1))
+patents = (p for p in alchemy.session.query(alchemy.grant.Patent).yield_per(1))
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
 ROW = lambda x: u'{number}, {mainclass}, {subclass}, {name_first}, {name_middle}, {name_last},\
