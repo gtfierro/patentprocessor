@@ -92,13 +92,13 @@ def add_grant(obj, override=True, temp=False):
     """
 
     # if a patent exists, remove it so we can replace it
-    (patent_exists, ), = session.query(exists().where(schema.Patent.number == obj.patent))
-    #pat_query = session.query(Patent).filter(Patent.number == obj.patent)
+    (patent_exists, ), = grantsession.query(exists().where(schema.Patent.number == obj.patent))
+    #pat_query = grantsession.query(Patent).filter(Patent.number == obj.patent)
     #if pat_query.count():
     if patent_exists:
         if override:
-            pat_query = session.query(schema.Patent).filter(schema.Patent.number == obj.patent)
-            session.delete(pat_query.one())
+            pat_query = grantsession.query(schema.Patent).filter(schema.Patent.number == obj.patent)
+            grantsession.delete(pat_query.one())
         else:
             return
     if len(obj.pat["number"]) < 3:
@@ -109,7 +109,7 @@ def add_grant(obj, override=True, temp=False):
     # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
 
-    session.merge(pat)
+    grantsession.merge(pat)
 
 
 def add_all_fields(obj, pat):
@@ -127,7 +127,7 @@ def add_asg(obj, pat):
     for asg, loc in obj.assignee_list:
         asg = schema.RawAssignee(**asg)
         loc = schema.RawLocation(**loc)
-        session.merge(loc)
+        grantsession.merge(loc)
         asg.rawlocation = loc
         pat.rawassignees.append(asg)
 
@@ -136,7 +136,7 @@ def add_inv(obj, pat):
     for inv, loc in obj.inventor_list:
         inv = schema.RawInventor(**inv)
         loc = schema.RawLocation(**loc)
-        session.merge(loc)
+        grantsession.merge(loc)
         inv.rawlocation = loc
         pat.rawinventors.append(inv)
 
@@ -159,8 +159,8 @@ def add_classes(obj, pat):
         uspc = schema.USPC(**uspc)
         mc = schema.MainClass(**mc)
         sc = schema.SubClass(**sc)
-        session.merge(mc)
-        session.merge(sc)
+        grantsession.merge(mc)
+        grantsession.merge(sc)
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
@@ -203,10 +203,144 @@ def add_claims(obj, pat):
 
 def commit():
     try:
-        session.commit()
+        grantsession.commit()
     except Exception, e:
-        session.rollback()
+        grantsession.rollback()
         print str(e)
 
+def add_application(obj, override=True, temp=False):
+    """
+    PatentApplication Object converting to tables via SQLAlchemy
+    Necessary to convert dates to datetime because of SQLite (OK on MySQL)
 
-session = fetch_session()
+    Case Sensitivity and Table Reflection
+    MySQL has inconsistent support for case-sensitive identifier names,
+    basing support on specific details of the underlying operating system.
+    However, it has been observed that no matter what case sensitivity
+    behavior is present, the names of tables in foreign key declarations
+    are always received from the database as all-lower case, making it
+    impossible to accurately reflect a schema where inter-related tables
+    use mixed-case identifier names.
+
+    Therefore it is strongly advised that table names be declared as all
+    lower case both within SQLAlchemy as well as on the MySQL database
+    itself, especially if database reflection features are to be used.
+    """
+
+    # if the application exists, remove it so we can replace it
+    (app_exists, ), = appsession.query(exists().where(schema.App_Application.number == obj.number))
+    if app_exists:
+        if override:
+            app_query = appsession.query(schema.App_Application).filter(schema.App_Application.number == obj.number)
+            appsession.delete(app_query.one())
+        else:
+            return
+    if len(obj.app["number"]) < 3:
+        return
+
+    app = schema.App_Application(**obj.app)
+    # lots of abstracts seem to be missing. why?
+    add_all_fields(obj, app)
+
+    appsession.merge(app)
+
+
+def add_all_app_fields(obj, app):
+    add_asg(obj, app)
+    add_inv(obj, app)
+    add_law(obj, app)
+    add_usreldoc(obj, app)
+    add_classes(obj, app)
+    add_ipcr(obj, app)
+    add_citations(obj, app)
+    add_claims(obj, app)
+
+
+def add_app_asg(obj, app):
+    for asg, loc in obj.assignee_list:
+        asg = schema.App_RawAssignee(**asg)
+        loc = schema.App_RawLocation(**loc)
+        appsession.merge(loc)
+        asg.rawlocation = loc
+        app.rawassignees.append(asg)
+
+
+def add_app_inv(obj, app):
+    for inv, loc in obj.inventor_list:
+        inv = schema.App_RawInventor(**inv)
+        loc = schema.App_RawLocation(**loc)
+        appsession.merge(loc)
+        inv.rawlocation = loc
+        app.rawinventors.append(inv)
+
+
+def add_app_law(obj, app):
+    for law in obj.lawyer_list:
+        law = schema.App_RawLawyer(**law)
+        app.rawlawyers.append(law)
+
+
+def add_app_usreldoc(obj, app):
+    for usr in obj.us_relation_list:
+        usr["rel_id"] = usr["number"]
+        usr = schema.App_USRelDoc(**usr)
+        app.usreldocs.append(usr)
+
+
+def add_app_classes(obj, app):
+    for uspc, mc, sc in obj.us_classifications:
+        uspc = schema.App_USPC(**uspc)
+        mc = schema.App_MainClass(**mc)
+        sc = schema.App_SubClass(**sc)
+        appsession.merge(mc)
+        appsession.merge(sc)
+        uspc.mainclass = mc
+        uspc.subclass = sc
+        app.classes.append(uspc)
+
+
+def add_app_ipcr(obj, app):
+    for ipc in obj.ipcr_classifications:
+        ipc = schema.App_IPCR(**ipc)
+        app.ipcrs.append(ipc)
+
+
+def add_app_citations(obj, app):
+    cits, refs = app.citation_list
+    for cit in cits:
+        if cit['country'] == 'US':
+            # granted patent doc number
+            if re.match(r'^[A-Z]*\d+$', cit['number']):
+                cit['citation_id'] = cit['number']
+                cit = schema.App_USPatentCitation(**cit)
+                app.uspatentcitations.append(cit)
+            # if not above, it's probably an application
+            else:
+                cit['application_id'] = cit['number']
+                cit = schema.App_USApplicationCitation(**cit)
+                app.usapplicationcitations.append(cit)
+        # if not US, then foreign citation
+        else:
+            cit = schema.App_ForeignCitation(**cit)
+            app.foreigncitations.append(cit)
+    for ref in refs:
+        ref = schema.App_OtherReference(**ref)
+        app.otherreferences.append(ref)
+
+def add_app_claims(obj, app):
+    claims = obj.claims
+    for claim in claims:
+        clm = schema.App_Claim(**claim)
+        app.claims.append(clm)
+
+
+def commit_application():
+    try:
+        appsession.commit()
+    except Exception, e:
+        appsession.rollback()
+        print str(e)
+
+grantsession = fetch_session(dbtype='grant')
+session = grantsession
+appsession = fetch_session(dbtype='application')
