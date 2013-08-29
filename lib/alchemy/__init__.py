@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import exists
 from collections import defaultdict
-import grant_schema as grant
+import schema
 from match import *
 
 
@@ -66,7 +66,7 @@ def fetch_session(db=None, dbtype='grant'):
             config.get(db).get('password'),
             config.get(db).get('host'),
             config.get(db).get('{0}-database'.format(dbtype)), echo=echo))
-    grant.Base.metadata.create_all(engine)
+    schema.GrantBase.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
     return session
@@ -92,20 +92,20 @@ def add_grant(obj, override=True, temp=False):
     """
 
     # if a patent exists, remove it so we can replace it
-    (patent_exists, ), = session.query(exists().where(grant.Patent.number == obj.patent))
+    (patent_exists, ), = session.query(exists().where(schema.Patent.number == obj.patent))
     #pat_query = session.query(Patent).filter(Patent.number == obj.patent)
     #if pat_query.count():
     if patent_exists:
         if override:
-            pat_query = session.query(grant.Patent).filter(grant.Patent.number == obj.patent)
+            pat_query = session.query(schema.Patent).filter(schema.Patent.number == obj.patent)
             session.delete(pat_query.one())
         else:
             return
     if len(obj.pat["number"]) < 3:
         return
 
-    pat = grant.Patent(**obj.pat)
-    pat.application = grant.Application(**obj.app)
+    pat = schema.Patent(**obj.pat)
+    pat.application = schema.Application(**obj.app)
     # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
 
@@ -125,8 +125,8 @@ def add_all_fields(obj, pat):
 
 def add_asg(obj, pat):
     for asg, loc in obj.assignee_list:
-        asg = grant.RawAssignee(**asg)
-        loc = grant.RawLocation(**loc)
+        asg = schema.RawAssignee(**asg)
+        loc = schema.RawLocation(**loc)
         session.merge(loc)
         asg.rawlocation = loc
         pat.rawassignees.append(asg)
@@ -134,8 +134,8 @@ def add_asg(obj, pat):
 
 def add_inv(obj, pat):
     for inv, loc in obj.inventor_list:
-        inv = grant.RawInventor(**inv)
-        loc = grant.RawLocation(**loc)
+        inv = schema.RawInventor(**inv)
+        loc = schema.RawLocation(**loc)
         session.merge(loc)
         inv.rawlocation = loc
         pat.rawinventors.append(inv)
@@ -143,22 +143,22 @@ def add_inv(obj, pat):
 
 def add_law(obj, pat):
     for law in obj.lawyer_list:
-        law = grant.RawLawyer(**law)
+        law = schema.RawLawyer(**law)
         pat.rawlawyers.append(law)
 
 
 def add_usreldoc(obj, pat):
     for usr in obj.us_relation_list:
         usr["rel_id"] = usr["number"]
-        usr = grant.USRelDoc(**usr)
+        usr = schema.USRelDoc(**usr)
         pat.usreldocs.append(usr)
 
 
 def add_classes(obj, pat):
     for uspc, mc, sc in obj.us_classifications:
-        uspc = grant.USPC(**uspc)
-        mc = grant.MainClass(**mc)
-        sc = grant.SubClass(**sc)
+        uspc = schema.USPC(**uspc)
+        mc = schema.MainClass(**mc)
+        sc = schema.SubClass(**sc)
         session.merge(mc)
         session.merge(sc)
         uspc.mainclass = mc
@@ -168,7 +168,7 @@ def add_classes(obj, pat):
 
 def add_ipcr(obj, pat):
     for ipc in obj.ipcr_classifications:
-        ipc = grant.IPCR(**ipc)
+        ipc = schema.IPCR(**ipc)
         pat.ipcrs.append(ipc)
 
 
@@ -179,25 +179,25 @@ def add_citations(obj, pat):
             # granted patent doc number
             if re.match(r'^[A-Z]*\d+$', cit['number']):
                 cit['citation_id'] = cit['number']
-                cit = grant.USPatentCitation(**cit)
+                cit = schema.USPatentCitation(**cit)
                 pat.uspatentcitations.append(cit)
             # if not above, it's probably an application
             else:
                 cit['application_id'] = cit['number']
-                cit = grant.USApplicationCitation(**cit)
+                cit = schema.USApplicationCitation(**cit)
                 pat.usapplicationcitations.append(cit)
         # if not US, then foreign citation
         else:
-            cit = grant.ForeignCitation(**cit)
+            cit = schema.ForeignCitation(**cit)
             pat.foreigncitations.append(cit)
     for ref in refs:
-        ref = grant.OtherReference(**ref)
+        ref = schema.OtherReference(**ref)
         pat.otherreferences.append(ref)
 
 def add_claims(obj, pat):
     claims = obj.claims
     for claim in claims:
-        clm = grant.Claim(**claim)
+        clm = schema.Claim(**claim)
         pat.claims.append(clm)
 
 
