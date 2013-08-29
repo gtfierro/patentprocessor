@@ -26,12 +26,12 @@ for patent in patents:
     row = {'number': patent.number,
            'mainclass': patent.classes[0].mainclass_id,
            'subclass': patent.classes[0].subclass_id,
-           'state': loc.state,
+           'state': loc.state if loc else '',
            'zipcode': '',
-           'latitude': loc.latitude,
-           'longitude': loc.longitude,
-           'country': loc.country,
-           'city': loc.city,
+           'latitude': loc.latitude if loc else '',
+           'longitude': loc.longitude if loc else '',
+           'country': loc.country if loc else '',
+           'city': loc.city if loc else '',
            }
     row['assignee'] = get_assignee_id(patent.assignees[0]) if patent.assignees else ''
     # generate a row for each of the inventors on a patent
