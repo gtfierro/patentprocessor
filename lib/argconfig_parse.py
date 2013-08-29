@@ -31,12 +31,17 @@ class ArgHandler(object):
                 if os.environ.has_key('PATENTOUTPUTDIR') else '.',
                 help='Set the output directory for the resulting sqlite3 files. Defaults\
                      to the current directory "."')
+        self.parser.add_argument('--document-type', '-d', type=str, nargs='?', 
+                default='grant',
+                help='Choose whether your files are patent grants or applications. \
+                     Defaults to patent grants.')
 
         # parse arguments and assign values
         args = self.parser.parse_args(self.arglist)
         self.xmlregex = args.xmlregex
         self.patentroot = args.patentroot
         self.output_directory = args.output_directory
+        self.document_type = args.document_type
 
         # adjust verbosity levels based on specified input
         logging_levels = {0: logging.ERROR,
@@ -56,6 +61,9 @@ class ArgHandler(object):
 
     def get_output_directory(self):
         return self.output_directory
+
+    def get_document_type(self):
+        return self.document_type
 
     def get_help(self):
         self.parser.print_help()
