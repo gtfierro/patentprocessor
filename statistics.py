@@ -15,7 +15,7 @@ def compute_future_citation_rank():
     Returns nested dictionary:
         years[YEAR][PATENT_ID] = list of Citation.number that cited PATENT_ID in YEAR
     """
-    citations = (c for c in alchemy.session.query(alchemy.USPatentCitation).yield_per(1))
+    citations = (c for c in alchemy.session.query(alchemy.grant.USPatentCitation).yield_per(1))
     years = defaultdict(lambda: defaultdict(list))
     print "Counting citations...", datetime.now()
     for cit in citations:
@@ -33,7 +33,7 @@ def insert_future_citation_rank(years):
     Inserts rows into the correct table:
     """
     # remove old rows to make way for new rankings
-    deleted = alchemy.session.query(alchemy.FutureCitationRank).delete()
+    deleted = alchemy.session.query(alchemy.grant.FutureCitationRank).delete()
     print 'Removed {0} rows from FutureCitationRank'.format(deleted)
     print 'Inserting records in order...', datetime.now()
     for year in years.iterkeys():
@@ -49,7 +49,7 @@ def insert_future_citation_rank(years):
                    'num_citations': len(record[1]),
                    'year': year,
                    'rank': rank}
-            dbrow = alchemy.FutureCitationRank(**row)
+            dbrow = alchemy.grant.FutureCitationRank(**row)
             alchemy.session.merge(dbrow)
             if (i+1) % 1000 == 0:
                 alchemy.commit()
@@ -62,7 +62,7 @@ def insert_cited_by(years):
         years[YEAR][PATENT_ID] = number of times PATENT_ID was cited in YEAR
     Inserts records into CitedBy table
     """
-    deleted = alchemy.session.query(alchemy.CitedBy).delete()
+    deleted = alchemy.session.query(alchemy.grant.CitedBy).delete()
     print 'Removed {0} rows from FutureCitationRank'.format(deleted)
     print 'Inserting records in order...', datetime.now()
     for year in years.iterkeys():
@@ -72,7 +72,7 @@ def insert_cited_by(years):
                    'year': year}
             for citation in record[1]:
                 row.update({'citation_id': citation})
-                dbrow = alchemy.CitedBy(**row)
+                dbrow = alchemy.grant.CitedBy(**row)
                 alchemy.session.merge(dbrow)
             if (i+1) % 1000 == 0:
                 alchemy.commit()
@@ -87,7 +87,7 @@ def compute_inventor_rank():
     Returns nested dictionary:
         years[YEAR][INVENTOR_ID] = number of patents granted in YEAR to INVENTOR_ID
     """
-    patents = (p for p in alchemy.session.query(alchemy.Patent).yield_per(1))
+    patents = (p for p in alchemy.session.query(alchemy.grant.Patent).yield_per(1))
     years = defaultdict(Counter)
     print 'Counting granted patents...', datetime.now()
     for pat in patents:
@@ -104,7 +104,7 @@ def insert_inventor_rank(years):
         years[YEAR][INVENTOR_ID] = number of patents granted in YEAR to INVENTOR_ID
     Inserts rows into the correct table:
     """
-    deleted = alchemy.session.query(alchemy.InventorRank).delete()
+    deleted = alchemy.session.query(alchemy.grant.InventorRank).delete()
     print 'removed {0} rows'.format(deleted)
     print 'Inserting records in order...', datetime.now()
     for year in years.iterkeys():
@@ -120,7 +120,7 @@ def insert_inventor_rank(years):
                    'num_patents': record[1],
                    'year': year,
                    'rank': rank}
-            dbrow = alchemy.InventorRank(**row)
+            dbrow = alchemy.grant.InventorRank(**row)
             alchemy.session.merge(dbrow)
             if (i+1) % 1000 == 0:
                 alchemy.commit()

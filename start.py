@@ -6,7 +6,6 @@ import time
 import itertools
 import datetime
 import logging
-from IPython.parallel import Client
 import requests
 import zipfile
 import cStringIO as StringIO
@@ -18,8 +17,6 @@ from config_parser import get_config_options
 
 logfile = "./" + 'xml-parsing.log'
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
-
-# table bookkeeping for the parse script
 
 def get_year_list(yearstring):
     """
@@ -66,7 +63,7 @@ def generate_download_list(years):
             a = a.findNext()
     return urls
 
-def download_files():
+def download_files(urls):
     """
     [downloaddir]: string representing base download directory. Will download
     files to this directory in folders named for each year
@@ -97,23 +94,7 @@ def download_files():
             continue
     return complete
 
-def connect_client():
-    """
-    Loops for a minute until the Client connects to the local ipcluster
-    """
-    start=time.time()
-    print 'Client connecting...'
-    while time.time()-start < 300:
-        try:
-            c = Client()
-            dview = c[:]
-            break
-        except:
-            time.sleep(2)
-            continue
-    return c, dview
-
-def run_parse():
+def run_parse(files):
     import parse
     import time
     import sys
@@ -124,8 +105,7 @@ def run_parse():
     logging.basicConfig(filename=logfile, level=logging.DEBUG)
     xmls = parse.parse_files(files)
     if xmls:
-        return parse.parse_patents(xmls)
-    return []
+        parse.parse_patents(xmls)
 
 def run_clean(process_config):
     if process_config['clean']:
@@ -142,22 +122,14 @@ if __name__=='__main__':
     # accepts path to configuration file as command line option
     process_config, parse_config = get_config_options(sys.argv[1])
 
-    # connect to ipcluster and get config options
-    c, dview = connect_client()
-    dview.block=True
-    dview['process_config'] = process_config
-    dview['parse_config'] = parse_config
-
     # download the files to be parsed
     urls = generate_download_list(parse_config['years'])
-    dview.scatter('urls', urls)
     # check download directory
     downloaddir = parse_config['downloaddir']
     if downloaddir and not os.path.exists(downloaddir):
         os.makedirs(downloaddir)
-    dview['downloaddir'] = parse_config['downloaddir']
     print 'Downloading files at {0}'.format(str(datetime.datetime.today()))
-    dview.apply(download_files)
+    download_files(urls)
     print 'Downloaded files:',parse_config['years']
     f = datetime.datetime.now()
     print 'Finished downloading in {0}'.format(str(f-s))
@@ -165,14 +137,11 @@ if __name__=='__main__':
     # find files
     print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
     files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
-    dview.scatter('files',files)
     print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
 
     # run parse and commit SQL
     print 'Running parse...'
-    patobjects = itertools.chain.from_iterable(dview.apply(run_parse))
-    del dview
-    parse.database_commit(patobjects)
+    run_parse(files)
     f = datetime.datetime.now()
     print 'Finished parsing in {0}'.format(str(f-s))
 

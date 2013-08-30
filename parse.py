@@ -100,7 +100,7 @@ def parse_files(filelist):
         print filename
         for i, xmltuple in enumerate(extract_xml_strings(filename)):
             patobj = parse_patent(xmltuple)
-            alchemy.add(patobj)
+            alchemy.add_grant(patobj)
             if commit_frequency and ((i+1) % commit_frequency == 0):
                 alchemy.commit()
                 print " *", (i+1), datetime.datetime.now()
