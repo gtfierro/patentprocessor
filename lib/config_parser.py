@@ -70,7 +70,7 @@ def get_dates(yearstring):
     return years
 
 
-def get_xml_handlers(configfile):
+def get_xml_handlers(configfile, document_type='grant'):
     """
     Called by parse.py to generate a lookup dictionary for which parser should
     be used for a given file
@@ -78,7 +78,9 @@ def get_xml_handlers(configfile):
     handler = ConfigParser()
     handler.read(configfile)
     xmlhandlers = {}
-    for yearrange, handler in handler.items('xml-handlers'):
+    config_item = 'grant-xml-handlers' if document_type == 'grant' \
+                   else 'application-xml-handlers'
+    for yearrange, handler in handler.items(config_item):
         for year in get_dates(yearrange):
             try:
                 xmlhandlers[year] = importlib.import_module(handler)
