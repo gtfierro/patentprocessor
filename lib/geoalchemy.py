@@ -73,7 +73,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8):
     #Making this now allows it to be referenced quickly later
     construct_valid_input_address_list()
     #Get all of the raw locations in alchemy.db that were parsed from XML
-    raw_parsed_locations = alchemy_session.query(alchemy.RawLocation).limit(limit).offset(offset)
+    raw_parsed_locations = alchemy_session.query(alchemy.schema.RawLocation).limit(limit).offset(offset)
     #If there are no locations, there is no point in continuing
     if raw_parsed_locations.count() == 0:
         return False
@@ -144,7 +144,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8):
     alchemy_session.commit()
 
     print "Matches made!", datetime.datetime.now() - t
-    unique_group_count = alchemy_session.query(expression.func.count(sqlalchemy.distinct(alchemy.Location.id))).all()
+    unique_group_count = alchemy_session.query(expression.func.count(sqlalchemy.distinct(alchemy.schema.Location.id))).all()
     print "%s groups formed from %s locations" % (unique_group_count, raw_parsed_locations.count())
 
 def identify_missing_locations(unidentified_grouped_locations_enum, 
@@ -217,16 +217,16 @@ def run_geo_match(key, default, match_group, counter, runtime):
     if len(match_group) > 1:
         # if key exists, look at the frequency
         # to determine the default summarization
-        clean = alchemy_session.query(alchemy.Location).filter(alchemy.Location.id == key).first()
+        clean = alchemy_session.query(alchemy.schema.Location).filter(alchemy.schema.Location.id == key).first()
         if clean:
             param = clean.summarize
             param.pop("id")
             param.pop("latitude")
             param.pop("longitude")
-            loc = alchemy_session.query(alchemy.RawLocation)\
-                .filter(alchemy.RawLocation.city == param["city"])\
-                .filter(alchemy.RawLocation.state == param["state"])\
-                .filter(alchemy.RawLocation.country == param["country"])\
+            loc = alchemy_session.query(alchemy.schema.RawLocation)\
+                .filter(alchemy.schema.RawLocation.city == param["city"])\
+                .filter(alchemy.schema.RawLocation.state == param["state"])\
+                .filter(alchemy.schema.RawLocation.country == param["country"])\
                 .first()
             if loc:
                 most_freq = len(loc.rawassignees) + len(loc.rawinventors)
