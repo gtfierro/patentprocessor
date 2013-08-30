@@ -33,8 +33,8 @@ class ArgHandler(object):
                      to the current directory "."')
         self.parser.add_argument('--document-type', '-d', type=str, nargs='?', 
                 default='grant',
-                help='Choose whether your files are patent grants or applications. \
-                     Defaults to patent grants.')
+                help='Set the type of patent document to be parsed: grant (default) \
+                or application')
 
         # parse arguments and assign values
         args = self.parser.parse_args(self.arglist)

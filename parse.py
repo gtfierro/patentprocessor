@@ -10,7 +10,6 @@ import lib.alchemy as alchemy
 import shutil
 from lib.config_parser import get_xml_handlers
 
-xmlhandlers = get_xml_handlers('process.cfg')
 logfile = "./" + 'xml-parsing.log'
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
 commit_frequency = alchemy.get_config().get('parse').get('commit_frequency')
@@ -173,5 +172,7 @@ if __name__ == '__main__':
     PATENTROOT = args.get_patentroot()
     VERBOSITY = args.get_verbosity()
     PATENTOUTPUTDIR = args.get_output_directory()
+    DOCUMENTTYPE = args.get_document_type()
+    xmlhandlers = get_xml_handlers('process.cfg', DOCUMENTTYPE)
 
     main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR)
