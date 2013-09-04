@@ -125,7 +125,7 @@ def parse_patent(xmltuple):
         return
     del xmltuple
     patobj = Patobj()
-    for attr in ['pat','patent','app','assignee_list','inventor_list','lawyer_list',
+    for attr in ['pat','app','assignee_list','patent','inventor_list','lawyer_list',
                  'us_relation_list','us_classifications','ipcr_classifications',
                  'citation_list','claims']:
         patobj.__dict__[attr] = getattr(patent, attr)
