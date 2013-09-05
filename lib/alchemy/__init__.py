@@ -228,10 +228,10 @@ def add_application(obj, override=True, temp=False):
     """
 
     # if the application exists, remove it so we can replace it
-    (app_exists, ), = appsession.query(exists().where(schema.App_Application.number == obj.number))
+    (app_exists, ), = appsession.query(exists().where(schema.App_Application.number == obj.application))
     if app_exists:
         if override:
-            app_query = appsession.query(schema.App_Application).filter(schema.App_Application.number == obj.number)
+            app_query = appsession.query(schema.App_Application).filter(schema.App_Application.number == obj.application)
             appsession.delete(app_query.one())
         else:
             return
@@ -240,20 +240,20 @@ def add_application(obj, override=True, temp=False):
 
     app = schema.App_Application(**obj.app)
     # lots of abstracts seem to be missing. why?
-    add_all_fields(obj, app)
+    add_all_app_fields(obj, app)
 
     appsession.merge(app)
 
 
 def add_all_app_fields(obj, app):
-    add_asg(obj, app)
-    add_inv(obj, app)
-    add_law(obj, app)
-    add_usreldoc(obj, app)
-    add_classes(obj, app)
-    add_ipcr(obj, app)
-    add_citations(obj, app)
-    add_claims(obj, app)
+    add_app_asg(obj, app)
+    add_app_inv(obj, app)
+    add_app_law(obj, app)
+    add_app_usreldoc(obj, app)
+    add_app_classes(obj, app)
+    add_app_ipcr(obj, app)
+    add_app_citations(obj, app)
+    add_app_claims(obj, app)
 
 
 def add_app_asg(obj, app):
