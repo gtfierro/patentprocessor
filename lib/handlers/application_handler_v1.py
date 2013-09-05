@@ -60,12 +60,6 @@ class PatentGrant(object):
             "kind": self.kind,
             "num_claims": self.clm_num
         }
-        self.app = { # again, don't know what to do about referencing patent grant
-            "type": 'FakeType',
-            "number": str(3453),
-            "country": 'FakeCountry',
-            "date": self._fix_date(self.date_app)
-        }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
 
     def _invention_title(self):
