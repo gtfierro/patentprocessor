@@ -15,10 +15,6 @@ logging.basicConfig(filename=logfile, level=logging.DEBUG)
 commit_frequency = alchemy.get_config().get('parse').get('commit_frequency')
 
 
-class Patobj(object):
-    pass
-
-
 def list_files(patentroot, xmlregex):
     """
     Returns listing of all files within patentroot
@@ -100,7 +96,10 @@ def parse_files(filelist):
         print filename
         for i, xmltuple in enumerate(extract_xml_strings(filename)):
             patobj = parse_patent(xmltuple)
-            alchemy.add_grant(patobj)
+            if DOCUMENTTYPE == 'grant':
+                alchemy.add_grant(patobj)
+            else:
+                alchemy.add_application(patobj)
             if commit_frequency and ((i+1) % commit_frequency == 0):
                 alchemy.commit()
                 print " *", (i+1), datetime.datetime.now()
@@ -118,18 +117,13 @@ def parse_patent(xmltuple):
         return
     try:
         date, xml = xmltuple  # extract out the parts of the tuple
-        patent = _get_parser(date).PatentGrant(xml, True)
+        patent = _get_parser(date).Patent(xml, True)
     except Exception as inst:
         logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
         return
     del xmltuple
-    patobj = Patobj()
-    for attr in ['pat','app','assignee_list','patent','inventor_list','lawyer_list',
-                 'us_relation_list','us_classifications','ipcr_classifications',
-                 'citation_list','claims']:
-        patobj.__dict__[attr] = getattr(patent, attr)
-    return patobj
+    return patent.get_patobj()
 
 
 # TODO: this should only move alchemy.sqlite3
