@@ -17,7 +17,11 @@ import xml_driver
 claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
 
-class PatentGrant(object):
+class Patobj(object):
+    pass
+
+
+class Patent(object):
 
     def __init__(self, xml_string, is_string=False):
         xh = xml_driver.XMLHandler()
@@ -422,3 +426,11 @@ class PatentGrant(object):
             data['uuid'] = str(uuid.uuid1())
             res.append(data)
         return res
+
+    def get_patobj(self):
+        patobj = Patobj()
+        for attr in ['pat','app','assignee_list','patent','inventor_list','lawyer_list',
+                     'us_relation_list','us_classifications','ipcr_classifications',
+                     'citation_list','claims']:
+            patobj.__dict__[attr] = getattr(self, attr)
+        return patobj

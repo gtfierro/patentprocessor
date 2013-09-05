@@ -17,7 +17,11 @@ import xml_driver
 claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
 
-class PatentGrant(object):
+class Patobj(object):
+    pass
+
+
+class Patent(object):
 
     def __init__(self, xml_string, is_string=False):
         xh = xml_driver.XMLHandler()
@@ -43,9 +47,9 @@ class PatentGrant(object):
             self.pat_type = None
         self.clm_num = len(self.xml.claims.claim)
         self.abstract = self.xml.abstract.contents_of('p', '', as_string=True, upper=False)
-        self.invention_title = self.xml.us_bibliographic_data_application.contents_of('invention_title')
+        self.invention_title = self._invention_title()
 
-        self.pat = {
+        self.app = {
             "id": self.application,
             "type": self.pat_type,
             "number": self.application,
@@ -57,6 +61,12 @@ class PatentGrant(object):
             "num_claims": self.clm_num
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
+
+    def _invention_title(self):
+        original = self.xml.contents_of('invention_title', upper=False)[0]
+        if isinstance(original, list):
+            original = ''.join(original)
+        return original
 
     def _invention_title(self):
         original = self.xml.contents_of('invention_title', upper=False)[0]
@@ -143,3 +153,9 @@ class PatentGrant(object):
                 asg['uuid'] = str(uuid.uuid1())
                 res.append([asg, loc])
         return res
+
+    def get_patobj(self):
+        patobj = Patobj()
+        for attr in ['app', 'application', 'assignee_list']:
+            patobj.__dict__[attr] = getattr(self, attr)
+        return patobj
