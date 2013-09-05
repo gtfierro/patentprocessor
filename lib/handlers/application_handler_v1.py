@@ -34,25 +34,21 @@ class PatentGrant(object):
         self.xml = xh.root.us_patent_application
 
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
-        self.patent = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
+        self.application = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
-        self.date_app = self.xml.publication_reference.contents_of('date')[0] # changed from grant to applied
-        self.pat_type = None # not sure exactly what this is
-        # don't know what to do about referencing a patent grant
-        # or when the patent has been granted
-        #
-        #
-        #
-        #
-        #
+        self.date_app = self.xml.publication_reference.contents_of('date')[0]
+        if self.xml.application_reference:
+            self.pat_type = self.xml.application_reference[0].get_attribute('appl-type', upper=False)
+        else:
+            self.pat_type = None
         self.clm_num = len(self.xml.claims.claim)
         self.abstract = self.xml.abstract.contents_of('p', '', as_string=True, upper=False)
         self.invention_title = self.xml.us_bibliographic_data_application.contents_of('invention_title')
 
         self.pat = {
-            "id": self.patent,
+            "id": self.application,
             "type": self.pat_type,
-            "number": self.patent,
+            "number": self.application,
             "country": self.country,
             "date": self._fix_date(self.date_app),
             "abstract": self.abstract,
