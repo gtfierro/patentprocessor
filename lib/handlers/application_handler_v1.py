@@ -33,7 +33,7 @@ class Patent(PatentHandler):
         else:
             parser.parse(xml_string)
 
-        self.attributes = ['app', 'application', 'assignee_list']
+        self.attributes = ['app', 'application', 'assignee_list', 'applicant_list']
 
         self.xml = xh.root.us_patent_application
 
@@ -152,4 +152,40 @@ class Patent(PatentHandler):
                 asg['sequence'] = i
                 asg['uuid'] = str(uuid.uuid1())
                 res.append([asg, loc])
+        return res
+
+    @property
+    def applicant_list(self):
+        """
+        Returns list of lists of applicant dictionary and location dictionary
+        applicant:
+          name_last
+          name_first
+          nationality
+          sequence
+        location:
+          id
+          city
+          state
+          country
+        """
+        applicants = self.xml.applicants.applicant
+        if not applicants:
+            return []
+        res = []
+        for i, applicant in enumerate(applicants):
+            # add applicant data
+            app = {}
+            app.update(self._name_helper_dict(applicant.addressbook))
+            app['nationality'] = applicant.nationality.contents_of('country', as_string=True)
+            # add location data for applicant
+            loc = {}
+            for tag in ['city', 'state', 'country']:
+                loc[tag] = applicant.addressbook.contents_of(tag, as_string=True, upper=False)
+            #this is created because of MySQL foreign key case sensitivities
+            loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
+            if any(app.values()) or any(loc.values()):
+                app['sequence'] = i
+                app['uuid'] = str(uuid.uuid1())
+                res.append([app, loc])
         return res

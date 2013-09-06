@@ -252,7 +252,7 @@ def add_all_app_fields(obj, app):
     add_app_usreldoc(obj, app)
     add_app_classes(obj, app)
     add_app_ipcr(obj, app)
-    add_app_citations(obj, app)
+    # add_app_citations(obj, app)
     add_app_claims(obj, app)
 
 
@@ -266,7 +266,7 @@ def add_app_asg(obj, app):
 
 
 def add_app_inv(obj, app):
-    for inv, loc in obj.inventor_list:
+    for inv, loc in obj.applicant_list:
         inv = schema.App_RawInventor(**inv)
         loc = schema.App_RawLocation(**loc)
         appsession.merge(loc)
