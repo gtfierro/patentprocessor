@@ -148,6 +148,8 @@ class Application(GrantBase):
         Index("app_idx1", "type", "number"),
         Index("app_idx2", "date"),
     )
+    granted = Column(Boolean)
+    num_claims = Column(Integer)
 
     def __repr__(self):
         return "<Application('{0}')>".format(self.id)
