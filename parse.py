@@ -98,12 +98,14 @@ def parse_files(filelist):
             patobj = parse_patent(xmltuple)
             if DOCUMENTTYPE == 'grant':
                 alchemy.add_grant(patobj)
+                commit = alchemy.commit
             else:
                 alchemy.add_application(patobj)
+                commit = alchemy.commit_application
             if commit_frequency and ((i+1) % commit_frequency == 0):
-                alchemy.commit()
+                commit()
                 print " *", (i+1), datetime.datetime.now()
-        alchemy.commit()
+        commit()
         print " *", "Complete", datetime.datetime.now()
 
 
