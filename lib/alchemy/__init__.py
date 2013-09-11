@@ -66,7 +66,12 @@ def fetch_session(db=None, dbtype='grant'):
             config.get(db).get('password'),
             config.get(db).get('host'),
             config.get(db).get('{0}-database'.format(dbtype)), echo=echo))
-    schema.GrantBase.metadata.create_all(engine)
+
+    if dbtype == 'grant':
+        schema.GrantBase.metadata.create_all(engine)
+    else:
+        schema.ApplicationBase.metadata.create_all(engine)
+
     Session = sessionmaker(bind=engine)
     session = Session()
     return session
@@ -342,5 +347,4 @@ def commit_application():
         print str(e)
 
 grantsession = fetch_session(dbtype='grant')
-session = grantsession
 appsession = fetch_session(dbtype='application')
