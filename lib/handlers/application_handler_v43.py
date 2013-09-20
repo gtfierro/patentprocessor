@@ -33,7 +33,7 @@ class Patent(PatentHandler):
         else:
             parser.parse(xml_string)
 
-        self.attributes = ['app','application']
+        self.attributes = ['app','application','assignee_list']
 
         self.xml = xh.root.us_patent_application
 
@@ -61,7 +61,8 @@ class Patent(PatentHandler):
             "num_claims": self.clm_num
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
-        print(self.app)
+        
+        print(self.assignee_list)
 
     def _invention_title(self):
         original = self.xml.contents_of('invention_title', upper=False)[0]
@@ -107,3 +108,42 @@ class Patent(PatentHandler):
         except Exception as inst:
             print inst, datestring
             return None
+
+    @property
+    def assignee_list(self):
+        """
+        Returns list of dictionaries:
+        assignee:
+          name_last
+          name_first
+          residence
+          nationality
+          organization
+          sequence
+        location:
+          id
+          city
+          state
+          country
+        """
+        assignees = self.xml.assignees.assignee
+        if not assignees:
+            return []
+        res = []
+        for i, assignee in enumerate(assignees):
+            # add assignee data
+            asg = {}
+            asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
+            asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
+            asg['role'] = assignee.contents_of('role', as_string=True)
+            # add location data for assignee
+            loc = {}
+            for tag in ['city', 'state', 'country']:
+                loc[tag] = assignee.contents_of(tag, as_string=True, upper=False)
+            #this is created because of MySQL foreign key case sensitivities
+            loc['id'] = unidecode(u"|".join([loc['city'], loc['state'], loc['country']]).lower())
+            if any(asg.values()) or any(loc.values()):
+                asg['sequence'] = i
+                asg['uuid'] = str(uuid.uuid1())
+                res.append([asg, loc])
+        return res
