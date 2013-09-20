@@ -271,7 +271,7 @@ def add_app_asg(obj, app):
 
 
 def add_app_inv(obj, app):
-    for inv, loc in obj.applicant_list:
+    for inv, loc in obj.inventor_list:
         inv = schema.App_RawInventor(**inv)
         loc = schema.App_RawLocation(**loc)
         appsession.merge(loc)
