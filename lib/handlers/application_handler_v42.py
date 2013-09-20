@@ -33,7 +33,7 @@ class Patent(PatentHandler):
         else:
             parser.parse(xml_string)
 
-        self.attributes = ['app','application','assignee_list','inventor_list',\
+        self.attributes = ['app','application','assignee_list','inventor_list',
                      'us_relation_list','us_classifications','ipcr_classifications',
                      'claims']
 
@@ -42,11 +42,11 @@ class Patent(PatentHandler):
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
         self.application = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
-        self.date_app = self.xml.publication_reference.contents_of('date')[0]
         if self.xml.application_reference:
             self.pat_type = self.xml.application_reference[0].get_attribute('appl-type', upper=False)
         else:
             self.pat_type = None
+        self.date_app = self.xml.publication_reference.contents_of('date')[0]
         self.clm_num = len(self.xml.claims.claim)
         self.abstract = self.xml.abstract.contents_of('p', '', as_string=True, upper=False)
         self.invention_title = self._invention_title()
