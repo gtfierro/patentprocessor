@@ -34,7 +34,7 @@ class Patent(PatentHandler):
             parser.parse(xml_string)
 
         self.attributes = ['app','application','assignee_list','inventor_list',
-                          'us_relation_list','us_classifications']
+                          'us_relation_list','us_classifications','ipcr_classifications']
 
         self.xml = xh.root.us_patent_application
 
@@ -278,3 +278,68 @@ class Patent(PatentHandler):
                         {'id': "{class}/{subclass}".format(**data).upper()}])
                     i = i + 1
         return classes
+
+    @property
+    def ipcr_classifications(self):
+        """
+        Returns list of dictionaries representing ipcr classifications
+        ipcr:
+          ipc_version_indicator
+          classification_level
+          section
+          class
+          subclass
+          main_group
+          subgroup
+          symbol_position
+          classification_value
+          action_date
+          classification_status
+          classification_data_source
+          sequence
+        """
+        ipcr_classifications = self.xml.classifications_ipcr
+        if not ipcr_classifications:
+            return []
+        res = []
+        # we can safely use [0] because there is only one ipcr_classifications tag
+        for i, ipcr in enumerate(ipcr_classifications.classification_ipcr):
+            data = {}
+            for tag in ['classification_level', 'section',
+                        'class', 'subclass', 'main_group', 'subgroup', 'symbol_position',
+                        'classification_value', 'classification_status',
+                        'classification_data_source']:
+                data[tag] = ipcr.contents_of(tag, as_string=True)
+            data['ipc_version_indicator'] = self._fix_date(ipcr.ipc_version_indicator.contents_of('date', as_string=True))
+            data['action_date'] = self._fix_date(ipcr.action_date.contents_of('date', as_string=True))
+            if any(data.values()):
+                data['sequence'] = i
+                data['uuid'] = str(uuid.uuid1())
+                res.append(data)
+        return res
+
+    @property
+    def claims(self):
+        """
+        Returns list of dictionaries representing claims
+        claim:
+          text
+          dependent -- -1 if an independent claim, else this is the number
+                       of the claim this one is dependent on
+          sequence
+        """
+        claims = self.xml.claim
+        res = []
+        for i, claim in enumerate(claims):
+            data = {}
+            data['text'] = claim.contents_of('claim_text', as_string=True, upper=False)
+            # remove leading claim num from text
+            data['text'] = claim_num_regex.sub('', data['text'])
+            data['sequence'] = i+1 # claims are 1-indexed
+            if claim.claim_ref:
+                # claim_refs are 'claim N', so we extract the N
+                data['dependent'] = int(claim.contents_of('claim_ref',\
+                                        as_string=True).split(' ')[-1])
+            data['uuid'] = str(uuid.uuid1())
+            res.append(data)
+        return res
