@@ -252,6 +252,7 @@ def add_application(obj, override=True, temp=False):
 
 def add_all_app_fields(obj, app):
     add_app_asg(obj, app)
+    """
     add_app_inv(obj, app)
     # add_app_law(obj, app)
     add_app_usreldoc(obj, app)
@@ -259,6 +260,7 @@ def add_all_app_fields(obj, app):
     add_app_ipcr(obj, app)
     # add_app_citations(obj, app)
     add_app_claims(obj, app)
+    """
 
 
 def add_app_asg(obj, app):
