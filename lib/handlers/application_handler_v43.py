@@ -33,7 +33,7 @@ class Patent(PatentHandler):
         else:
             parser.parse(xml_string)
 
-        self.attributes = ['app','application','assignee_list']
+        self.attributes = ['app','application','assignee_list','inventor_list']
 
         self.xml = xh.root.us_patent_application
 
@@ -62,8 +62,6 @@ class Patent(PatentHandler):
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
         
-        print(self.assignee_list)
-
     def _invention_title(self):
         original = self.xml.contents_of('invention_title', upper=False)[0]
         if isinstance(original, list):
@@ -136,6 +134,8 @@ class Patent(PatentHandler):
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
             asg['role'] = assignee.contents_of('role', as_string=True)
+            asg['nationality'] = assignee.contents_of('country', as_string=True)
+            asg['residence'] = assignee.contents_of('country', as_string=True)
             # add location data for assignee
             loc = {}
             for tag in ['city', 'state', 'country']:
@@ -146,4 +146,40 @@ class Patent(PatentHandler):
                 asg['sequence'] = i
                 asg['uuid'] = str(uuid.uuid1())
                 res.append([asg, loc])
+        return res
+
+    @property
+    def inventor_list(self):
+        """
+        Returns list of lists of inventor dictionary and location dictionary
+        inventor:
+          name_last
+          name_first
+          nationality
+          sequence
+        location:
+          id
+          city
+          state
+          country
+        """
+        inventors = self.xml.inventors.inventor
+        if not inventors:
+            return []
+        res = []
+        for i, inventor in enumerate(inventors):
+            # add inventor data
+            inv = {}
+            inv.update(self._name_helper_dict(inventor.addressbook))
+            inv['nationality'] = inventor.contents_of('country', as_string=True)
+            # add location data for inventor
+            loc = {}
+            for tag in ['city', 'state', 'country']:
+                loc[tag] = inventor.addressbook.contents_of(tag, as_string=True, upper=False)
+            #this is created because of MySQL foreign key case sensitivities
+            loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
+            if any(inv.values()) or any(loc.values()):
+                inv['sequence'] = i
+                inv['uuid'] = str(uuid.uuid1())
+                res.append([inv, loc])
         return res
