@@ -70,12 +70,6 @@ class Patent(PatentHandler):
             original = ''.join(original)
         return original
 
-    def _invention_title(self):
-        original = self.xml.contents_of('invention_title', upper=False)[0]
-        if isinstance(original, list):
-            original = ''.join(original)
-        return original
-
     def _name_helper(self, tag_root):
         """
         Returns dictionary of firstname, lastname with prefix associated
