@@ -33,7 +33,7 @@ class Patent(PatentHandler):
         else:
             parser.parse(xml_string)
 
-        self.attributes = ['app','application','assignee_list','applicant_list',\
+        self.attributes = ['app','application','assignee_list','inventor_list',\
                      'us_relation_list','us_classifications','ipcr_classifications',
                      'claims']
 
@@ -157,7 +157,7 @@ class Patent(PatentHandler):
         return res
 
     @property
-    def applicant_list(self):
+    def inventor_list(self):
         """
         Returns list of lists of applicant dictionary and location dictionary
         applicant:
