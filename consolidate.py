@@ -47,8 +47,5 @@ for patent in patents:
         tmprow = row.copy()
         tmprow.update(namedict)
         newrow = normalize_utf8(ROW(tmprow))
-        insert_rows.append(newrow)
-
-with codecs.open('disambiguator.csv', 'wb', encoding='utf-8') as csv:
-    for row in insert_rows:
-        csv.write(row)
+        with codecs.open('disambiguator.csv', 'a', encoding='utf-8') as csv:
+            csv.write(newrow)
