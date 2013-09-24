@@ -21,8 +21,6 @@ THRESHOLD = config.get("assignee").get("threshold")
 blocks = defaultdict(list)
 id_map = defaultdict(list)
 
-# get all assignees in database
-assignees = deque(session.query(RawAssignee))
 assignee_dict = {}
 
 
@@ -130,6 +128,8 @@ def printall():
 
 
 def run_disambiguation():
+    # get all assignees in database
+    assignees = deque(session.query(RawAssignee))
     assignee_alpha_blocks = clean_assignees(assignees)
     create_jw_blocks(assignee_alpha_blocks)
     create_assignee_table()
