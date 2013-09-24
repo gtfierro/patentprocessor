@@ -34,6 +34,8 @@ for patent in patents:
            'city': loc.city if loc else '',
            }
     row['assignee'] = get_assignee_id(patent.assignees[0]) if patent.assignees else ''
+    if not row['assignee']:
+        row['assignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
     # generate a row for each of the inventors on a patent
     for ri in patent.rawinventors:
         namedict = {'name_first': ri.name_first}
