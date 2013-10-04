@@ -33,7 +33,7 @@ class Patent(PatentHandler):
         else:
             parser.parse(xml_string)
 
-        self.attributes = ['app','application','assignee_list']
+        self.attributes = ['app','application','assignee_list','inventor_list']
 
         self.xml = xh.root.patent_application_publication
 
@@ -62,7 +62,7 @@ class Patent(PatentHandler):
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
 
-        print(self.assignee_list)
+        print(self.inventor_list)
 
     def _invention_title(self):
         original = self.xml.contents_of('title_of_invention', upper=False)[0]
@@ -75,8 +75,8 @@ class Patent(PatentHandler):
         Returns dictionary of firstname, lastname with prefix associated
         with lastname
         """
-        firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
-        lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
+        firstname = tag_root.contents_of('given_name', as_string=True, upper=False)
+        lastname = tag_root.contents_of('family_name', as_string=True, upper=False)
         return xml_util.associate_prefix(firstname, lastname)
 
     def _name_helper_dict(self, tag_root):
@@ -84,8 +84,8 @@ class Patent(PatentHandler):
         Returns dictionary of firstname, lastname with prefix associated
         with lastname
         """
-        firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
-        lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
+        firstname = tag_root.contents_of('given_name', as_string=True, upper=False)
+        lastname = tag_root.contents_of('family_name', as_string=True, upper=False)
         firstname, lastname = xml_util.associate_prefix(firstname, lastname)
         return {'name_first': firstname, 'name_last': lastname}
 
@@ -149,4 +149,41 @@ class Patent(PatentHandler):
                 asg['sequence'] = i
                 asg['uuid'] = str(uuid.uuid1())
                 res.append([asg, loc])
+        return res
+
+    @property
+    def inventor_list(self):
+        """
+        Returns list of lists of applicant dictionary and location dictionary
+        applicant:
+          name_last
+          name_first
+          nationality
+          sequence
+        location:
+          id
+          city
+          state
+          country
+        """
+        applicants = self.xml.first_named_inventor + self.xml.inventors.inventor
+        if not applicants:
+            return []
+        res = []
+        for i, applicant in enumerate(applicants):
+            # add applicant data
+            app = {}
+            app.update(self._name_helper_dict(applicant.name))
+            app['nationality'] = applicant.contents_of('country_code', as_string=True)
+            # add location data for applicant
+            loc = {}
+            for tag in ['city', 'state']:
+                loc[tag] = applicant.residence.contents_of(tag, as_string=True, upper=False)
+            loc['country'] = app['nationality']
+            #this is created because of MySQL foreign key case sensitivities
+            loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
+            if any(app.values()) or any(loc.values()):
+                app['sequence'] = i
+                app['uuid'] = str(uuid.uuid1())
+                res.append([app, loc])
         return res
