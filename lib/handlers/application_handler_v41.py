@@ -34,7 +34,7 @@ class Patent(PatentHandler):
             parser.parse(xml_string)
 
         self.attributes = ['app','application','assignee_list','inventor_list',
-                          'us_relation_list','us_classifications']
+                          'us_relation_list','us_classifications','ipcr_classifications']
 
         self.xml = xh.root.patent_application_publication
 
@@ -63,7 +63,7 @@ class Patent(PatentHandler):
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
 
-        print(self.us_classifications)
+        print(self.ipcr_classifications)
 
     def _invention_title(self):
         original = self.xml.contents_of('title_of_invention', upper=False)[0]
@@ -285,3 +285,41 @@ class Patent(PatentHandler):
                         {'id': "{class}/{subclass}".format(**data).upper()}])
                     i = i + 1
         return classes
+
+    @property
+    def ipcr_classifications(self):
+        """
+        Returns list of dictionaries representing ipcr classifications
+        ipcr:
+          ipc_version_indicator
+          classification_level
+          section
+          class
+          subclass
+          main_group
+          subgroup
+          symbol_position
+          classification_value
+          action_date
+          classification_status
+          classification_data_source
+          sequence
+        """
+        ipcr_classifications = self.xml.classification_ipc
+        if not ipcr_classifications:
+            return []
+        res = []
+        # we can safely use [0] because there is only one ipcr_classifications tag
+        for i, ipcr in enumerate(ipcr_classifications.classification_ipc_primary + 
+                                 ipcr_classifications.classification_ipc_secondary):
+            data = {}
+            data['classification_level'] = ipcr.contents_of('ipc', as_string=True)[0]
+            data['class'] = ipcr.contents_of('ipc', as_string=True)[1:3]
+            data['subclass'] = ipcr.contents_of('ipc', as_string=True)[3]
+            data['main_group'] = ipcr.contents_of('ipc', as_string=True)[4:7]
+            data['subgroup'] = ipcr.contents_of('ipc', as_string=True).split('/')[1]
+            if any(data.values()):
+                data['sequence'] = i
+                data['uuid'] = str(uuid.uuid1())
+                res.append(data)
+        return res
