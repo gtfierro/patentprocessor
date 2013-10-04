@@ -33,11 +33,11 @@ def _get_date(filename, dateformat='ipg%y%m%d.xml'):
     Given a [filename], returns the expanded year.
     The optional [dateformat] argument allows for different file formats
     """
-    filename = re.search(r'ip[ag]\d{6}', filename)
+    filename = re.search(r'ip[ag]\d{6}', filename) or re.search(r'p[ag]\d{6}', filename)
     if not filename:
         return 'default'
     filename = filename.group() + '.xml'
-    dateobj = datetime.datetime.strptime(filename.replace('ipa', 'ipg'), dateformat)
+    dateobj = datetime.datetime.strptime(filename.replace('ipa', 'ipg').replace('pa', 'ipg'), dateformat)
     return int(dateobj.strftime('%Y%m%d'))  # returns YYYYMMDD
 
 
