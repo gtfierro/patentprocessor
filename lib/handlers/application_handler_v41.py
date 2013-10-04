@@ -33,7 +33,8 @@ class Patent(PatentHandler):
         else:
             parser.parse(xml_string)
 
-        self.attributes = ['app','application','assignee_list','inventor_list']
+        self.attributes = ['app','application','assignee_list','inventor_list',
+                          'us_relation_list']
 
         self.xml = xh.root.patent_application_publication
 
@@ -62,7 +63,7 @@ class Patent(PatentHandler):
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
 
-        print(self.inventor_list)
+        print(self.us_relation_list)
 
     def _invention_title(self):
         original = self.xml.contents_of('title_of_invention', upper=False)[0]
@@ -186,4 +187,69 @@ class Patent(PatentHandler):
                 app['sequence'] = i
                 app['uuid'] = str(uuid.uuid1())
                 res.append([app, loc])
+        return res
+
+    def _get_doc_info(self, root):
+        """
+        Accepts an XMLElement root as an argument. Returns list of
+        [country, doc-number, kind, date] for the given root
+        """
+        res = {}
+        country = root.contents_of('country_code')[0] if root.contents_of('country_code') else []
+        kind = root.contents_of('kind_code')[0] if root.contents_of('kind_code') else []
+        date = root.contents_of('document_date')[0] if root.contents_of('document_date') else []
+        res['country'] = country if country else ''
+        res['kind'] = kind if kind else ''
+        res['date'] = date if date else ''
+        res['number'] = xml_util.normalize_document_identifier(
+            root.contents_of('doc_number')[0])
+        return res
+
+    @property
+    def us_relation_list(self):
+        """
+        returns list of dictionaries for us reldoc:
+        usreldoc:
+          doctype
+          status (parent status)
+          date
+          number
+          kind
+          country
+          relationship
+          sequence
+        """
+        root = self.xml.continuations
+        if not root:
+            return []
+        root = root[0]
+        res = []
+        i = 0
+        for reldoc in root.children:
+            if reldoc._name not in ['non_provisional_of_provisional','continuation_of']:
+                print("Value not parsed in application_handler_v41.us_relation_list: " + reldoc._name)
+            elif reldoc._name == 'non_provisional_of_provisional':
+                data = {'doctype': 'us_provisional_application'}
+                data.update(self._get_doc_info(reldoc))
+                data['date'] = self._fix_date(data['date'])
+                if any(data.values()):
+                    data['sequence'] = i
+                    data['uuid'] = str(uuid.uuid1())
+                    i = i + 1
+                    res.append(data)
+            for relation in reldoc.parent_child:
+                for relationship in ['parent', 'child']:
+                    data = {'doctype': u'relation'}
+                    doc = getattr(relation, relationship)
+                    if not doc:
+                        continue
+                    data.update(self._get_doc_info(doc[0]))
+                    data['date'] = self._fix_date(data['date'])
+                    data['status'] = relation.contents_of('parent_status', as_string=True)
+                    data['relationship'] = relationship  # parent/child
+                    if any(data.values()):
+                        data['sequence'] = i
+                        data['uuid'] = str(uuid.uuid1())
+                        i = i + 1
+                        res.append(data)
         return res
