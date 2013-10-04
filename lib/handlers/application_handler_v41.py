@@ -34,7 +34,7 @@ class Patent(PatentHandler):
             parser.parse(xml_string)
 
         self.attributes = ['app','application','assignee_list','inventor_list',
-                          'us_relation_list']
+                          'us_relation_list','us_classifications']
 
         self.xml = xh.root.patent_application_publication
 
@@ -63,7 +63,7 @@ class Patent(PatentHandler):
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
 
-        print(self.us_relation_list)
+        print(self.us_classifications)
 
     def _invention_title(self):
         original = self.xml.contents_of('title_of_invention', upper=False)[0]
@@ -227,7 +227,7 @@ class Patent(PatentHandler):
         i = 0
         for reldoc in root.children:
             if reldoc._name not in ['non_provisional_of_provisional','continuation_of']:
-                print("Value not parsed in application_handler_v41.us_relation_list: " + reldoc._name)
+                print('Value not parsed in application_handler_v41.us_relation_list: ' + reldoc._name)
             elif reldoc._name == 'non_provisional_of_provisional':
                 data = {'doctype': 'us_provisional_application'}
                 data.update(self._get_doc_info(reldoc))
@@ -253,3 +253,35 @@ class Patent(PatentHandler):
                         i = i + 1
                         res.append(data)
         return res
+
+    @property
+    def us_classifications(self):
+        """
+        Returns list of dictionaries representing us classification
+        main:
+          class
+          subclass
+        """
+        classes = []
+        i = 0
+        main = self.xml.classification_us.classification_us_primary.uspc
+        data = {'class': main.contents_of('class', as_string=True),
+              'subclass': main.contents_of('subclass', as_string=True)}
+        if any(data.values()):
+            classes.append([
+                {'uuid': str(uuid.uuid1()), 'sequence': i},
+                {'id': data['class'].upper()},
+                {'id': "{class}/{subclass}".format(**data).upper()}])
+            i = i + 1
+        if self.xml.classification_us.classification_us_secondary:
+            further = self.xml.classification_us.contents_of('classification_us_secondary')
+            for classification in further:
+                data = {'class': classification.contents_of('class', as_string=True),
+                        'subclass': classification.contents_of('class', as_string=True)}
+                if any(data.values()):
+                    classes.append([
+                        {'uuid': str(uuid.uuid1()), 'sequence': i},
+                        {'id': data['class'].upper()},
+                        {'id': "{class}/{subclass}".format(**data).upper()}])
+                    i = i + 1
+        return classes
