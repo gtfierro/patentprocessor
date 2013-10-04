@@ -34,14 +34,15 @@ class Patent(PatentHandler):
             parser.parse(xml_string)
 
         self.attributes = ['app','application','assignee_list','inventor_list',
-                          'us_relation_list','us_classifications','ipcr_classifications']
+                          'us_relation_list','us_classifications','ipcr_classifications',
+                          'claims']
 
         self.xml = xh.root.patent_application_publication
 
         if self.xml.foreign_priority_data:
             self.country = self.xml.foreign_priority_data.contents_of('country_code')[0]
         else:
-            self.country = self.xml.country_code[0]
+            self.country = self.xml.contents_of('country_code')[0]
         self.application = xml_util.normalize_document_identifier(self.xml.document_id.contents_of('doc_number')[0])
         self.kind = self.xml.document_id.contents_of('kind_code')[0]
         self.pat_type = None
@@ -62,8 +63,6 @@ class Patent(PatentHandler):
             "num_claims": self.clm_num
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
-
-        print(self.ipcr_classifications)
 
     def _invention_title(self):
         original = self.xml.contents_of('title_of_invention', upper=False)[0]
@@ -137,15 +136,19 @@ class Patent(PatentHandler):
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('organization_name', as_string=True, upper=False)
             asg['role'] = assignee.contents_of('role', as_string=True)
-            asg['nationality'] = assignee.contents_of('country_code')[0]
-            asg['residence'] = assignee.contents_of('country_code')[0]
+            if assignee.contents_of('country_code'):
+                asg['nationality'] = assignee.contents_of('country_code')[0]
+                asg['residence'] = assignee.contents_of('country_code')[0]
             # add location data for assignee
             loc = {}
             for tag in ['city', 'state']:
                 loc[tag] = assignee.contents_of(tag, as_string=True, upper=False)
-            loc['country'] = asg['nationality']
+            if 'nationality' in asg:
+                loc['country'] = asg['nationality']
             #this is created because of MySQL foreign key case sensitivities
-            loc['id'] = unidecode(u"|".join([loc['city'], loc['state'], loc['country']]).lower())
+                loc['id'] = unidecode(u"|".join([loc['city'], loc['state'], loc['country']]).lower())
+            else:
+                loc['id'] = u''
             if any(asg.values()) or any(loc.values()):
                 asg['sequence'] = i
                 asg['uuid'] = str(uuid.uuid1())
@@ -226,9 +229,7 @@ class Patent(PatentHandler):
         res = []
         i = 0
         for reldoc in root.children:
-            if reldoc._name not in ['non_provisional_of_provisional','continuation_of']:
-                print('Value not parsed in application_handler_v41.us_relation_list: ' + reldoc._name)
-            elif reldoc._name == 'non_provisional_of_provisional':
+            if reldoc._name == 'non_provisional_of_provisional':
                 data = {'doctype': 'us_provisional_application'}
                 data.update(self._get_doc_info(reldoc))
                 data['date'] = self._fix_date(data['date'])
@@ -274,7 +275,7 @@ class Patent(PatentHandler):
                 {'id': "{class}/{subclass}".format(**data).upper()}])
             i = i + 1
         if self.xml.classification_us.classification_us_secondary:
-            further = self.xml.classification_us.contents_of('classification_us_secondary')
+            further = self.xml.classification_us.classification_us_secondary
             for classification in further:
                 data = {'class': classification.contents_of('class', as_string=True),
                         'subclass': classification.contents_of('class', as_string=True)}
@@ -322,4 +323,30 @@ class Patent(PatentHandler):
                 data['sequence'] = i
                 data['uuid'] = str(uuid.uuid1())
                 res.append(data)
+        return res
+
+    @property
+    def claims(self):
+        """
+        Returns list of dictionaries representing claims
+        claim:
+          text
+          dependent -- -1 if an independent claim, else this is the number
+                       of the claim this one is dependent on
+          sequence
+        """
+        claims = self.xml.claim
+        res = []
+        for i, claim in enumerate(claims):
+            data = {}
+            data['text'] = claim.contents_of('claim_text', as_string=True, upper=False)
+            # remove leading claim num from text
+            data['text'] = claim_num_regex.sub('', data['text'])
+            data['sequence'] = i+1 # claims are 1-indexed
+            if claim.dependent_claim_reference:
+                # claim_refs are 'claim N', so we extract the N
+                data['dependent'] = int(claim.dependent_claim_reference.contents_of('claim_text',\
+                                        as_string=True).split(' ')[-1])
+            data['uuid'] = str(uuid.uuid1())
+            res.append(data)
         return res
