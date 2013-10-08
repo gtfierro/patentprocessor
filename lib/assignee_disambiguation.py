@@ -90,11 +90,17 @@ def create_assignee_table():
     populates the Assignee table in the database
     """
     print 'Disambiguating assignees...'
+    i = 0
     for assignee in blocks.iterkeys():
         ra_ids = (id_map[ra] for ra in blocks[assignee])
         for block in ra_ids:
+          i += 1
           rawassignees = [assignee_dict[ra_id] for ra_id in block]
-          match(rawassignees, session)
+          if i % 10000 == 0:
+              match(rawassignees, session, commit=True)
+          else:
+              match(rawassignees, session, commit=False)
+    session.commit()
 
 def examine():
     assignees = s.query(Assignee).all()
