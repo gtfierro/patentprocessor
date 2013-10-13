@@ -97,7 +97,7 @@ def create_assignee_table():
           i += 1
           rawassignees = [assignee_dict[ra_id] for ra_id in block]
           session.execute('select 1')
-          if i % 1000 == 0:
+          if i % 10000 == 0:
               match(rawassignees, session, commit=True)
           else:
               match(rawassignees, session, commit=False)

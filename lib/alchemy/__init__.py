@@ -28,7 +28,7 @@ def get_config(localfile="config.ini", default_file=True):
         cfg.read(openfile)
         for s in cfg.sections():
             for k, v in cfg.items(s):
-                dec = re.compile('\d+(\.\d+)?')
+                dec = re.compile(r'^\d+(\.\d+)?$')
                 if v in ("True", "False") or v.isdigit() or dec.match(v):
                     v = eval(v)
                 config[s][k] = v
@@ -67,7 +67,7 @@ def fetch_session(db=None, dbtype='grant'):
             config.get(db).get('host'),
             config.get(db).get('{0}-database'.format(dbtype)), echo=echo))
     schema.GrantBase.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
+    Session = sessionmaker(bind=engine, _enable_transaction_accounting=False)
     session = Session()
     return session
 

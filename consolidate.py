@@ -10,9 +10,12 @@ import codecs
 from lib import alchemy
 from lib.assignee_disambiguation import get_assignee_id
 from lib.handlers.xml_util import normalize_utf8
+from sqlalchemy.orm import joinedload, subqueryload
 
 # get patents as iterator to save memory
-patents = (p for p in alchemy.session.query(alchemy.schema.Patent).yield_per(1))
+# use subqueryload to get better performance by using less queries on the backend:
+# --> http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
+patents = (p for p in alchemy.session.query(alchemy.schema.Patent).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
 ROW = lambda x: u'{number}, {mainclass}, {subclass}, {name_first}, {name_middle}, {name_last},\

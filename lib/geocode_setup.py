@@ -3,33 +3,6 @@
 import re
 import fwork
 
-def get_jaro_required(replacement_operation):
-    if replacement_operation=='domestic_first3':
-        return "0.92"
-    elif replacement_operation=='domestic_last4':
-        return "0.90"
-    elif replacement_operation=='foreign_first3':
-        return "0.92"
-    elif replacement_operation=='foreign_last4':
-        return "0.90"
-    elif replacement_operation=='domestic_first3_2nd':
-        return "0.95"
-    elif replacement_operation=='foreign_first3_2nd':
-        return "0.95"
-
-#return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
-def get_entry_from_row(row, i):
-    if i==-1:
-        return row
-    else:
-        #Match the , and | separators and any spaces on either side
-        pattern = re.compile(" *?[,|] *")
-        row_split = pattern.split(row)
-        if len(row_split)> i:
-            return row_split[i]
-        else:
-            return ""
-
 # TODO: Consider replacing the lambdas with functions which can be tested.
 def create_sql_helper_functions(conn):
     conn.create_function("remove_spaces", 1, lambda x: re.sub(" ", "", x))
@@ -38,15 +11,23 @@ def create_sql_helper_functions(conn):
     conn.create_function("cityctry",  3, fwork.cityctry)
     conn.create_function("get_entry_from_row", 2, get_entry_from_row)
     #conn.create_function("rev_wrd",   2, lambda x,y:x.upper()[::-1][:y])
-
-
+    
+def create_hashtbl(cursor, connection):
+    geocode_db_initialize(cursor)
+    loc_create_table(cursor)
+    if not(fwork.tblExist(cursor, "locMerge")):
+        fix_city_country(cursor)
+        fix_state_zip(cursor)
+        create_loc_indexes(connection)
+    create_usloc_table(cursor)
+    create_locMerge_table(cursor)
+    
 def geocode_db_initialize(cursor):
     cursor.executescript("""
         PRAGMA CACHE_SIZE=20000;
         ATTACH DATABASE 'loctbl'   AS loctbl;
         """)
-
-
+    
 # TODO: Ensure this is the correct schema, that is, the
 # schema below needs to match the schema in the existing
 # loc table. If it doesn't match, we need to find out
@@ -73,45 +54,19 @@ def loc_create_table(cursor):
         DROP INDEX IF EXISTS loc_ixnCS;
         DROP INDEX IF EXISTS loc3_idxCC;
         """)
-
-
-def create_hashtbl(cursor, connection):
-    geocode_db_initialize(cursor)
-    loc_create_table(cursor)
-    if not(fwork.tblExist(cursor, "locMerge")):
-        fix_city_country(cursor)
-        fix_state_zip(cursor)
-        create_loc_indexes(connection)
-    create_usloc_table(cursor)
-    create_locMerge_table(cursor)
-
-
-# This feels a little overboard, but this DRYs up
-# code in a couple of methods where the line count
-# is already too long.
-def drop_temp_tables(cursor):
-    cursor.executescript("""
-        DROP TABLE temp;
-        DROP TABLE temp2;
-        """)
-
-
-def update_table_loc_from_typos(cursor):
-    cursor.executescript("""
-        INSERT OR REPLACE INTO loc
-            SELECT  a.*,
-                    SUBSTR(CityY,1,3),
-                    b.NewCity,
-                    b.NewState,
-                    b.NewCountry
-              FROM  temp2 AS a
-         LEFT JOIN  loctbl.typos AS b
-                ON  a.CityY  = b.City
-               AND  a.StateY = b.State
-               AND  a.CtryY  = b.Country;
-        """)
-
-
+    
+# TODO: Find a way to unit test fix_city_country
+def fix_city_country(cursor):
+    create_table_temp_assignees_db(cursor)
+    create_table_temp2_assignees(cursor)
+    update_table_loc(cursor)
+    drop_temp_tables(cursor)
+    
+def create_table_temp_assignees_db(cursor):
+    cursor.execute("ATTACH DATABASE 'assignee.sqlite3' AS assigneesdb;")
+    create_table_temp_assignees(cursor)
+    cursor.execute("DETACH DATABASE assigneesdb;")
+    
 def create_table_temp_assignees(cursor):
     cursor.executescript("""
        CREATE TEMPORARY TABLE temp AS
@@ -123,8 +78,52 @@ def create_table_temp_assignees(cursor):
              WHERE  City != ""
           GROUP BY  CityX, StateX, CountryX;
         """)
+    
+def create_table_temp2_assignees(cursor):
+    cursor.executescript("""
+        CREATE TEMPORARY TABLE temp2 AS
+            SELECT  sum(Cnt)                          AS Cnt,
+                    cityctry(CityX, CountryX, 'city') AS CityY,
+                    StateX                            AS StateY,
+                    cityctry(CityX, CountryX, 'ctry') AS CtryY,
+                    ''                                AS ZipcodeY
+              FROM  temp
+             WHERE  CityY != ""
+          GROUP BY  CityY, StateY, CtryY;
+        """)
+    
+def update_table_loc(cursor):
+    cursor.executescript("""
+        INSERT OR REPLACE INTO loc
+            SELECT  *,
+                    SUBSTR(CityY,1,3),
+                    CityY,
+                    StateY,
+                    CtryY
+              FROM  temp2;
+        """)
+    
+# This feels a little overboard, but this DRYs up
+# code in a couple of methods where the line count
+# is already too long.
+def drop_temp_tables(cursor):
+    cursor.executescript("""
+        DROP TABLE temp;
+        DROP TABLE temp2;
+        """)
 
-
+# TODO: Find a way to unit test fix_state_zip
+def fix_state_zip(cursor):
+    create_table_temp_inventors_db(cursor)
+    create_table_temp2_inventors(cursor)
+    update_table_loc(cursor)
+    drop_temp_tables(cursor)
+    
+def create_table_temp_inventors_db(cursor):
+    cursor.execute("ATTACH DATABASE 'inventor.sqlite3' AS inventorsdb;")
+    create_table_temp_inventors(cursor)
+    cursor.execute("DETACH DATABASE inventorsdb;")
+    
 def create_table_temp_inventors(cursor):
     cursor.executescript("""
        CREATE TEMPORARY TABLE temp AS
@@ -139,33 +138,6 @@ def create_table_temp_inventors(cursor):
           GROUP BY  CityX, StateX, CountryX, Zipcode;
         """)
 
-
-def create_table_temp_assignees_db(cursor):
-    cursor.execute("ATTACH DATABASE 'assignee.sqlite3' AS assigneesdb;")
-    create_table_temp_assignees(cursor)
-    cursor.execute("DETACH DATABASE assigneesdb;")
-
-
-def create_table_temp_inventors_db(cursor):
-    cursor.execute("ATTACH DATABASE 'inventor.sqlite3' AS inventorsdb;")
-    create_table_temp_inventors(cursor)
-    cursor.execute("DETACH DATABASE inventorsdb;")
-
-
-def create_table_temp2_assignees(cursor):
-    cursor.executescript("""
-        CREATE TEMPORARY TABLE temp2 AS
-            SELECT  sum(Cnt)                          AS Cnt,
-                    cityctry(CityX, CountryX, 'city') AS CityY,
-                    StateX                            AS StateY,
-                    cityctry(CityX, CountryX, 'ctry') AS CtryY,
-                    ''                                AS ZipcodeY
-              FROM  temp
-             WHERE  CityY != ""
-          GROUP BY  CityY, StateY, CtryY;
-        """)
-
-
 def create_table_temp2_inventors(cursor):
     cursor.executescript("""
         CREATE TEMPORARY TABLE temp2 AS
@@ -178,24 +150,7 @@ def create_table_temp2_inventors(cursor):
              WHERE  CityY != ""
           GROUP BY  CityY, StateY, CtryY, ZipcodeY;
         """)
-
-
-# TODO: Find a way to unit test fix_city_country
-def fix_city_country(cursor):
-    create_table_temp_assignees_db(cursor)
-    create_table_temp2_assignees(cursor)
-    update_table_loc_from_typos(cursor)
-    drop_temp_tables(cursor)
-
-
-# TODO: Find a way to unit test fix_state_zip
-def fix_state_zip(cursor):
-    create_table_temp_inventors_db(cursor)
-    create_table_temp2_inventors(cursor)
-    update_table_loc_from_typos(cursor)
-    drop_temp_tables(cursor)
-
-
+    
 # TODO: Find a way to ensure that the correct indexes are created as
 # the schemas change.
 def create_loc_indexes(cursor):
@@ -208,7 +163,6 @@ def create_loc_indexes(cursor):
         CREATE INDEX IF NOT EXISTS loc_ixn   ON loc (NCity,NState,NCountry);
         CREATE INDEX IF NOT EXISTS loc_ixnCS ON loc (NCity,NState);
         """)
-
 
 # TODO: unit test
 def create_usloc_table(cursor):
@@ -223,7 +177,7 @@ def create_usloc_table(cursor):
                     SUBSTR(remove_spaces(City), -4)        AS City4R,
                     UPPER(State)                       AS State,
                     "US"                               AS Country
-              FROM  loctbl.us_cities_merged;
+              FROM  loctbl.us_cities;
 
         CREATE INDEX If NOT EXISTS usloc_idxZ  on usloc (Zipcode);
         CREATE INDEX If NOT EXISTS usloc_idxCS on usloc (City, State);
@@ -241,7 +195,6 @@ def create_usloc_table(cursor):
         CREATE INDEX gnsloc_idxCC on gnsloc (City, Country)
         */;
         """)
-
 
 def create_locMerge_table(cursor):
     cursor.executescript("""
@@ -267,3 +220,32 @@ def create_locMerge_table(cursor):
         CREATE INDEX IF NOT EXISTS okM_idxCS ON locMerge (City,State);
         CREATE INDEX IF NOT EXISTS okM_idx3  ON locMerge (City3,State,Country);
         """)
+
+def get_jaro_required(replacement_operation):
+    if replacement_operation=='domestic_first3':
+        return "0.92"
+    elif replacement_operation=='domestic_last4':
+        return "0.90"
+    elif replacement_operation=='foreign_first3':
+        return "0.92"
+    elif replacement_operation=='foreign_last4':
+        return "0.90"
+    elif replacement_operation=='domestic_first3_2nd':
+        return "0.95"
+    elif replacement_operation=='foreign_first3_2nd':
+        return "0.95"
+    else:
+        assert(False)
+
+#return the ith entry in a row separated by ',' or '|'. Return an empty string if there are fewer than i segments in the row.
+def get_entry_from_row(row, i):
+    if i==-1:
+        return row
+    else:
+        #Match the , and | separators and any spaces on either side
+        pattern = re.compile(" *?[,|] *")
+        row_split = pattern.split(row)
+        if len(row_split)> i:
+            return row_split[i]
+        else:
+            return ""

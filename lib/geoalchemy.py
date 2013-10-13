@@ -154,30 +154,37 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
     for i, item in unidentified_grouped_locations_enum:
         country, grouped_locations_list = item
         #Get a list of all cities that exist anywhere in that country
-        all_cities = geo_data_session.query(AllCities.city, AllCities.region).filter_by(country=country)
+        all_cities_in_country = geo_data_session.query(AllCities.city, AllCities.region).filter_by(country=country)
         #Construct a name for each location that matches the normal cleaned location format
-        all_cities = [geoalchemy_util.clean_raw_location(geoalchemy_util.concatenate_location(x.city, 
+        all_cities_in_country = [geoalchemy_util.concatenate_location(x.city, 
                            x.region if geoalchemy_util.region_is_a_state(x.region) else '',
-                           country)) for x in all_cities]
+                           country) for x in all_cities_in_country]
         #For each location found in this country, find its closest match
         #among the list of all cities from that country
         for grouped_location in grouped_locations_list:
             cleaned_location = grouped_location["cleaned_location"]
-            closest_match = geoalchemy_util.get_closest_match_leven(cleaned_location, all_cities, minimum_match_value)
+            closest_match = geoalchemy_util.get_closest_match_leven(cleaned_location, all_cities_in_country, minimum_match_value)
             #If no match was found or only the trivial match
             if closest_match=='' or closest_match==country:
                 continue
-            if input_address_exists(closest_match):
-                matching_location = geo_data_session.query(RawGoogle).filter(
-                                         RawGoogle.input_address==closest_match).first()
-                grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
-                raw_location = grouped_location["raw_location"]
-                identified_grouped_locations.append({"raw_location": raw_location,
+            #If we have a good match, add it to the list of matched locations
+            closest_match_split = re.split(",",closest_match)
+            city = closest_match_split[0].strip()
+            if len(closest_match_split)==3:
+                region = closest_match_split[1].strip()
+                country = closest_match_split[2].strip()
+                matching_location = geo_data_session.query(AllCities).filter_by(city=city, region=region, country=country).first()
+            else:
+                country = closest_match_split[1].strip()
+                matching_location = geo_data_session.query(AllCities).filter_by(city=city, country=country).first()
+            if not matching_location:
+                print 'Warning: all_cities match attempt failed for', cleaned_location.encode('utf8'), 'location not found'
+            grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
+            raw_location = grouped_location["raw_location"]
+            identified_grouped_locations.append({"raw_location": raw_location,
                                   "matching_location": matching_location,
                                   "grouping_id": grouping_id})
-                print 'all_cities found additional match for', cleaned_location.encode('utf8'), ':', closest_match
-            else:
-                print 'raw_google cannot find real city:', closest_match.encode('utf8')
+            print 'all_cities found additional location for', raw_location
     
 def match_grouped_locations(identified_grouped_locations_enum, t):
     for i, item in identified_grouped_locations_enum:
