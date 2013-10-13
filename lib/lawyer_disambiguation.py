@@ -92,11 +92,17 @@ def create_lawyer_table():
     populates the lawyer table in the database
     """
     print 'Disambiguating lawyers...'
+    i = 0
     for lawyer in blocks.iterkeys():
         rl_ids = (id_map[ra] for ra in blocks[lawyer])
         for block in rl_ids:
+          i += 1
           rawlawyers = [lawyer_dict[rl_id] for rl_id in block]
-          match(rawlawyers, session)
+          if i % 10000 == 0:
+              match(rawlawyers, session, commit=True)
+          else:
+              match(rawlawyers, session, commit=False)
+    session.commit()
 
 def examine():
     lawyers = s.query(lawyer).all()
