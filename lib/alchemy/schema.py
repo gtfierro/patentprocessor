@@ -997,11 +997,6 @@ applicationinventor = Table(
     Column('application_id', Unicode(20), ForeignKey('application.id')),
     Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
-applicationlawyer = Table(
-    'application_lawyer', ApplicationBase.metadata,
-    Column('application_id', Unicode(20), ForeignKey('application.id')),
-    Column('lawyer_id', Unicode(36), ForeignKey('lawyer.id')))
-
 locationassignee = Table(
     'location_assignee', ApplicationBase.metadata,
     Column('location_id', Unicode(256), ForeignKey('location.id')),
@@ -1040,7 +1035,6 @@ class App_Application(ApplicationBase):
 
     rawassignees = relationship("App_RawAssignee", backref="application", cascade=cascade)
     rawinventors = relationship("App_RawInventor", backref="application", cascade=cascade)
-    rawlawyers = relationship("App_RawLawyer", backref="application", cascade=cascade)
     claims = relationship("App_Claim", backref="application", cascade=cascade)
     uspatentcitations = relationship(
         "App_USPatentCitation",
@@ -1065,7 +1059,6 @@ class App_Application(ApplicationBase):
         backref="relpatent", cascade=cascade)
     assignees = relationship("App_Assignee", secondary=applicationassignee, backref="applications")
     inventors = relationship("App_Inventor", secondary=applicationinventor, backref="applications")
-    lawyers = relationship("App_Lawyer", secondary=applicationlawyer, backref="applications")
 
     __table_args__ = (
         Index("pat_idx1", "type", "number", unique=True),
@@ -1086,7 +1079,6 @@ class App_Application(ApplicationBase):
             "ipcrs": len(self.ipcrs),
             "rawassignees": len(self.rawassignees),
             "rawinventors": len(self.rawinventors),
-            "rawlawyers": len(self.rawlawyers),
             "otherreferences": len(self.otherreferences),
             "uspatentcitations": len(self.uspatentcitations),
             "usapplicationcitations": len(self.usapplicationcitations),
@@ -1400,67 +1392,6 @@ class App_RawInventor(ApplicationBase):
         return "<RawInventor('{0}')>".format(unidecode(self.name_full))
 
 
-class App_RawLawyer(ApplicationBase):
-    __tablename__ = "rawlawyer"
-    uuid = Column(Unicode(36), primary_key=True)
-    lawyer_id = Column(Unicode(36), ForeignKey("lawyer.id"))
-    application_id = Column(Unicode(20), ForeignKey("application.id"))
-    name_first = Column(Unicode(64))
-    name_last = Column(Unicode(64))
-    organization = Column(Unicode(64))
-    country = Column(Unicode(10))
-    sequence = Column(Integer, index=True)
-
-    @hybrid_property
-    def name_full(self):
-        return u"{first} {last}".format(
-            first=self.name_first,
-            last=self.name_last)
-
-    # -- Functions for Disambiguation --
-
-    @hybrid_property
-    def summarize(self):
-        return {
-            "name_first": self.name_first,
-            "name_last": self.name_last,
-            "organization": self.organization,
-            "country": self.country}
-
-    @hybrid_property
-    def __clean__(self):
-        return self.lawyer
-
-    @hybrid_property
-    def __related__(self):
-        return App_Lawyer
-
-    def unlink(self, session):
-        clean = self.__clean__
-        pats = [obj.application_id for obj in clean.__raw__ if obj.application_id == self.application_id]
-        if len(pats) == 1:
-            session.query(applicationlawyer).filter(
-                applicationlawyer.c.application_id == self.application_id).delete(
-                    synchronize_session=False)
-        session.query(App_RawLawyer).filter(
-            App_RawLawyer.uuid == self.uuid).update(
-                {App_RawLawyer.lawyer_id: None},
-                synchronize_session=False)
-        if len(clean.__raw__) == 0:
-            session.delete(clean)
-        session.commit()
-
-    # ----------------------------------
-
-    def __repr__(self):
-        data = []
-        if self.name_first:
-            data.append("{0} {1}".format(self.name_first, self.name_last))
-        if self.organization:
-            data.append(self.organization)
-        return "<RawLawyer('{0}')>".format(unidecode(", ".join(data)))
-
-
 # DISAMBIGUATED -----------------------
 
 
@@ -1642,96 +1573,6 @@ class App_Inventor(ApplicationBase):
 
     def __repr__(self):
         return "<Inventor('{0}')>".format(unidecode(self.name_full))
-
-
-class App_Lawyer(ApplicationBase):
-    __tablename__ = "lawyer"
-    id = Column(Unicode(36), primary_key=True)
-    name_first = Column(Unicode(64))
-    name_last = Column(Unicode(64))
-    organization = Column(Unicode(64))
-    country = Column(Unicode(10))
-    rawlawyers = relationship("App_RawLawyer", backref="lawyer")
-
-    @hybrid_property
-    def name_full(self):
-        return u"{first} {last}".format(
-            first=self.name_first,
-            last=self.name_last)
-
-    # -- Functions for Disambiguation --
-
-    @hybrid_property
-    def summarize(self):
-        return {
-            "id": self.id,
-            "name_first": self.name_first,
-            "name_last": self.name_last,
-            "organization": self.organization,
-            "country": self.country}
-
-    @hybrid_property
-    def __raw__(self):
-        return self.rawlawyers
-
-    @hybrid_property
-    def __related__(self):
-        return App_RawLawyer
-
-    def __rawgroup__(self, session, key):
-        if key in App_RawLawyer.__dict__:
-            return session.query(App_RawLawyer.__dict__[key], func.count()).filter(
-                App_RawLawyer.lawyer_id == self.id).group_by(
-                    App_RawLawyer.__dict__[key]).all()
-        else:
-            return []
-
-    def relink(self, session, obj):
-        if obj == self:
-            return
-        if obj.__tablename__[:3] == "raw":
-            if obj.application and obj.application not in self.applications:
-                self.applications.append(obj.application)
-            if obj and obj not in self.__raw__:
-                self.__raw__.append(obj)
-        else:
-            session.query(App_RawLawyer).filter(
-                App_RawLawyer.lawyer_id == obj.id).update(
-                    {App_RawLawyer.lawyer_id: self.id},
-                    synchronize_session=False)
-            session.query(applicationlawyer).filter(
-                applicationlawyer.c.lawyer_id == obj.id).update(
-                    {applicationlawyer.c.lawyer_id: self.id},
-                    synchronize_session=False)
-
-    def update(self, **kwargs):
-        if "name_first" in kwargs:
-            self.name_first = kwargs["name_first"]
-        if "name_last" in kwargs:
-            self.name_last = kwargs["name_last"]
-        if "organization" in kwargs:
-            self.organization = kwargs["organization"]
-        if "country" in kwargs:
-            self.country = kwargs["country"]
-
-    @classmethod
-    def fetch(self, session, default={}):
-        return schema_func.fetch(
-            App_Lawyer,
-            [["id"],
-             ["organization"],
-             ["name_first", "name_last"]],
-            session, default)
-
-    # ----------------------------------
-
-    def __repr__(self):
-        data = []
-        if self.name_full:
-            data.append(self.name_full)
-        if self.organization:
-            data.append(self.organization)
-        return "<Lawyer('{0}')>".format(unidecode(", ".join(data)))
 
 
 # CLASSIFICATIONS ------------------
