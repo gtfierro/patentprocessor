@@ -10,9 +10,12 @@ import codecs
 from lib import alchemy
 from lib.assignee_disambiguation import get_assignee_id
 from lib.handlers.xml_util import normalize_utf8
+from sqlalchemy.orm import joinedload, subqueryload
 
 # get patents as iterator to save memory
-patents = (p for p in alchemy.session.query(alchemy.schema.Patent).yield_per(1))
+# use subqueryload to get better performance by using less queries on the backend:
+# --> http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
+patents = (p for p in alchemy.session.query(alchemy.schema.Patent).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
 ROW = lambda x: u'{number}, {mainclass}, {subclass}, {name_first}, {name_middle}, {name_last},\
@@ -34,6 +37,8 @@ for patent in patents:
            'city': loc.city if loc else '',
            }
     row['assignee'] = get_assignee_id(patent.assignees[0]) if patent.assignees else ''
+    if not row['assignee']:
+        row['assignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
     # generate a row for each of the inventors on a patent
     for ri in patent.rawinventors:
         namedict = {'name_first': ri.name_first}
@@ -45,8 +50,5 @@ for patent in patents:
         tmprow = row.copy()
         tmprow.update(namedict)
         newrow = normalize_utf8(ROW(tmprow))
-        insert_rows.append(newrow)
-
-with codecs.open('disambiguator.csv', 'wb', encoding='utf-8') as csv:
-    for row in insert_rows:
-        csv.write(row)
+        with codecs.open('disambiguator.csv', 'a', encoding='utf-8') as csv:
+            csv.write(newrow)
