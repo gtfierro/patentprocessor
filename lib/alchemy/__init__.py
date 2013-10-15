@@ -253,7 +253,6 @@ def add_application(obj, override=True, temp=False):
 def add_all_app_fields(obj, app):
     add_app_asg(obj, app)
     add_app_inv(obj, app)
-    # add_app_law(obj, app)
     add_app_usreldoc(obj, app)
     add_app_classes(obj, app)
     add_app_ipcr(obj, app)
@@ -277,12 +276,6 @@ def add_app_inv(obj, app):
         appsession.merge(loc)
         inv.rawlocation = loc
         app.rawinventors.append(inv)
-
-
-def add_app_law(obj, app):
-    for law in obj.lawyer_list:
-        law = schema.App_RawLawyer(**law)
-        app.rawlawyers.append(law)
 
 
 def add_app_usreldoc(obj, app):
