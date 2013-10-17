@@ -1020,11 +1020,6 @@ class App_Application(ApplicationBase):
     title = deferred(Column(UnicodeText))
     granted = Column(Boolean)
     num_claims = Column(Integer)
-    usapplicationcitations = relationship(
-        "App_USApplicationCitation",
-        primaryjoin="App_Application.id == App_USApplicationCitation.application_id",
-        foreign_keys="App_USApplicationCitation.application_id",
-        backref="application", cascade=cascade)
     __table_args__ = (
         Index("app_idx1", "type", "number"),
         Index("app_idx2", "date"),
@@ -1036,18 +1031,6 @@ class App_Application(ApplicationBase):
     rawassignees = relationship("App_RawAssignee", backref="application", cascade=cascade)
     rawinventors = relationship("App_RawInventor", backref="application", cascade=cascade)
     claims = relationship("App_Claim", backref="application", cascade=cascade)
-    uspatentcitations = relationship(
-        "App_USPatentCitation",
-        primaryjoin="App_Application.id == App_USPatentCitation.application_id",
-        backref="application", cascade=cascade)
-    uspatentcitedby = relationship(
-        "App_USPatentCitation",
-        primaryjoin="App_Application.id == App_USPatentCitation.citation_id",
-        foreign_keys="App_USPatentCitation.citation_id",
-        backref="citation", cascade=cascade)
-    usapplicationcitations = relationship("App_USApplicationCitation", backref="application", cascade=cascade)
-    foreigncitations = relationship("App_ForeignCitation", backref="application", cascade=cascade)
-    otherreferences = relationship("App_OtherReference", backref="application", cascade=cascade)
     usreldocs = relationship(
         "App_USRelDoc",
         primaryjoin="App_Application.id == App_USRelDoc.application_id",
@@ -1632,75 +1615,6 @@ class App_SubClass(ApplicationBase):
 
 # REFERENCES -----------------------
 
-class App_USPatentCitation(ApplicationBase):
-    """
-    US Patent Citation schema
-    """
-    __tablename__ = "uspatentcitation"
-    uuid = Column(Unicode(36), primary_key=True)
-    application_id = Column(Unicode(20), ForeignKey("application.id"))
-    citation_id = Column(Unicode(20), index=True)
-    date = Column(Date)
-    name = Column(Unicode(64))
-    kind = Column(Unicode(10))
-    number = Column(Unicode(64))
-    country = Column(Unicode(10))
-    category = Column(Unicode(20))
-    sequence = Column(Integer)
-
-    def __repr__(self):
-        return "<USPatentCitation('{0} {1}, {2}')>".format(self.patent_id, self.citation_id, self.date)
-
-
-class App_USApplicationCitation(ApplicationBase):
-    """
-    US application Citation schema
-    """
-    __tablename__ = "usapplicationcitation"
-    uuid = Column(Unicode(36), primary_key=True)
-    application_id = Column(Unicode(20), ForeignKey("application.id"))
-    citation_id = Column(Unicode(20), index=True)
-    date = Column(Date)
-    name = Column(Unicode(64))
-    kind = Column(Unicode(10))
-    number = Column(Unicode(64))
-    country = Column(Unicode(10))
-    category = Column(Unicode(20))
-    sequence = Column(Integer)
-
-    def __repr__(self):
-        return "<USapplicationCitation('{0} {1}, {2}')>".format(self.application_id, self.citation_id, self.date)
-
-class App_ForeignCitation(ApplicationBase):
-    """
-    Foreign Citation schema
-    """
-    __tablename__ = "foreigncitation"
-    uuid = Column(Unicode(36), primary_key=True)
-    application_id = Column(Unicode(20), ForeignKey("application.id"))
-    date = Column(Date)
-    name = Column(Unicode(64))
-    kind = Column(Unicode(10))
-    number = Column(Unicode(64))
-    country = Column(Unicode(10))
-    category = Column(Unicode(20))
-    sequence = Column(Integer)
-
-    def __repr__(self):
-        return "<ForeignCitation('{0} {1}, {2}')>".format(self.application_id, self.number, self.date)
-
-
-class App_OtherReference(ApplicationBase):
-    __tablename__ = "otherreference"
-    uuid = Column(Unicode(36), primary_key=True)
-    application_id = Column(Unicode(20), ForeignKey("application.id"))
-    text = deferred(Column(UnicodeText))
-    sequence = Column(Integer)
-
-    def __repr__(self):
-        return "<OtherReference('{0}')>".format(unidecode(self.text[:20]))
-
-
 class App_USRelDoc(ApplicationBase):
     __tablename__ = "usreldoc"
     uuid = Column(Unicode(36), primary_key=True)
@@ -1754,14 +1668,3 @@ class App_InventorRank(ApplicationBase):
     num_applications = Column(Integer)
     year = Column(Integer)
     rank = Column(Integer)
-
-class App_CitedBy(ApplicationBase):
-    """
-    Table contains direct mapping of application_id to all citation_ids that cite that application.
-    Takes place of the much slower foreign key relation in the application table
-    """
-    __tablename__ = "citedby"
-    uuid = Column(Unicode(36), primary_key=True)
-    application_id = Column(Unicode(20))
-    citation_id = Column(Unicode(36))
-    year = Column(Integer)
