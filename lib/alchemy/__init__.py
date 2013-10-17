@@ -256,7 +256,6 @@ def add_all_app_fields(obj, app):
     add_app_usreldoc(obj, app)
     add_app_classes(obj, app)
     add_app_ipcr(obj, app)
-    # add_app_citations(obj, app)
     add_app_claims(obj, app)
 
 
@@ -302,28 +301,6 @@ def add_app_ipcr(obj, app):
         ipc = schema.App_IPCR(**ipc)
         app.ipcrs.append(ipc)
 
-
-def add_app_citations(obj, app):
-    cits, refs = app.citation_list
-    for cit in cits:
-        if cit['country'] == 'US':
-            # granted patent doc number
-            if re.match(r'^[A-Z]*\d+$', cit['number']):
-                cit['citation_id'] = cit['number']
-                cit = schema.App_USPatentCitation(**cit)
-                app.uspatentcitations.append(cit)
-            # if not above, it's probably an application
-            else:
-                cit['application_id'] = cit['number']
-                cit = schema.App_USApplicationCitation(**cit)
-                app.usapplicationcitations.append(cit)
-        # if not US, then foreign citation
-        else:
-            cit = schema.App_ForeignCitation(**cit)
-            app.foreigncitations.append(cit)
-    for ref in refs:
-        ref = schema.App_OtherReference(**ref)
-        app.otherreferences.append(ref)
 
 def add_app_claims(obj, app):
     claims = obj.claims
