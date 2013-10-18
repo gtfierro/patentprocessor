@@ -48,6 +48,10 @@ echo 'Testing test/fixtures/xml/pa040101.two.xml'
 make spotless > /dev/null
 mkdir -p tmp/integration/pa040101.two
 ./parse.py -p test/fixtures/xml/ -x pa040101.two.xml -d application -o .
+for table in application mainclass subclass ipcr uspc claim usreldoc rawlocation rawinventor rawassignee
+do
+  echo $table 'diffs...'
+done 
 
 # clean up after we're done
 rm -rf tmp
