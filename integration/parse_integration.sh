@@ -44,6 +44,11 @@ do
   diff test/integration/parse/ipg120327.18/${table}.csv tmp/integration/ipg120327.18/${table}.csv
 done
 
+echo 'Testing test/fixtures/xml/pa040101.two.xml'
+make spotless > /dev/null
+mkdir -p tmp/integration/pa040101.two
+./parse.py -p test/fixtures/xml/ -x pa040101.two.xml -d application -o .
+
 # clean up after we're done
 rm -rf tmp
 make spotless > /dev/null
