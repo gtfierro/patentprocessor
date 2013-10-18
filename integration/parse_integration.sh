@@ -30,6 +30,7 @@ do
   diff test/integration/parse/ipg120327.two/${table}.csv tmp/integration/ipg120327.two/${table}.csv
 done
 
+echo 'Testing test/fixtures/xml/ipg120327.18.xml'
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.18
 ./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml -o .
