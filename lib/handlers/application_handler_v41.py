@@ -76,7 +76,11 @@ class Patent(PatentHandler):
         with lastname
         """
         firstname = tag_root.contents_of('given_name', as_string=True, upper=False)
+        if not firstname:
+            firstname = tag_root.contents_of('name_1', as_string=True, upper=False)
         lastname = tag_root.contents_of('family_name', as_string=True, upper=False)
+        if not lastname:
+            lastname = tag_root.contents_of('name_2', as_string=True, upper=False)
         return xml_util.associate_prefix(firstname, lastname)
 
     def _name_helper_dict(self, tag_root):
