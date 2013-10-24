@@ -34,7 +34,8 @@ class Patent(PatentHandler):
             parser.parse(xml_string)
 
         self.attributes = ['app','application','assignee_list','inventor_list',
-                          'us_relation_list','us_classifications','ipcr_classifications']
+                          'us_relation_list','us_classifications','ipcr_classifications',
+                          'claims']
 
         self.xml = xh.root.us_patent_application
 
@@ -176,7 +177,7 @@ class Patent(PatentHandler):
             # add location data for inventor
             loc = {}
             for tag in ['city', 'state', 'country']:
-                loc[tag] = inventor.addressbook.contents_of(tag, as_string=True, upper=False)
+                loc[tag] = inventor.contents_of(tag, as_string=True, upper=False)
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(inv.values()) or any(loc.values()):
