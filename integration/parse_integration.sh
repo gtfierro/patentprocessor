@@ -55,7 +55,20 @@ do
   sqlite3 -csv -header application.db "select * from ${table}"  > tmp/integration/pa040101.two/${table}.csv
   perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/pa040101.two/${table}.csv
   diff test/integration/parse/pa040101.two/${table}.csv tmp/integration/pa040101.two/${table}.csv
-done 
+done
+
+echo 'Testing test/fixtures/xml/ipa061228.one.xml'
+make spotless > /dev/null
+mkdir -p tmp/integration/ipa061228.one
+./parse.py -p test/fixtures/xml/ -x ipa061228.one.xml -d application -o .
+
+for table in application mainclass subclass ipcr uspc claim usreldoc rawlocation rawinventor rawassignee
+do
+  echo $table 'diffs...'
+  sqlite3 -csv -header application.db "select * from ${table}"  > tmp/integration/ipa061228.one/${table}.csv
+  perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12},//' tmp/integration/ipa061228.one/${table}.csv
+  diff test/integration/parse/ipa061228.one/${table}.csv tmp/integration/ipa061228.one/${table}.csv
+done
 
 # clean up after we're done
 rm -rf tmp
