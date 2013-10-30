@@ -10,14 +10,9 @@ import lib.alchemy as alchemy
 import shutil
 from lib.config_parser import get_xml_handlers
 
-xmlhandlers = get_xml_handlers('process.cfg')
 logfile = "./" + 'xml-parsing.log'
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
 commit_frequency = alchemy.get_config().get('parse').get('commit_frequency')
-
-
-class Patobj(object):
-    pass
 
 
 def list_files(patentroot, xmlregex):
@@ -38,11 +33,11 @@ def _get_date(filename, dateformat='ipg%y%m%d.xml'):
     Given a [filename], returns the expanded year.
     The optional [dateformat] argument allows for different file formats
     """
-    filename = re.search(r'ipg\d{6}', filename)
+    filename = re.search(r'ip[ag]\d{6}', filename) or re.search(r'p[ag]\d{6}', filename)
     if not filename:
         return 'default'
     filename = filename.group() + '.xml'
-    dateobj = datetime.datetime.strptime(filename, dateformat)
+    dateobj = datetime.datetime.strptime(filename.replace('ipa', 'ipg').replace('pa', 'ipg'), dateformat)
     return int(dateobj.strftime('%Y%m%d'))  # returns YYYYMMDD
 
 
@@ -97,15 +92,21 @@ def parse_files(filelist):
     """
     if not filelist:
         return []
+    commit = alchemy.commit
     for filename in filelist:
         print filename
         for i, xmltuple in enumerate(extract_xml_strings(filename)):
             patobj = parse_patent(xmltuple)
-            alchemy.add_grant(patobj)
+            if DOCUMENTTYPE == 'grant':
+                alchemy.add_grant(patobj)
+                commit = alchemy.commit
+            else:
+                alchemy.add_application(patobj)
+                commit = alchemy.commit_application
             if commit_frequency and ((i+1) % commit_frequency == 0):
-                alchemy.commit()
+                commit()
                 print " *", (i+1), datetime.datetime.now()
-        alchemy.commit()
+        commit()
         print " *", "Complete", datetime.datetime.now()
 
 
@@ -119,18 +120,13 @@ def parse_patent(xmltuple):
         return
     try:
         date, xml = xmltuple  # extract out the parts of the tuple
-        patent = _get_parser(date).PatentGrant(xml, True)
+        patent = _get_parser(date).Patent(xml, True)
     except Exception as inst:
         logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
         return
     del xmltuple
-    patobj = Patobj()
-    for attr in ['pat','patent','app','assignee_list','inventor_list','lawyer_list',
-                 'us_relation_list','us_classifications','ipcr_classifications',
-                 'citation_list','claims']:
-        patobj.__dict__[attr] = getattr(patent, attr)
-    return patobj
+    return patent.get_patobj()
 
 
 # TODO: this should only move alchemy.sqlite3
@@ -173,5 +169,7 @@ if __name__ == '__main__':
     PATENTROOT = args.get_patentroot()
     VERBOSITY = args.get_verbosity()
     PATENTOUTPUTDIR = args.get_output_directory()
+    DOCUMENTTYPE = args.get_document_type()
+    xmlhandlers = get_xml_handlers('process.cfg', DOCUMENTTYPE)
 
     main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR)
