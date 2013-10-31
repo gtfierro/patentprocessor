@@ -18,7 +18,7 @@ class ArgHandler(object):
                 if os.environ.has_key('PATENTROOT') else '.',
                 help='root directory of all patent files')
         self.parser.add_argument('--xmlregex','-x', type=str,
-                nargs='?', default=r"ipg\d{6}.xml",
+                nargs='?',
                 help='regex used to match xml files in the PATENTROOT directory.\
                      Defaults to ipg\d{6}.xml')
         self.parser.add_argument('--verbosity', '-v', type = int,
@@ -42,6 +42,11 @@ class ArgHandler(object):
         self.patentroot = args.patentroot
         self.output_directory = args.output_directory
         self.document_type = args.document_type
+        if self.xmlregex == None: # set defaults for xmlregex here depending on doctype
+            if self.document_type == 'grant':
+                self.xmlregex = r"ipg\d{6}.xml"
+            else:
+                self.xmlregex = r"i?pa\d{6}.xml"
 
         # adjust verbosity levels based on specified input
         logging_levels = {0: logging.ERROR,
