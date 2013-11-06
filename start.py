@@ -9,7 +9,7 @@ import logging
 import requests
 import zipfile
 import cStringIO as StringIO
-from BeautifulSoup import BeautifulSoup as bs
+from bs4 import BeautifulSoup as bs
 import lib.alchemy as alchemy
 
 sys.path.append('lib')
