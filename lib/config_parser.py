@@ -19,6 +19,7 @@ def extract_process_options(handler, config_section):
     result['clean'] = handler.get(config_section,'clean') == 'True'
     result['consolidate'] = handler.get(config_section,'consolidate') == 'True'
     result['outputdir'] = handler.get(config_section,'outputdir')
+    result['doctype'] = handler.get(config_section,'doctype')
     return result
 
 def extract_parse_options(handler, config_section):
@@ -44,7 +45,7 @@ def get_config_options(configfile):
     handler = ConfigParser(defaults)
     handler.read(configfile)
     process_config = extract_process_options(handler, 'process')
-    parse_config = extract_parse_options(handler, 'parse')
+    parse_config = extract_parse_options(handler, process_config['parse'])
     return process_config, parse_config
 
 def get_dates(yearstring):
