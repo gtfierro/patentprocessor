@@ -9,28 +9,28 @@ defaults = {'parse': 'defaultparse',
             'years': None,
             'downloaddir' : None}
 
-def extract_process_options(handler):
+def extract_process_options(handler, config_section):
     """
     Extracts the high level options from the [process] section
     of the configuration file. Returns a dictionary of the options
     """
     result = {}
-    result['parse'] = handler.get('process','parse')
-    result['clean'] = handler.get('process','clean') == 'True'
-    result['consolidate'] = handler.get('process','consolidate') == 'True'
-    result['outputdir'] = handler.get('process','outputdir')
+    result['parse'] = handler.get(config_section,'parse')
+    result['clean'] = handler.get(config_section,'clean') == 'True'
+    result['consolidate'] = handler.get(config_section,'consolidate') == 'True'
+    result['outputdir'] = handler.get(config_section,'outputdir')
     return result
 
-def extract_parse_options(handler, section):
+def extract_parse_options(handler, config_section):
     """
     Extracts the specific parsing options from the parse section
     as given by the [parse] config option in the [process] section
     """
     options = {}
-    options['datadir'] = handler.get(section,'datadir')
-    options['dataregex'] = handler.get(section,'dataregex')
-    options['years'] = handler.get(section,'years')
-    options['downloaddir'] = handler.get(section,'downloaddir')
+    options['datadir'] = handler.get(config_section,'datadir')
+    options['dataregex'] = handler.get(config_section,'dataregex')
+    options['years'] = handler.get(config_section,'years')
+    options['downloaddir'] = handler.get(config_section,'downloaddir')
     if options['years'] and options['downloaddir']:
         options['datadir'] = options['downloaddir']
     return options
@@ -43,8 +43,8 @@ def get_config_options(configfile):
     """
     handler = ConfigParser(defaults)
     handler.read(configfile)
-    process_config = extract_process_options(handler)
-    parse_config = extract_parse_options(handler, process_config['parse'])
+    process_config = extract_process_options(handler, 'process')
+    parse_config = extract_parse_options(handler, 'parse')
     return process_config, parse_config
 
 def get_dates(yearstring):
