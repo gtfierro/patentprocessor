@@ -339,8 +339,9 @@ class Patent(PatentHandler):
             data['sequence'] = i+1 # claims are 1-indexed
             if claim.claim_ref:
                 # claim_refs are 'claim N', so we extract the N
-                data['dependent'] = int(claim.contents_of('claim_ref',\
-                                        as_string=True).split(' ')[-1])
+                claim_str = claim.contents_of('claim_ref',\
+                                        as_string=True).split(' ')[-1]
+                data['dependent'] = int(''.join(c for c in claim_str if c.isdigit()))
             data['uuid'] = str(uuid.uuid1())
             res.append(data)
         return res
