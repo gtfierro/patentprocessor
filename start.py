@@ -121,6 +121,7 @@ if __name__=='__main__':
     s = datetime.datetime.now()
     # accepts path to configuration file as command line option
     process_config, parse_config = get_config_options(sys.argv[1])
+    doctype = process_config['doctype']
 
     # download the files to be parsed
     urls = generate_download_list(parse_config['years'])
