@@ -125,6 +125,7 @@ if __name__=='__main__':
 
     # download the files to be parsed
     urls = generate_download_list(parse_config['years'])
+
     # check download directory
     downloaddir = parse_config['downloaddir']
     if downloaddir and not os.path.exists(downloaddir):
