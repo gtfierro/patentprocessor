@@ -94,7 +94,7 @@ def download_files(urls):
             continue
     return complete
 
-def run_parse(files):
+def run_parse(files, doctype='grant'):
     import parse
     import time
     import sys
@@ -103,7 +103,7 @@ def run_parse(files):
     import logging
     logfile = "./" + 'xml-parsing.log'
     logging.basicConfig(filename=logfile, level=logging.DEBUG)
-    parse.parse_files(files)
+    parse.parse_files(files, doctype)
 
 def run_clean(process_config):
     if process_config['clean']:
