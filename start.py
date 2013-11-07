@@ -38,14 +38,17 @@ def get_year_list(yearstring):
         years.extend(range(start,end))
     return years
 
-def generate_download_list(years, doctype):
+def generate_download_list(years, doctype='grant'):
     """
     Given the year string from the configuration file, return
     a list of urls to be downloaded
     """
     if not years: return []
     urls = []
-    url = requests.get('https://www.google.com/googlebooks/uspto-patents-grants-text.html')
+    link = 'https://www.google.com/googlebooks/uspto-patents-grants-text.html'
+    if doctype == 'application':
+        link = 'https://www.google.com/googlebooks/uspto-patents-applications-text.html'
+    url = requests.get(link)
     soup = bs(url.content)
     years = get_year_list(years)
 
@@ -122,7 +125,11 @@ if __name__=='__main__':
     doctype = process_config['doctype']
 
     # download the files to be parsed
-    urls = generate_download_list(parse_config['years'], doctype)
+    urls = []
+    if doctype == 'all' or doctype == 'application':
+        urls += generate_download_list(parse_config['years'], 'application')
+    if doctype == 'all' or doctype == 'grant':
+        urls += generate_download_list(parse_config['years'], 'grant')
     downloaddir = parse_config['downloaddir']
     if downloaddir and not os.path.exists(downloaddir):
         os.makedirs(downloaddir)
