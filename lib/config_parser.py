@@ -20,6 +20,8 @@ def extract_process_options(handler, config_section):
     result['consolidate'] = handler.get(config_section,'consolidate') == 'True'
     result['outputdir'] = handler.get(config_section,'outputdir')
     result['doctype'] = handler.get(config_section,'doctype')
+    if result['doctype'] == 'application':
+        handler.set('DEFAULT', 'dataregex', 'i?pa\d{6}.xml')
     return result
 
 def extract_parse_options(handler, config_section):

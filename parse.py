@@ -23,7 +23,7 @@ def list_files(patentroot, xmlregex):
     files = [patentroot+'/'+fi for fi in os.listdir(patentroot)
              if re.search(xmlregex, fi, re.I) is not None]
     if not files:
-        logging.error("No files matching {0} found in {1}".format(XMLREGEX, PATENTROOT))
+        logging.error("No files matching {0} found in {1}".format(xmlregex, patentroot))
         sys.exit(1)
     return files
 

@@ -38,7 +38,7 @@ def get_year_list(yearstring):
         years.extend(range(start,end))
     return years
 
-def generate_download_list(years):
+def generate_download_list(years, doctype):
     """
     Given the year string from the configuration file, return
     a list of urls to be downloaded
@@ -122,7 +122,7 @@ if __name__=='__main__':
     doctype = process_config['doctype']
 
     # download the files to be parsed
-    urls = generate_download_list(parse_config['years'])
+    urls = generate_download_list(parse_config['years'], doctype)
     downloaddir = parse_config['downloaddir']
     if downloaddir and not os.path.exists(downloaddir):
         os.makedirs(downloaddir)
