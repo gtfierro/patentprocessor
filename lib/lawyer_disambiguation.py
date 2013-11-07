@@ -21,8 +21,6 @@ THRESHOLD = config.get("lawyer").get("threshold")
 blocks = defaultdict(list)
 id_map = defaultdict(list)
 
-# get all lawyers in database
-lawyers = deque(session.query(RawLawyer))
 lawyer_dict = {}
 
 
@@ -129,6 +127,7 @@ def printall():
 
 
 def run_disambiguation():
+    lawyers = deque(session.query(RawLawyer))
     lawyer_alpha_blocks = clean_lawyers(lawyers)
     create_jw_blocks(lawyer_alpha_blocks)
     create_lawyer_table()
