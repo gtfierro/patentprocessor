@@ -5,7 +5,8 @@ defaults = {'parse': 'defaultparse',
             'clean': 'True',
             'consolidate': 'True',
             'datadir': '/data/patentdata/patents/2013',
-            'dataregex': 'ipg\d{6}.xml',
+            'grantregex': 'ipg\d{6}.xml',
+            'applicationregex': 'ipa\d{6}.xml',
             'years': None,
             'downloaddir' : None}
 
@@ -20,10 +21,6 @@ def extract_process_options(handler, config_section):
     result['consolidate'] = handler.get(config_section,'consolidate') == 'True'
     result['outputdir'] = handler.get(config_section,'outputdir')
     result['doctype'] = handler.get(config_section,'doctype')
-    if result['doctype'] == 'application':
-        handler.set('DEFAULT', 'dataregex', 'i?pa\d{6}.xml')
-    elif result['doctype'] == 'all':
-        handler.set('DEFAULT', 'dataregex', 'i?p[ag]\d{6}.xml')
     return result
 
 def extract_parse_options(handler, config_section):
@@ -33,7 +30,8 @@ def extract_parse_options(handler, config_section):
     """
     options = {}
     options['datadir'] = handler.get(config_section,'datadir')
-    options['dataregex'] = handler.get(config_section,'dataregex')
+    options['grantregex'] = handler.get(config_section,'grantregex')
+    options['applicationregex'] = handler.get(config_section, 'applicationregex')
     options['years'] = handler.get(config_section,'years')
     options['downloaddir'] = handler.get(config_section,'downloaddir')
     if options['years'] and options['downloaddir']:
