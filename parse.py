@@ -78,13 +78,7 @@ def extract_xml_strings(filename):
 
 def parse_files(filelist, doctype='grant'):
     """
-    Given a list of files, extracts the XML strings from each and returns a
-    flat iterable of all of them.
-
-    Given a list of xml strings as [xmltuples], parses them
-    all and returns a flat iterator of patSQL.*XML instances
-
-    takes in a list of Patent objects (from parse_patents above) and commits
+    Takes in a list of patent file names (from __main__() and start.py) and commits
     them to the database. This method is designed to be used sequentially to
     account for db concurrency.  The optional argument `commit_frequency`
     determines the frequency with which we commit the objects to the database.
@@ -92,7 +86,7 @@ def parse_files(filelist, doctype='grant'):
     `commit_frequency` to be low (but not 0) is helpful for low memory machines.
     """
     if not filelist:
-        return []
+        return
     commit = alchemy.commit
     for filename in filelist:
         print filename
