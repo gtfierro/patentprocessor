@@ -126,10 +126,12 @@ if __name__=='__main__':
 
     # download the files to be parsed
     urls = []
-    if doctype == 'all' or doctype == 'application':
-        urls += generate_download_list(parse_config['years'], 'application')
-    if doctype == 'all' or doctype == 'grant':
+    should_process_grants = doctype in ['all', 'grant']
+    should_process_applications = doctype in ['all', 'application']
+    if should_process_grants:
         urls += generate_download_list(parse_config['years'], 'grant')
+    if should_process_applications:
+        urls += generate_download_list(parse_config['years'], 'application')
     downloaddir = parse_config['downloaddir']
     if downloaddir and not os.path.exists(downloaddir):
         os.makedirs(downloaddir)
@@ -141,13 +143,20 @@ if __name__=='__main__':
 
     # find files
     print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
-    files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
-    print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
-
-    # run parse and commit SQL
-    print 'Running parse...'
-    run_parse(files)
-    f = datetime.datetime.now()
+    if should_process_grants:
+        files = parse.list_files(parse_config['datadir'],parse_config['grantregex'])
+        print 'Running grant parse...'
+        run_parse(files, 'grant')
+        f = datetime.datetime.now()
+        print "Found {2} files matching {0} in directory {1}"\
+                .format(parse_config['grantregex'], parse_config['datadir'], len(files))
+    if should_process_applications:
+        files = parse.list_files(parse_config['datadir'],parse_config['applicationregex'])
+        print 'Running application parse...'
+        run_parse(files, 'application')
+        f = datetime.datetime.now()
+        print "Found {2} files matching {0} in directory {1}"\
+                .format(parse_config['applicationregex'], parse_config['datadir'], len(files))
     print 'Finished parsing in {0}'.format(str(f-s))
 
     # run extra phases if needed, then move output files
