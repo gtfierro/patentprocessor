@@ -103,9 +103,7 @@ def run_parse(files):
     import logging
     logfile = "./" + 'xml-parsing.log'
     logging.basicConfig(filename=logfile, level=logging.DEBUG)
-    xmls = parse.parse_files(files)
-    if xmls:
-        parse.parse_patents(xmls)
+    parse.parse_files(files)
 
 def run_clean(process_config):
     if process_config['clean']:
