@@ -7,7 +7,7 @@ import uuid
 import cPickle as pickle
 from collections import Counter
 from Levenshtein import jaro_winkler
-from alchemy import session, get_config, match
+from alchemy import appsession, grantsession, get_config, match
 from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
 
@@ -18,10 +18,7 @@ THRESHOLD = config.get("assignee").get("threshold")
 # get alchemy.db from the directory above
 
 # bookkeeping for blocks
-blocks = defaultdict(list)
-id_map = defaultdict(list)
 
-assignee_dict = {}
 
 
 def get_assignee_id(obj):
@@ -36,7 +33,7 @@ def get_assignee_id(obj):
     except:
         return ''
 
-def clean_assignees(list_of_assignees):
+def clean_assignees(list_of_assignees, id_map, assignee_dict):
     """
     Removes the following stop words from each assignee:
     the, of, and, a, an, at
@@ -59,7 +56,7 @@ def clean_assignees(list_of_assignees):
     return alpha_blocks.itervalues()
 
 
-def create_jw_blocks(list_of_assignees):
+def create_jw_blocks(list_of_assignees, blocks):
     """
     Receives list of blocks, where a block is a list of assignees
     that all begin with the same letter. Within each block, does
@@ -84,7 +81,7 @@ def create_jw_blocks(list_of_assignees):
     print 'Assignee blocks created!'
 
 
-def create_assignee_table():
+def create_assignee_table(session, blocks, id_map, assignee_dict):
     """
     Given a list of assignees and the redis key-value disambiguation,
     populates the Assignee table in the database
@@ -126,12 +123,21 @@ def printall():
             f.write('\n')
 
 
-def run_disambiguation():
+def run_disambiguation(doctype):
+    blocks = defaultdict(list)
+    id_map = defaultdict(list)
+    assignee_dict = {}
+
     # get all assignees in database
-    assignees = deque(session.query(RawAssignee))
-    assignee_alpha_blocks = clean_assignees(assignees)
-    create_jw_blocks(assignee_alpha_blocks)
-    create_assignee_table()
+    session = grantsession
+    if doctype == 'grant':
+        assignees = deque(grantsession.query(RawAssignee))
+    if doctype == 'application':
+        assignees = deque(appsession.query(App_RawAssignee))
+        session = appsession
+    assignee_alpha_blocks = clean_assignees(assignees, id_map, assignee_dict)
+    create_jw_blocks(assignee_alpha_blocks, blocks)
+    create_assignee_table(session, blocks, id_map, assignee_dict)
 
 
 if __name__ == '__main__':
