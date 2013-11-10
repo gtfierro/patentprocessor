@@ -146,7 +146,9 @@ def run_disambiguation():
 
 
 if __name__ == '__main__':
-    #run_disambiguation()
-    letter = sys.argv[1]
-    print 'Running', letter
-    run_letter(letter)
+    if len(sys.argv) < 2:
+      run_disambiguation()
+    else:
+      letter = sys.argv[1]
+      print 'Running', letter
+      run_letter(letter)
