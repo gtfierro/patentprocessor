@@ -25,7 +25,7 @@ patents = (p for p in alchemy.session.query(alchemy.schema.Patent).filter(extrac
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
 
-ROW = lambda x: u'{name_first}\t{name_middle}\t{name_last}\t{number}\t{mainclass}\t{subclass}\t{city}\t{state}\t{country}\t{assignee}\t{rawassignee}\n'.format(**x)
+ROW = lambda x: u'{uuid}\t{name_first}\t{name_middle}\t{name_last}\t{number}\t{mainclass}\t{subclass}\t{city}\t{state}\t{country}\t{assignee}\t{rawassignee}\n'.format(**x)
 
 insert_rows = []
 
@@ -50,7 +50,7 @@ for patent in patents:
       row['rawassignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
       # generate a row for each of the inventors on a patent
       for ri in patent.rawinventors:
-          namedict = {'name_first': ri.name_first}
+          namedict = {'name_first': ri.name_first, 'uuid': ri.uuid}
           raw_name = ri.name_last.split(' ')
           # name_last is the last space-delimited word. Middle name is everything before that
           name_middle, name_last = ' '.join(raw_name[:-1]), raw_name[-1]
