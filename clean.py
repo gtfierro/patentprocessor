@@ -9,7 +9,8 @@ def disambiguate(doctype='grant'):
     assignee_disambiguation.run_disambiguation(doctype)
 
     # run lawyer disambiguation
-    lawyer_disambiguation.run_disambiguation()
+    if doctype == 'grant':
+      lawyer_disambiguation.run_disambiguation()
 
     #Run new geocoding
     geoalchemy.main()
