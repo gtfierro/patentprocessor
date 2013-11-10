@@ -7,7 +7,7 @@ import uuid
 import cPickle as pickle
 from collections import Counter
 from Levenshtein import jaro_winkler
-from alchemy import session, get_config, match
+from alchemy import grantsession, get_config, match
 from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
 
@@ -84,7 +84,7 @@ def create_jw_blocks(list_of_lawyers):
     print 'lawyer blocks created!'
 
 
-def create_lawyer_table():
+def create_lawyer_table(session):
     """
     Given a list of lawyers and the redis key-value disambiguation,
     populates the lawyer table in the database
@@ -127,10 +127,10 @@ def printall():
 
 
 def run_disambiguation():
-    lawyers = deque(session.query(RawLawyer))
+    lawyers = deque(grantsession.query(RawLawyer))
     lawyer_alpha_blocks = clean_lawyers(lawyers)
     create_jw_blocks(lawyer_alpha_blocks)
-    create_lawyer_table()
+    create_lawyer_table(grantsession)
 
 
 if __name__ == '__main__':
