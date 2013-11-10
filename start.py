@@ -109,14 +109,28 @@ def run_parse(files, doctype='grant'):
     parse.parse_files(files, doctype)
 
 def run_clean(process_config):
-    if process_config['clean']:
-        print 'Running clean...'
-        import clean
+    if not process_config['clean']:
+        return
+    import clean
+    doctype = process_config['doctype']
+    if doctype in ['all', 'grant']:
+        print 'Running grant clean...'
+        clean.disambiguate('grant')
+    if doctype in ['all', 'application']:
+        print 'Running application clean...'
+        clean.disambiguate('application')
 
 def run_consolidate(process_config):
-    if process_config['consolidate']:
-        print 'Running consolidate...'
-        import consolidate
+    if not process_config['consolidate']:
+        return
+    import consolidate
+    doctype = process_config['doctype']
+    if doctype in ['all', 'grant']:
+        print 'Running grant consolidate...'
+        consolidate.dump('grant')
+    if doctype in ['all', 'application']:
+        print 'Running application consolidate...'
+        consolidate.dump('application')
 
 if __name__=='__main__':
     s = datetime.datetime.now()
