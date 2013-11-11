@@ -18,8 +18,6 @@ config = get_config()
 
 THRESHOLD = config.get("assignee").get("threshold")
 
-# get alchemy.db from the directory above
-
 # bookkeeping for blocks
 blocks = defaultdict(list)
 id_map = defaultdict(list)
