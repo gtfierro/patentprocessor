@@ -16,6 +16,7 @@ python clean.py
 echo Starting consolidate...
 python consolidate.py
 
+perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12}\t//' disambiguator.csv
 diff test/integration/consolidate/ipg120327.two/disambiguator.csv disambiguator.csv
 
 ### 18 rows
@@ -30,6 +31,7 @@ python clean.py
 echo Starting consolidate...
 python consolidate.py
 
+perl -pi -e 's/^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12}\t//' disambiguator.csv
 diff test/integration/consolidate/ipg120327.18/disambiguator.csv disambiguator.csv
 
 ## clean up after we're done
