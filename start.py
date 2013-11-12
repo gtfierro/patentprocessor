@@ -110,12 +110,18 @@ def run_parse(files):
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
-        os.system('bash run_clean.sh')
+        if process_config['lowmemory']:
+            os.system('bash run_clean.sh')
+        else:
+            os.system('python clean.py')
 
 def run_consolidate(process_config):
     if process_config['consolidate']:
         print 'Running consolidate...'
-        os.system('bash run_consolidation.sh')
+        if process_config['lowmemory']:
+            os.system('bash run_consolidation.sh')
+        else:
+            os.system('python consolidate.py')
 
 if __name__=='__main__':
     s = datetime.datetime.now()
