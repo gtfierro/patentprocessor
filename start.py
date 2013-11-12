@@ -110,12 +110,12 @@ def run_parse(files):
 def run_clean(process_config):
     if process_config['clean']:
         print 'Running clean...'
-        import clean
+        os.system('bash run_clean.sh')
 
 def run_consolidate(process_config):
     if process_config['consolidate']:
         print 'Running consolidate...'
-        import consolidate
+        os.system('bash run_consolidation.sh')
 
 if __name__=='__main__':
     s = datetime.datetime.now()
