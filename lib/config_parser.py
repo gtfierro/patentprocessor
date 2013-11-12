@@ -19,7 +19,7 @@ def extract_process_options(handler):
     result['clean'] = handler.get('process','clean') == 'True'
     result['consolidate'] = handler.get('process','consolidate') == 'True'
     result['outputdir'] = handler.get('process','outputdir')
-    result['lowmemory'] = handler.get('process','lowmemory')
+    result['lowmemory'] = handler.get('process','lowmemory') == 'True'
     return result
 
 def extract_parse_options(handler, section):
