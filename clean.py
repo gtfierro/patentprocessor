@@ -13,7 +13,7 @@ def disambiguate(doctype='grant'):
       lawyer_disambiguation.run_disambiguation()
 
     #Run new geocoding
-    geoalchemy.main()
+    geoalchemy.main(doctype=doctype)
 
 if __name__ == '__main__':
     disambiguate()

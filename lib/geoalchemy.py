@@ -11,8 +11,6 @@ import re
 import alchemy
 #The config file alchemy uses to store information
 alchemy_config = alchemy.get_config()
-#Used to query the database used for input and output
-alchemy_session = alchemy.fetch_session()
 #The path to the database which holds geolocation data
 geo_data_dbpath = os.path.join(
     alchemy_config.get("location").get('path'),
@@ -66,14 +64,18 @@ class AllCities(base):
         self.longitude = longitude
 
 #Perform geocoding on the data stored in alchemy.db provided by parsing XML
-def main(limit=None, offset=0, minimum_match_value=0.8):
+def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
+    alchemy_session = alchemy.fetch_session(dbtype=doctype)
     t = datetime.datetime.now()
     print "geocoding started", t
     #Construct a list of all addresses which Google was capable of identifying
     #Making this now allows it to be referenced quickly later
     construct_valid_input_address_list()
     #Get all of the raw locations in alchemy.db that were parsed from XML
-    raw_parsed_locations = alchemy_session.query(alchemy.schema.RawLocation).limit(limit).offset(offset)
+    if doctype == 'grant':
+        raw_parsed_locations = alchemy_session.query(alchemy.schema.RawLocation).limit(limit).offset(offset)
+    elif doctype == 'application':
+        raw_parsed_locations = alchemy_session.query(alchemy.schema.App_RawLocation).limit(limit).offset(offset)
     #If there are no locations, there is no point in continuing
     if raw_parsed_locations.count() == 0:
         return False
@@ -111,7 +113,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8):
             country = geoalchemy_util.get_country_from_cleaned(cleaned_location)
             unidentified_grouped_locations.append({"raw_location": instance,
                                                    "cleaned_location": cleaned_location,
-                                                "country": country})
+                                                   "country": country})
     print "locations grouped", datetime.datetime.now() - t
     print 'count of identified locations:', len(identified_grouped_locations)
     t = datetime.datetime.now()
@@ -139,12 +141,16 @@ def main(limit=None, offset=0, minimum_match_value=0.8):
     print "identified_grouped_locations sorted", datetime.datetime.now() - t
     t = datetime.datetime.now()
     #Match the locations
-    match_grouped_locations(identified_grouped_locations_enum, t)
+    match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session)
     
     alchemy_session.commit()
 
     print "Matches made!", datetime.datetime.now() - t
-    unique_group_count = alchemy_session.query(expression.func.count(sqlalchemy.distinct(alchemy.schema.Location.id))).all()
+    if doctype == 'grant':
+        unique_group_count = alchemy_session.query(expression.func.count(sqlalchemy.distinct(alchemy.schema.Location.id))).all()
+    elif doctype == 'application':
+        unique_group_count = alchemy_session.query(expression.func.count(sqlalchemy.distinct(alchemy.schema.App_Location.id))).all()
+
     print "%s groups formed from %s locations" % (unique_group_count, raw_parsed_locations.count())
 
 def identify_missing_locations(unidentified_grouped_locations_enum, 
@@ -186,7 +192,7 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
                                   "grouping_id": grouping_id})
             print 'all_cities found additional location for', raw_location
     
-def match_grouped_locations(identified_grouped_locations_enum, t):
+def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
     for i, item in identified_grouped_locations_enum:
         #grouped_locations_list = a list of every grouped location with the same grouping_id
         # Note that a grouped_location is a dict, as described above
@@ -214,9 +220,9 @@ def match_grouped_locations(identified_grouped_locations_enum, t):
                    "longitude":first_matching_location.longitude}
         #No need to run match() if no matching location was found.
         if(grouping_id!="nolocationfound"):
-            run_geo_match(grouping_id, default, match_group, i, t)
+            run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
         
-def run_geo_match(key, default, match_group, counter, runtime):
+def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
     most_freq = 0
     #If there is more than one key, we need to figure out what attributes
     #(city, region, country, latitude, longitude) to assign the group 
