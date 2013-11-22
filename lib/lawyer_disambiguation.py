@@ -10,19 +10,18 @@ from Levenshtein import jaro_winkler
 from alchemy import session, get_config, match
 from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
-
+from datetime import datetime
+from sqlalchemy.sql import or_
+from sqlalchemy.sql.expression import bindparam
+import sys
 config = get_config()
 
 THRESHOLD = config.get("lawyer").get("threshold")
 
-# get alchemy.db from the directory above
-
 # bookkeeping for blocks
 blocks = defaultdict(list)
 id_map = defaultdict(list)
-
-# get all lawyers in database
-lawyers = deque(session.query(RawLawyer))
+lawyers = []
 lawyer_dict = {}
 
 
@@ -127,12 +126,27 @@ def printall():
             f.write('-'*20)
             f.write('\n')
 
+def run_letter(letter):
+    letter = letter.upper()
+    clause1 = RawLawyer.organization.startswith(bindparam('letter',letter))
+    clause2 = RawLawyer.name_first.startswith(bindparam('letter',letter))
+    clauses = or_(clause1, clause2)
+    lawyers = (lawyer for lawyer in session.query(RawLawyer).filter(clauses))
+    block = clean_lawyers(lawyers)
+    create_jw_blocks(block)
+    create_lawyer_table()
 
 def run_disambiguation():
+    lawyers = deque(session.query(RawLawyer))
     lawyer_alpha_blocks = clean_lawyers(lawyers)
     create_jw_blocks(lawyer_alpha_blocks)
     create_lawyer_table()
 
 
 if __name__ == '__main__':
-    run_disambiguation()
+    if len(sys.argv) < 2:
+      run_disambiguation()
+    else:
+      letter = sys.argv[1]
+      print 'Running', letter
+      run_letter(letter)
