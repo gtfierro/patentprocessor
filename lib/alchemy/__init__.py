@@ -66,7 +66,12 @@ def fetch_session(db=None, dbtype='grant'):
             config.get(db).get('password'),
             config.get(db).get('host'),
             config.get(db).get('{0}-database'.format(dbtype)), echo=echo))
-    schema.GrantBase.metadata.create_all(engine)
+
+    if dbtype == 'grant':
+        schema.GrantBase.metadata.create_all(engine)
+    else:
+        schema.ApplicationBase.metadata.create_all(engine)
+
     Session = sessionmaker(bind=engine, _enable_transaction_accounting=False)
     session = Session()
     return session
@@ -228,10 +233,10 @@ def add_application(obj, override=True, temp=False):
     """
 
     # if the application exists, remove it so we can replace it
-    (app_exists, ), = appsession.query(exists().where(schema.App_Application.number == obj.number))
+    (app_exists, ), = appsession.query(exists().where(schema.App_Application.number == obj.application))
     if app_exists:
         if override:
-            app_query = appsession.query(schema.App_Application).filter(schema.App_Application.number == obj.number)
+            app_query = appsession.query(schema.App_Application).filter(schema.App_Application.number == obj.application)
             appsession.delete(app_query.one())
         else:
             return
@@ -240,20 +245,18 @@ def add_application(obj, override=True, temp=False):
 
     app = schema.App_Application(**obj.app)
     # lots of abstracts seem to be missing. why?
-    add_all_fields(obj, app)
+    add_all_app_fields(obj, app)
 
     appsession.merge(app)
 
 
 def add_all_app_fields(obj, app):
-    add_asg(obj, app)
-    add_inv(obj, app)
-    add_law(obj, app)
-    add_usreldoc(obj, app)
-    add_classes(obj, app)
-    add_ipcr(obj, app)
-    add_citations(obj, app)
-    add_claims(obj, app)
+    add_app_asg(obj, app)
+    add_app_inv(obj, app)
+    add_app_usreldoc(obj, app)
+    add_app_classes(obj, app)
+    add_app_ipcr(obj, app)
+    add_app_claims(obj, app)
 
 
 def add_app_asg(obj, app):
@@ -272,12 +275,6 @@ def add_app_inv(obj, app):
         appsession.merge(loc)
         inv.rawlocation = loc
         app.rawinventors.append(inv)
-
-
-def add_app_law(obj, app):
-    for law in obj.lawyer_list:
-        law = schema.App_RawLawyer(**law)
-        app.rawlawyers.append(law)
 
 
 def add_app_usreldoc(obj, app):
@@ -305,28 +302,6 @@ def add_app_ipcr(obj, app):
         app.ipcrs.append(ipc)
 
 
-def add_app_citations(obj, app):
-    cits, refs = app.citation_list
-    for cit in cits:
-        if cit['country'] == 'US':
-            # granted patent doc number
-            if re.match(r'^[A-Z]*\d+$', cit['number']):
-                cit['citation_id'] = cit['number']
-                cit = schema.App_USPatentCitation(**cit)
-                app.uspatentcitations.append(cit)
-            # if not above, it's probably an application
-            else:
-                cit['application_id'] = cit['number']
-                cit = schema.App_USApplicationCitation(**cit)
-                app.usapplicationcitations.append(cit)
-        # if not US, then foreign citation
-        else:
-            cit = schema.App_ForeignCitation(**cit)
-            app.foreigncitations.append(cit)
-    for ref in refs:
-        ref = schema.App_OtherReference(**ref)
-        app.otherreferences.append(ref)
-
 def add_app_claims(obj, app):
     claims = obj.claims
     for claim in claims:
@@ -342,5 +317,5 @@ def commit_application():
         print str(e)
 
 grantsession = fetch_session(dbtype='grant')
-session = grantsession
 appsession = fetch_session(dbtype='application')
+session = grantsession # default for clean and consolidate

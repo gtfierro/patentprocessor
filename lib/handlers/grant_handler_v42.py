@@ -8,6 +8,7 @@ from patent grant documents
 from cStringIO import StringIO
 from datetime import datetime
 from unidecode import unidecode
+from handler import Patobj, PatentHandler
 import re
 import uuid
 import xml.sax
@@ -16,7 +17,8 @@ import xml_driver
 
 claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
-class PatentGrant(object):
+
+class Patent(PatentHandler):
 
     def __init__(self, xml_string, is_string=False):
         xh = xml_driver.XMLHandler()
@@ -30,6 +32,11 @@ class PatentGrant(object):
             parser.parse(StringIO(xml_string))
         else:
             parser.parse(xml_string)
+
+        self.attributes = ['pat','app','assignee_list','patent','inventor_list','lawyer_list',
+                     'us_relation_list','us_classifications','ipcr_classifications',
+                     'citation_list','claims']
+
         self.xml = xh.root.us_patent_grant
 
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
