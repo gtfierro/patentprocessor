@@ -18,7 +18,7 @@ class ArgHandler(object):
                 if os.environ.has_key('PATENTROOT') else '.',
                 help='root directory of all patent files')
         self.parser.add_argument('--xmlregex','-x', type=str,
-                nargs='?', default=r"ipg\d{6}.xml",
+                nargs='?',
                 help='regex used to match xml files in the PATENTROOT directory.\
                      Defaults to ipg\d{6}.xml')
         self.parser.add_argument('--verbosity', '-v', type = int,
@@ -31,12 +31,22 @@ class ArgHandler(object):
                 if os.environ.has_key('PATENTOUTPUTDIR') else '.',
                 help='Set the output directory for the resulting sqlite3 files. Defaults\
                      to the current directory "."')
+        self.parser.add_argument('--document-type', '-d', type=str, nargs='?', 
+                default='grant',
+                help='Set the type of patent document to be parsed: grant (default) \
+                or application')
 
         # parse arguments and assign values
         args = self.parser.parse_args(self.arglist)
         self.xmlregex = args.xmlregex
         self.patentroot = args.patentroot
         self.output_directory = args.output_directory
+        self.document_type = args.document_type
+        if self.xmlregex == None: # set defaults for xmlregex here depending on doctype
+            if self.document_type == 'grant':
+                self.xmlregex = r"ipg\d{6}.xml"
+            else:
+                self.xmlregex = r"i?pa\d{6}.xml"
 
         # adjust verbosity levels based on specified input
         logging_levels = {0: logging.ERROR,
@@ -56,6 +66,9 @@ class ArgHandler(object):
 
     def get_output_directory(self):
         return self.output_directory
+
+    def get_document_type(self):
+        return self.document_type
 
     def get_help(self):
         self.parser.print_help()

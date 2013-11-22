@@ -92,7 +92,7 @@ class XMLElement(object):
                  and len(res) == 1\
                  and isinstance(res[0], list):
                 res = res[0]
-            return ' '.join(filter(lambda x: x, res))
+            return ' '.join(filter(lambda x: x, filter(lambda x: not isinstance(x, list), res)))
         return res
 
     def get_content(self, upper=True):
