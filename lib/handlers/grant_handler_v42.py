@@ -146,7 +146,7 @@ class Patent(PatentHandler):
             asg = {}
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
-            asg['type'] = assignee.contents_of('role', as_string=True)
+            asg['type'] = str(int(assignee.contents_of('role', as_string=True)))
             asg['nationality'] = assignee.nationality.contents_of('country')[0]
             asg['residence'] = assignee.nationality.contents_of('country')[0]
             # add location data for assignee
