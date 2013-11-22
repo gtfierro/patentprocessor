@@ -317,7 +317,7 @@ def find_difficult_locations_from_file(inputfilename, outputfilename):
     print datetime.datetime.now()-t
 
 if __name__=='__main__':
-  numlocs = alchemy_session.query(alchemy.schema.RawLocation).count()
-  for i in range((numlocs / 10000)+1):
-    print i
-    main(limit=10000, offset=i*10000)
+    numlocs = alchemy.session.query(alchemy.schema.RawLocation).count()
+    for i in range((numlocs / 10000)+1):
+        print i
+        main(limit=10000, offset=i*10000)
