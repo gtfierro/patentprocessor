@@ -5,17 +5,19 @@ Performs a basic assignee disambiguation
 from collections import defaultdict, deque
 import uuid
 import cPickle as pickle
+import alchemy
 from collections import Counter
 from Levenshtein import jaro_winkler
-from alchemy import appsession, grantsession, get_config, match
+from alchemy import get_config, match
 from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
-
+from datetime import datetime
+from sqlalchemy.sql import or_
+from sqlalchemy.sql.expression import bindparam
+import sys
 config = get_config()
 
 THRESHOLD = config.get("assignee").get("threshold")
-
-# get alchemy.db from the directory above
 
 # bookkeeping for blocks
 
@@ -41,7 +43,8 @@ def clean_assignees(list_of_assignees, id_map, assignee_dict):
     with the same letter. Returns a list of these blocks
     """
     stoplist = ['the', 'of', 'and', 'a', 'an', 'at']
-    alpha_blocks = defaultdict(list)
+    #alpha_blocks = defaultdict(list)
+    block = []
     print 'Removing stop words, blocking by first letter...'
     for assignee in list_of_assignees:
         assignee_dict[assignee.uuid] = assignee
@@ -51,9 +54,9 @@ def clean_assignees(list_of_assignees, id_map, assignee_dict):
                             x.lower() not in stoplist,
                             a_id.split(' ')))
         id_map[a_id].append(assignee.uuid)
-        alpha_blocks[a_id[0]].append(a_id)
-    print 'Alpha blocks created!'
-    return alpha_blocks.itervalues()
+        block.append(a_id)
+    print 'Assignees cleaned!'
+    return block
 
 
 def create_jw_blocks(list_of_assignees, blocks):
@@ -64,19 +67,18 @@ def create_jw_blocks(list_of_assignees, blocks):
     """
     consumed = defaultdict(int)
     print 'Doing pairwise Jaro-Winkler...'
-    for alphablock in list_of_assignees:
-        for primary in alphablock:
-            if consumed[primary]: continue
-            consumed[primary] = 1
-            blocks[primary].append(primary)
-            for secondary in alphablock:
-                if consumed[secondary]: continue
-                if primary == secondary:
-                    blocks[primary].append(secondary)
-                    continue
-                if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
-                    consumed[secondary] = 1
-                    blocks[primary].append(secondary)
+    for primary in list_of_assignees:
+        if consumed[primary]: continue
+        consumed[primary] = 1
+        blocks[primary].append(primary)
+        for secondary in list_of_assignees:
+            if consumed[secondary]: continue
+            if primary == secondary:
+                blocks[primary].append(secondary)
+                continue
+            if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
+                consumed[secondary] = 1
+                blocks[primary].append(secondary)
     pickle.dump(blocks, open('assignee.pickle', 'wb'))
     print 'Assignee blocks created!'
 
@@ -94,10 +96,12 @@ def create_assignee_table(session, blocks, id_map, assignee_dict):
           i += 1
           rawassignees = [assignee_dict[ra_id] for ra_id in block]
           if i % 10000 == 0:
+              print i, datetime.now()
               match(rawassignees, session, commit=True)
           else:
               match(rawassignees, session, commit=False)
     session.commit()
+    print i, datetime.now()
 
 def examine():
     assignees = s.query(Assignee).all()
@@ -122,23 +126,45 @@ def printall():
             f.write('-'*20)
             f.write('\n')
 
+def run_letter(letter, session, doctype='grant'):
+    schema = RawAssignee
+    if doctype == 'application':
+        schema = App_RawAssignee
+    letter = letter.upper()
+    clause1 = schema.organization.startswith(bindparam('letter',letter))
+    clause2 = schema.name_first.startswith(bindparam('letter',letter))
+    clauses = or_(clause1, clause2)
+    assignees = (assignee for assignee in session.query(schema).filter(clauses))
+    block = clean_assignees(assignees)
+    create_jw_blocks(block)
+    create_assignee_table()
 
-def run_disambiguation(doctype):
+def run_disambiguation(doctype='grant'):
     blocks = defaultdict(list)
     id_map = defaultdict(list)
     assignee_dict = {}
 
     # get all assignees in database
-    session = grantsession
+    session = alchemy.fetch_session(dbtype=doctype)
     if doctype == 'grant':
-        assignees = deque(grantsession.query(RawAssignee))
+        assignees = deque(session.query(RawAssignee))
     if doctype == 'application':
-        assignees = deque(appsession.query(App_RawAssignee))
-        session = appsession
+        assignees = deque(session.query(App_RawAssignee))
     assignee_alpha_blocks = clean_assignees(assignees, id_map, assignee_dict)
     create_jw_blocks(assignee_alpha_blocks, blocks)
     create_assignee_table(session, blocks, id_map, assignee_dict)
 
 
 if __name__ == '__main__':
-    run_disambiguation()
+    if len(sys.argv) < 2:
+        run_disambiguation()
+    elif len(sys.argv) < 3:
+        doctype = sys.argv[1]
+        print ('Running ' + doctype)
+        run_disambiguation(doctype)
+    else:
+        doctype = sys.argv[1]
+        letter = sys.argv[1]
+        session = alchemy.fetch_session(dbtype=doctype)
+        print('Running ' + letter + ' ' + doctype)
+        run_letter(letter, session, doctype)

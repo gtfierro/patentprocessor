@@ -15,24 +15,21 @@ from sqlalchemy import extract
 from datetime import datetime
 import sys
 
-gyear = sys.argv[1]
-print gyear
+# create CSV file row using a dictionary. Use `ROW(dictionary)`
+ROW = lambda x: u'{uuid}\t{name_first}\t{name_middle}\t{name_last}\t{number}\t{mainclass}\t{subclass}\t{city}\t{state}\t{country}\t{assignee}\t{rawassignee}\n'.format(**x)
 
-def dump(doctype='grant'):
+def main(year, doctype='grant'):
     # get patents as iterator to save memory
     # use subqueryload to get better performance by using less queries on the backend:
     # --> http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
+    session = alchemy.fetch_session(dbtype=doctype)
+    schema = alchemy.schema.Patent
     if doctype == 'application':
-        patents = (p for p in alchemy.appsession.query(alchemy.schema.App_Application).filter(extract('year', alchemy.schema.App_Application.date) == gyear).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
+        schema = alchemy.schema.App_Application
+    if year:
+        patents = (p for p in session.query(schema).filter(extract('year', schema.date) == gyear).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
     else:
-        patents = (p for p in alchemy.grantsession.query(alchemy.schema.Patent).filter(extract('year', alchemy.schema.Patent.date) == gyear).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
-
-    # create CSV file row using a dictionary. Use `ROW(dictionary)`
-
-    ROW = lambda x: u'{name_first}\t{name_middle}\t{name_last}\t{number}\t{mainclass}\t{subclass}\t{city}\t{state}\t{country}\t{assignee}\t{rawassignee}\n'.format(**x)
-
-    insert_rows = []
-
+        patents = (p for p in session.query(schema).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
     i = 0
     for patent in patents:
         i += 1
@@ -54,7 +51,7 @@ def dump(doctype='grant'):
           row['rawassignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
           # generate a row for each of the inventors on a patent
           for ri in patent.rawinventors:
-              namedict = {'name_first': ri.name_first}
+              namedict = {'name_first': ri.name_first, 'uuid': ri.uuid}
               raw_name = ri.name_last.split(' ')
               # name_last is the last space-delimited word. Middle name is everything before that
               name_middle, name_last = ' '.join(raw_name[:-1]), raw_name[-1]
@@ -68,3 +65,16 @@ def dump(doctype='grant'):
         except Exception as e:
           print e
           continue
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        main(None)
+    elif len(sys.argv) < 3:
+        doctype = sys.argv[1]
+        print('Running ' + doctype)
+        main(None, doctype)
+    else:
+        gyear = sys.argv[2]
+        doctype = sys.argv[1]
+        print('Running ' + str(gyear) + ' ' + doctype)
+        main(gyear, doctype)

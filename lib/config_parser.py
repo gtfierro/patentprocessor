@@ -16,10 +16,11 @@ def extract_process_options(handler, config_section):
     of the configuration file. Returns a dictionary of the options
     """
     result = {}
-    result['parse'] = handler.get(config_section,'parse')
-    result['clean'] = handler.get(config_section,'clean') == 'True'
-    result['consolidate'] = handler.get(config_section,'consolidate') == 'True'
-    result['outputdir'] = handler.get(config_section,'outputdir')
+    result['parse'] = handler.get('process','parse')
+    result['clean'] = handler.get('process','clean') == 'True'
+    result['consolidate'] = handler.get('process','consolidate') == 'True'
+    result['outputdir'] = handler.get('process','outputdir')
+    result['lowmemory'] = handler.get('process','lowmemory') == 'True'
     result['doctype'] = handler.get(config_section,'doctype')
     return result
 
