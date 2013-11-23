@@ -111,30 +111,33 @@ def run_parse(files, doctype='grant'):
 def run_clean(process_config):
     if not process_config['clean']:
         return
-    import clean
     doctype = process_config['doctype']
+    command = 'python clean.py'
+    if process_config['lowmemory']:
+        command = 'bash run_clean.sh'
     if doctype in ['all', 'grant']:
-        print 'Running grant clean...'
-        clean.disambiguate('grant')
+        os.system(command + ' grant')
     if doctype in ['all', 'application']:
-        print 'Running application clean...'
-        clean.disambiguate('application')
+        os.system(command + ' application')
 
 def run_consolidate(process_config):
     if not process_config['consolidate']:
         return
-    import consolidate
     doctype = process_config['doctype']
+    command = 'python consolidate.py'
+    if process_config['lowmemory']:
+        command = 'bash run_consolidation.sh'
     if doctype in ['all', 'grant']:
-        print 'Running grant consolidate...'
-        consolidate.dump('grant')
+        os.system(command + ' grant')
     if doctype in ['all', 'application']:
-        print 'Running application consolidate...'
-        consolidate.dump('application')
+        os.system(command + ' application')
 
 if __name__=='__main__':
     s = datetime.datetime.now()
     # accepts path to configuration file as command line option
+    if len(sys.argv) < 2:
+        print('Please specify a configuration file as the first argument')
+        exit()
     process_config, parse_config = get_config_options(sys.argv[1])
     doctype = process_config['doctype']
 
