@@ -19,10 +19,6 @@ config = get_config()
 
 THRESHOLD = config.get("assignee").get("threshold")
 
-# bookkeeping for blocks
-
-
-
 def get_assignee_id(obj):
     """
     Returns string representing an assignee object. Returns obj.organization if
