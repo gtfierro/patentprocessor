@@ -46,7 +46,11 @@ def get_config_options(configfile):
     See `process.cfg` for explanation of the optiosn
     """
     handler = ConfigParser(defaults)
-    handler.read(configfile)
+    try:
+        handler.read(configfile)
+    except IOError:
+        print('Error reading config file ' + configfile)
+        exit()
     process_config = extract_process_options(handler, 'process')
     parse_config = extract_parse_options(handler, process_config['parse'])
     return process_config, parse_config
