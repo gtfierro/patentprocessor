@@ -328,7 +328,7 @@ if __name__=='__main__':
     if len(sys.argv) > 1:
         doctype = sys.argv[1]
         schema = schema if doctype == 'grant' else alchemy.schema.App_RawLocation
-    numlocs = alchemy.fetch_session(dbtype=doctype).query().count()
+    numlocs = alchemy.fetch_session(dbtype=doctype).query(schema).count()
     for i in range((numlocs / 10000)+1):
         print i
         main(limit=10000, offset=i*10000, doctype=doctype)
