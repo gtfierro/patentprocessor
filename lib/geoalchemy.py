@@ -7,6 +7,7 @@ import itertools
 import os
 import datetime
 import re
+import sys
 
 import alchemy
 #The config file alchemy uses to store information
@@ -323,7 +324,12 @@ def find_difficult_locations_from_file(inputfilename, outputfilename):
     print datetime.datetime.now()-t
 
 if __name__=='__main__':
-    numlocs = alchemy.session.query(alchemy.schema.RawLocation).count()
+    doctype = 'grant'
+    schema = alchemy.schema.RawLocation
+    if len(sys.argv) > 2:
+        doctype = sys.argv[1]
+        schema = schema if doctype == 'grant' else alchemy.schema.App_RawLocation
+    numlocs = alchemy.fetch_session(dbtype=doctype).query().count()
     for i in range((numlocs / 10000)+1):
         print i
-        main(limit=10000, offset=i*10000)
+        main(limit=10000, offset=i*10000, doctype=doctype)
