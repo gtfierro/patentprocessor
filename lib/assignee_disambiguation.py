@@ -141,7 +141,7 @@ def run_letter(letter, session, doctype='grant'):
     assignees = (assignee for assignee in session.query(schema).filter(clauses))
     block = clean_assignees(assignees)
     create_jw_blocks(block)
-    create_assignee_table()
+    create_assignee_table(session)
 
 
 def run_disambiguation(doctype='grant'):
