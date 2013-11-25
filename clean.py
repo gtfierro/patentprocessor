@@ -3,6 +3,7 @@
 from lib import assignee_disambiguation
 from lib import lawyer_disambiguation
 from lib import geoalchemy
+import sys
 
 def disambiguate(doctype='grant'):
     # run assignee disambiguation and populate the Assignee table
@@ -16,4 +17,7 @@ def disambiguate(doctype='grant'):
     geoalchemy.main(doctype=doctype)
 
 if __name__ == '__main__':
-    disambiguate()
+    doctype = 'grant'
+    if len(sys.argv) > 1:
+        doctype = sys.argv[1]
+    disambiguate(doctype)
