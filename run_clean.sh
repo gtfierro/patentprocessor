@@ -14,4 +14,4 @@ if [ $1 = "grant" ]
 fi
 
 echo 'Running geo disambiguation'
-python lib/geoalchemy.py
+python lib/geoalchemy.py $1

@@ -252,7 +252,6 @@ def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
             if freq > most_freq:
                 default.update(loc.summarize)
                 most_freq = freq"""
-
     alchemy.match(match_group, alchemy_session, default, commit=False)
     if (counter + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
         print " *", (counter + 1), datetime.datetime.now() - runtime
@@ -326,7 +325,7 @@ def find_difficult_locations_from_file(inputfilename, outputfilename):
 if __name__=='__main__':
     doctype = 'grant'
     schema = alchemy.schema.RawLocation
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 1:
         doctype = sys.argv[1]
         schema = schema if doctype == 'grant' else alchemy.schema.App_RawLocation
     numlocs = alchemy.fetch_session(dbtype=doctype).query().count()
