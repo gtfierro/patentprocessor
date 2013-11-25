@@ -1117,7 +1117,7 @@ class App_RawLocation(ApplicationBase):
 
     @hybrid_property
     def __related__(self):
-        return Location
+        return App_Location
 
     def unlink(self, session):
         # TODO: probably need to rebuild this
@@ -1187,7 +1187,7 @@ class App_Location(ApplicationBase):
 
     @hybrid_property
     def __related__(self):
-        return RawLocation
+        return App_RawLocation
 
     def __rawgroup__(self, session, key):
         if key in App_RawLocation.__dict__:
