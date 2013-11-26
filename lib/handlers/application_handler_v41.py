@@ -39,10 +39,10 @@ class Patent(PatentHandler):
 
         self.xml = xh.root.patent_application_publication
 
-        if self.xml.foreign_priority_data:
-            self.country = self.xml.foreign_priority_data.contents_of('country_code')[0]
+        if filter(lambda x: not isinstance(x, list), self.xml.contents_of('country_code')):
+            self.country = filter(lambda x: not isinstance(x, list), self.xml.contents_of('country_code'))[0]
         else:
-            self.country = self.xml.contents_of('country_code')[0]
+            self.country = ''
         self.application = xml_util.normalize_document_identifier(self.xml.document_id.contents_of('doc_number')[0])
         self.kind = self.xml.document_id.contents_of('kind_code')[0]
         self.pat_type = None
@@ -202,9 +202,9 @@ class Patent(PatentHandler):
         [country, doc-number, kind, date] for the given root
         """
         res = {}
-        country = root.contents_of('country_code')[0] if root.contents_of('country_code') else []
-        kind = root.contents_of('kind_code')[0] if root.contents_of('kind_code') else []
-        date = root.contents_of('document_date')[0] if root.contents_of('document_date') else []
+        country = root.contents_of('country_code')[0] if root.contents_of('country_code') else ''
+        kind = root.contents_of('kind_code')[0] if root.contents_of('kind_code') else ''
+        date = root.contents_of('document_date')[0] if root.contents_of('document_date') else ''
         res['country'] = country if country else ''
         res['kind'] = kind if kind else ''
         res['date'] = date if date else ''

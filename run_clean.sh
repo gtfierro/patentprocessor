@@ -2,13 +2,16 @@
 
 echo 'Running assignee disambiguation'
 for i in {a..z} ; do
-    python lib/assignee_disambiguation.py $i
+    python lib/assignee_disambiguation.py $1 $i
 done
 
-echo 'Running lawyer disambiguation'
-for i in {a..z} ; do
-    python lib/lawyer_disambiguation.py $i
-done
+if [ $1 = "grant" ]
+    then
+        echo 'Running lawyer disambiguation'
+        for i in {a..z} ; do
+            python lib/lawyer_disambiguation.py $i
+        done
+fi
 
 echo 'Running geo disambiguation'
-python lib/geoalchemy.py
+python lib/geoalchemy.py $1

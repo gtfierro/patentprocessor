@@ -16,19 +16,20 @@ from datetime import datetime
 import sys
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
-
 ROW = lambda x: u'{uuid}\t{name_first}\t{name_middle}\t{name_last}\t{number}\t{mainclass}\t{subclass}\t{city}\t{state}\t{country}\t{assignee}\t{rawassignee}\n'.format(**x)
 
-insert_rows = []
-
-def main(year):
+def main(year, doctype='grant'):
     # get patents as iterator to save memory
     # use subqueryload to get better performance by using less queries on the backend:
     # --> http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
+    session = alchemy.fetch_session(dbtype=doctype)
+    schema = alchemy.schema.Patent
+    if doctype == 'application':
+        schema = alchemy.schema.App_Application
     if year:
-        patents = (p for p in alchemy.session.query(alchemy.schema.Patent).filter(extract('year', alchemy.schema.Patent.date) == gyear).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
+        patents = (p for p in session.query(schema).filter(extract('year', schema.date) == gyear).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
     else:
-        patents = (p for p in alchemy.session.query(alchemy.schema.Patent).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
+        patents = (p for p in session.query(schema).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
     i = 0
     for patent in patents:
         i += 1
@@ -68,7 +69,12 @@ def main(year):
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         main(None)
+    elif len(sys.argv) < 3:
+        doctype = sys.argv[1]
+        print('Running ' + doctype)
+        main(None, doctype)
     else:
-        gyear = sys.argv[1]
-        print gyear
-        main(gyear)
+        gyear = sys.argv[2]
+        doctype = sys.argv[1]
+        print('Running ' + str(gyear) + ' ' + doctype)
+        main(gyear, doctype)

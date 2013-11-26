@@ -5,9 +5,10 @@ Performs a basic assignee disambiguation
 from collections import defaultdict, deque
 import uuid
 import cPickle as pickle
+import alchemy
 from collections import Counter
 from Levenshtein import jaro_winkler
-from alchemy import session, get_config, match
+from alchemy import get_config, match
 from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
 from datetime import datetime
@@ -23,7 +24,6 @@ blocks = defaultdict(list)
 id_map = defaultdict(list)
 
 assignee_dict = {}
-
 
 def get_assignee_id(obj):
     """
@@ -85,7 +85,7 @@ def create_jw_blocks(list_of_assignees):
     print 'Assignee blocks created!'
 
 
-def create_assignee_table():
+def create_assignee_table(session):
     """
     Given a list of assignees and the redis key-value disambiguation,
     populates the Assignee table in the database
@@ -104,6 +104,7 @@ def create_assignee_table():
               match(rawassignees, session, commit=False)
     session.commit()
     print i, datetime.now()
+
 
 def examine():
     assignees = s.query(Assignee).all()
@@ -128,28 +129,43 @@ def printall():
             f.write('-'*20)
             f.write('\n')
 
-def run_letter(letter):
+
+def run_letter(letter, session, doctype='grant'):
+    schema = RawAssignee
+    if doctype == 'application':
+        schema = App_RawAssignee
     letter = letter.upper()
-    clause1 = RawAssignee.organization.startswith(bindparam('letter',letter))
-    clause2 = RawAssignee.name_first.startswith(bindparam('letter',letter))
+    clause1 = schema.organization.startswith(bindparam('letter',letter))
+    clause2 = schema.name_first.startswith(bindparam('letter',letter))
     clauses = or_(clause1, clause2)
-    assignees = (assignee for assignee in session.query(RawAssignee).filter(clauses))
+    assignees = (assignee for assignee in session.query(schema).filter(clauses))
     block = clean_assignees(assignees)
     create_jw_blocks(block)
-    create_assignee_table()
+    create_assignee_table(session)
 
-def run_disambiguation():
+
+def run_disambiguation(doctype='grant'):
     # get all assignees in database
-    assignees = deque(session.query(RawAssignee))
+    session = alchemy.fetch_session(dbtype=doctype)
+    if doctype == 'grant':
+        assignees = deque(session.query(RawAssignee))
+    if doctype == 'application':
+        assignees = deque(session.query(App_RawAssignee))
     assignee_alpha_blocks = clean_assignees(assignees)
     create_jw_blocks(assignee_alpha_blocks)
-    create_assignee_table()
+    create_assignee_table(session)
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-      run_disambiguation()
+        run_disambiguation()
+    elif len(sys.argv) < 3:
+        doctype = sys.argv[1]
+        print ('Running ' + doctype)
+        run_disambiguation(doctype)
     else:
-      letter = sys.argv[1]
-      print 'Running', letter
-      run_letter(letter)
+        doctype = sys.argv[1]
+        letter = sys.argv[2]
+        session = alchemy.fetch_session(dbtype=doctype)
+        print('Running ' + letter + ' ' + doctype)
+        run_letter(letter, session, doctype)

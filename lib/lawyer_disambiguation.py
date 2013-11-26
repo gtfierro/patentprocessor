@@ -7,7 +7,7 @@ import uuid
 import cPickle as pickle
 from collections import Counter
 from Levenshtein import jaro_winkler
-from alchemy import session, get_config, match
+from alchemy import grantsession, get_config, match
 from alchemy.schema import *
 from handlers.xml_util import normalize_utf8
 from datetime import datetime
@@ -98,10 +98,10 @@ def create_lawyer_table():
           i += 1
           rawlawyers = [lawyer_dict[rl_id] for rl_id in block]
           if i % 10000 == 0:
-              match(rawlawyers, session, commit=True)
+              match(rawlawyers, grantsession, commit=True)
           else:
-              match(rawlawyers, session, commit=False)
-    session.commit()
+              match(rawlawyers, grantsession, commit=False)
+    grantsession.commit()
 
 def examine():
     lawyers = s.query(lawyer).all()
@@ -131,13 +131,13 @@ def run_letter(letter):
     clause1 = RawLawyer.organization.startswith(bindparam('letter',letter))
     clause2 = RawLawyer.name_first.startswith(bindparam('letter',letter))
     clauses = or_(clause1, clause2)
-    lawyers = (lawyer for lawyer in session.query(RawLawyer).filter(clauses))
+    lawyers = (lawyer for lawyer in grantsession.query(RawLawyer).filter(clauses))
     block = clean_lawyers(lawyers)
     create_jw_blocks(block)
     create_lawyer_table()
 
 def run_disambiguation():
-    lawyers = deque(session.query(RawLawyer))
+    lawyers = deque(grantsession.query(RawLawyer))
     lawyer_alpha_blocks = clean_lawyers(lawyers)
     create_jw_blocks(lawyer_alpha_blocks)
     create_lawyer_table()
@@ -148,5 +148,5 @@ if __name__ == '__main__':
       run_disambiguation()
     else:
       letter = sys.argv[1]
-      print 'Running', letter
+      print ('Running ' + letter)
       run_letter(letter)
