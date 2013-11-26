@@ -9,7 +9,7 @@ import logging
 import requests
 import zipfile
 import cStringIO as StringIO
-from BeautifulSoup import BeautifulSoup as bs
+from bs4 import BeautifulSoup as bs
 import lib.alchemy as alchemy
 
 sys.path.append('lib')
@@ -38,14 +38,17 @@ def get_year_list(yearstring):
         years.extend(range(start,end))
     return years
 
-def generate_download_list(years):
+def generate_download_list(years, doctype='grant'):
     """
     Given the year string from the configuration file, return
     a list of urls to be downloaded
     """
     if not years: return []
     urls = []
-    url = requests.get('https://www.google.com/googlebooks/uspto-patents-grants-text.html')
+    link = 'https://www.google.com/googlebooks/uspto-patents-grants-text.html'
+    if doctype == 'application':
+        link = 'https://www.google.com/googlebooks/uspto-patents-applications-text.html'
+    url = requests.get(link)
     soup = bs(url.content)
     years = get_year_list(years)
 
@@ -94,7 +97,7 @@ def download_files(urls):
             continue
     return complete
 
-def run_parse(files):
+def run_parse(files, doctype='grant'):
     import parse
     import time
     import sys
@@ -103,34 +106,49 @@ def run_parse(files):
     import logging
     logfile = "./" + 'xml-parsing.log'
     logging.basicConfig(filename=logfile, level=logging.DEBUG)
-    xmls = parse.parse_files(files)
-    if xmls:
-        parse.parse_patents(xmls)
+    parse.parse_files(files, doctype)
 
 def run_clean(process_config):
-    if process_config['clean']:
-        print 'Running clean...'
-        if process_config['lowmemory']:
-            os.system('bash run_clean.sh')
-        else:
-            os.system('python clean.py')
+    if not process_config['clean']:
+        return
+    doctype = process_config['doctype']
+    command = 'python clean.py'
+    if process_config['lowmemory']:
+        command = 'bash run_clean.sh'
+    if doctype in ['all', 'grant']:
+        os.system(command + ' grant')
+    if doctype in ['all', 'application']:
+        os.system(command + ' application')
 
 def run_consolidate(process_config):
-    if process_config['consolidate']:
-        print 'Running consolidate...'
-        if process_config['lowmemory']:
-            os.system('bash run_consolidation.sh')
-        else:
-            os.system('python consolidate.py')
+    if not process_config['consolidate']:
+        return
+    doctype = process_config['doctype']
+    command = 'python consolidate.py'
+    if process_config['lowmemory']:
+        command = 'bash run_consolidation.sh'
+    if doctype in ['all', 'grant']:
+        os.system(command + ' grant')
+    if doctype in ['all', 'application']:
+        os.system(command + ' application')
 
 if __name__=='__main__':
     s = datetime.datetime.now()
     # accepts path to configuration file as command line option
+    if len(sys.argv) < 2:
+        print('Please specify a configuration file as the first argument')
+        exit()
     process_config, parse_config = get_config_options(sys.argv[1])
+    doctype = process_config['doctype']
 
     # download the files to be parsed
-    urls = generate_download_list(parse_config['years'])
-    # check download directory
+    urls = []
+    should_process_grants = doctype in ['all', 'grant']
+    should_process_applications = doctype in ['all', 'application']
+    if should_process_grants:
+        urls += generate_download_list(parse_config['years'], 'grant')
+    if should_process_applications:
+        urls += generate_download_list(parse_config['years'], 'application')
     downloaddir = parse_config['downloaddir']
     if downloaddir and not os.path.exists(downloaddir):
         os.makedirs(downloaddir)
@@ -142,13 +160,20 @@ if __name__=='__main__':
 
     # find files
     print "Starting parse on {0} on directory {1}".format(str(datetime.datetime.today()),parse_config['datadir'])
-    files = parse.list_files(parse_config['datadir'],parse_config['dataregex'])
-    print "Found {2} files matching {0} in directory {1}".format(parse_config['dataregex'], parse_config['datadir'], len(files))
-
-    # run parse and commit SQL
-    print 'Running parse...'
-    run_parse(files)
-    f = datetime.datetime.now()
+    if should_process_grants:
+        files = parse.list_files(parse_config['datadir'],parse_config['grantregex'])
+        print 'Running grant parse...'
+        run_parse(files, 'grant')
+        f = datetime.datetime.now()
+        print "Found {2} files matching {0} in directory {1}"\
+                .format(parse_config['grantregex'], parse_config['datadir'], len(files))
+    if should_process_applications:
+        files = parse.list_files(parse_config['datadir'],parse_config['applicationregex'])
+        print 'Running application parse...'
+        run_parse(files, 'application')
+        f = datetime.datetime.now()
+        print "Found {2} files matching {0} in directory {1}"\
+                .format(parse_config['applicationregex'], parse_config['datadir'], len(files))
     print 'Finished parsing in {0}'.format(str(f-s))
 
     # run extra phases if needed, then move output files

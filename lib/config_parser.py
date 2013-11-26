@@ -5,11 +5,12 @@ defaults = {'parse': 'defaultparse',
             'clean': 'True',
             'consolidate': 'True',
             'datadir': '/data/patentdata/patents/2013',
-            'dataregex': 'ipg\d{6}.xml',
+            'grantregex': 'ipg\d{6}.xml',
+            'applicationregex': 'ipa\d{6}.xml',
             'years': None,
             'downloaddir' : None}
 
-def extract_process_options(handler):
+def extract_process_options(handler, config_section):
     """
     Extracts the high level options from the [process] section
     of the configuration file. Returns a dictionary of the options
@@ -20,18 +21,20 @@ def extract_process_options(handler):
     result['consolidate'] = handler.get('process','consolidate') == 'True'
     result['outputdir'] = handler.get('process','outputdir')
     result['lowmemory'] = handler.get('process','lowmemory') == 'True'
+    result['doctype'] = handler.get(config_section,'doctype')
     return result
 
-def extract_parse_options(handler, section):
+def extract_parse_options(handler, config_section):
     """
     Extracts the specific parsing options from the parse section
     as given by the [parse] config option in the [process] section
     """
     options = {}
-    options['datadir'] = handler.get(section,'datadir')
-    options['dataregex'] = handler.get(section,'dataregex')
-    options['years'] = handler.get(section,'years')
-    options['downloaddir'] = handler.get(section,'downloaddir')
+    options['datadir'] = handler.get(config_section,'datadir')
+    options['grantregex'] = handler.get(config_section,'grantregex')
+    options['applicationregex'] = handler.get(config_section, 'applicationregex')
+    options['years'] = handler.get(config_section,'years')
+    options['downloaddir'] = handler.get(config_section,'downloaddir')
     if options['years'] and options['downloaddir']:
         options['datadir'] = options['downloaddir']
     return options
@@ -43,8 +46,12 @@ def get_config_options(configfile):
     See `process.cfg` for explanation of the optiosn
     """
     handler = ConfigParser(defaults)
-    handler.read(configfile)
-    process_config = extract_process_options(handler)
+    try:
+        handler.read(configfile)
+    except IOError:
+        print('Error reading config file ' + configfile)
+        exit()
+    process_config = extract_process_options(handler, 'process')
     parse_config = extract_parse_options(handler, process_config['parse'])
     return process_config, parse_config
 

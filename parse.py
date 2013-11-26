@@ -23,7 +23,7 @@ def list_files(patentroot, xmlregex):
     files = [patentroot+'/'+fi for fi in os.listdir(patentroot)
              if re.search(xmlregex, fi, re.I) is not None]
     if not files:
-        logging.error("No files matching {0} found in {1}".format(XMLREGEX, PATENTROOT))
+        logging.error("No files matching {0} found in {1}".format(xmlregex, patentroot))
         sys.exit(1)
     return files
 
@@ -41,11 +41,12 @@ def _get_date(filename, dateformat='ipg%y%m%d.xml'):
     return int(dateobj.strftime('%Y%m%d'))  # returns YYYYMMDD
 
 
-def _get_parser(date):
+def _get_parser(date, doctype='grant'):
     """
     Given a [date], returns the class of parser needed
     to parse it
     """
+    xmlhandlers = get_xml_handlers('process.cfg', doctype)
     for daterange in xmlhandlers.iterkeys():
         if daterange[0] <= date <= daterange[1]:
             return xmlhandlers[daterange]
@@ -75,15 +76,9 @@ def extract_xml_strings(filename):
                 doc = ''
 
 
-def parse_files(filelist):
+def parse_files(filelist, doctype='grant'):
     """
-    Given a list of files, extracts the XML strings from each and returns a
-    flat iterable of all of them.
-
-    Given a list of xml strings as [xmltuples], parses them
-    all and returns a flat iterator of patSQL.*XML instances
-
-    takes in a list of Patent objects (from parse_patents above) and commits
+    Takes in a list of patent file names (from __main__() and start.py) and commits
     them to the database. This method is designed to be used sequentially to
     account for db concurrency.  The optional argument `commit_frequency`
     determines the frequency with which we commit the objects to the database.
@@ -91,13 +86,13 @@ def parse_files(filelist):
     `commit_frequency` to be low (but not 0) is helpful for low memory machines.
     """
     if not filelist:
-        return []
+        return
     commit = alchemy.commit
     for filename in filelist:
         print filename
         for i, xmltuple in enumerate(extract_xml_strings(filename)):
-            patobj = parse_patent(xmltuple)
-            if DOCUMENTTYPE == 'grant':
+            patobj = parse_patent(xmltuple, doctype)
+            if doctype == 'grant':
                 alchemy.add_grant(patobj)
                 commit = alchemy.commit
             else:
@@ -110,7 +105,7 @@ def parse_files(filelist):
         print " *", "Complete", datetime.datetime.now()
 
 
-def parse_patent(xmltuple):
+def parse_patent(xmltuple, doctype='grant'):
     """
     Parses an xml string given as [xmltuple] with the appropriate parser (given
     by the first part of the tuple). Returns list of objects
@@ -120,7 +115,7 @@ def parse_patent(xmltuple):
         return
     try:
         date, xml = xmltuple  # extract out the parts of the tuple
-        patent = _get_parser(date).Patent(xml, True)
+        patent = _get_parser(date, doctype).Patent(xml, True)
     except Exception as inst:
         logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
@@ -147,7 +142,7 @@ def move_tables(output_directory):
         print 'Database file {0} does not exist'.format(dbfile)
 
 
-def main(patentroot, xmlregex, verbosity, output_directory='.'):
+def main(patentroot, xmlregex, verbosity, output_directory='.', doctype='grant'):
     logfile = "./" + 'xml-parsing.log'
     logging.basicConfig(filename=logfile, level=verbosity)
 
@@ -155,7 +150,7 @@ def main(patentroot, xmlregex, verbosity, output_directory='.'):
     files = list_files(patentroot, xmlregex)
 
     logging.info("Found all files matching {0} in directory {1}".format(xmlregex, patentroot))
-    parse_files(files)
+    parse_files(files, doctype)
     move_tables(output_directory)
 
     logging.info("SQL tables moved to {0}".format(output_directory))
@@ -170,6 +165,5 @@ if __name__ == '__main__':
     VERBOSITY = args.get_verbosity()
     PATENTOUTPUTDIR = args.get_output_directory()
     DOCUMENTTYPE = args.get_document_type()
-    xmlhandlers = get_xml_handlers('process.cfg', DOCUMENTTYPE)
 
-    main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR)
+    main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR, DOCUMENTTYPE)
