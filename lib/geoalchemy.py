@@ -71,7 +71,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     print "geocoding started", t
     #Construct a list of all addresses which Google was capable of identifying
     #Making this now allows it to be referenced quickly later
-    construct_valid_input_address_list()
+    valid_input_addresses = construct_valid_input_addresses()
     #Get all of the raw locations in alchemy.db that were parsed from XML
     if doctype == 'grant':
         raw_parsed_locations = alchemy_session.query(alchemy.schema.RawLocation).limit(limit).offset(offset)
@@ -95,7 +95,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
         cleaned_location = geoalchemy_util.clean_raw_location(parsed_raw_location)
         #If the cleaned location has a match in the raw_google database,
         #we use that to classify it
-        if input_address_exists(cleaned_location):
+        if input_address_exists(valid_input_addresses, cleaned_location):
             matching_location = geo_data_session.query(RawGoogle).filter(
                                      RawGoogle.input_address==cleaned_location).first()
             grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
@@ -267,7 +267,7 @@ def clean_raw_locations_from_file(inputfilename, outputfilename):
         outputfile.write(line)
         
 def analyze_input_addresses(inputfilename):
-    construct_valid_input_address_list()
+    valid_input_addresses = construct_valid_input_addresses()
     print datetime.datetime.now()
     inputfile = open(inputfilename, 'r')
     line_count=0
@@ -277,7 +277,7 @@ def analyze_input_addresses(inputfilename):
     for line in inputfile:
         line = line.decode('utf8')
         input_address = geoalchemy_util.clean_raw_location(line)
-        if input_address_exists(input_address):
+        if input_address_exists(valid_input_addresses, input_address):
             good_count+=1
         #else:
             #not_found_file.write('{0}\n'.format(input_address.encode('utf8')))
@@ -287,18 +287,19 @@ def analyze_input_addresses(inputfilename):
     print '% in all_cities:', exists_in_all_cities_count*1.0/line_count
     print datetime.datetime.now()
 
-valid_input_address_list = set()
-def construct_valid_input_address_list():
+def construct_valid_input_addresses():
+    valid_input_addresses = set()
     temp = geo_data_session.query(RawGoogle.input_address).filter(RawGoogle.confidence>0)\
                                 .filter((RawGoogle.city!='') | (RawGoogle.region!=''))
     for row in temp:
         input_address = row.input_address
-        valid_input_address_list.add(input_address)
-    print 'List of all valid Google input_address values constructed with', len(valid_input_address_list), 'items'
+        valid_input_addresses.add(input_address)
+    print 'List of all valid Google input_address values constructed with', len(valid_input_addresses), 'items'
+    return valid_input_addresses
 
-def input_address_exists(input_address):
-    if valid_input_address_list:
-        return input_address in valid_input_address_list
+def input_address_exists(valid_input_addresses, input_address):
+    if valid_input_addresses:
+        return input_address in valid_input_addresses
     else:
         print 'Error: list of valid input addresses not constructed'
         return False
