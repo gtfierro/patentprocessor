@@ -45,7 +45,7 @@ class RawGoogle(base):
         self.confidence = confidence
 
     def __repr__(self):
-        return "<RawGoogle('%s','%s','%s','%s','%s')>" % (self.input_address, self.city, self.region, self.country, self.latitude, self.longitude, self.confidence)
+        return "<RawGoogle('%s','%s','%s','%s','%s','%s','%s')>" % (self.input_address, self.city, self.region, self.country, self.latitude, self.longitude, self.confidence)
         
 #One of the cities in the world as stored in the MaxMinds database
 class AllCities(base):
@@ -203,7 +203,9 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
             print 'all_cities found additional location for', raw_location
 
 def fix_state_abbreviations(locations):
-    print 'fix_state_abbreviations', locations
+    for location in locations:
+        matching_location = location['matching_location']
+        print matching_location
     assert(false)
     
 def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
