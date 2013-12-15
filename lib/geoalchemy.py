@@ -205,8 +205,11 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
 def fix_state_abbreviations(locations):
     for location in locations:
         matching_location = location['matching_location']
-        print matching_location
-    assert(false)
+        matching_location.region = force_abbreviation(matching_location.region)
+        print location['matching_location'].region.encode('utf8'), matching_location.country.encode('utf8')
+
+def force_abbreviation(region):
+    pass
     
 def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
     for i, item in identified_grouped_locations_enum:
