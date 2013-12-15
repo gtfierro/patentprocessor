@@ -50,8 +50,8 @@ def generate_manual_patterns_and_replacements(library_file_name):
     manual_replacement_1 = lambda n: substs_1[n.lastindex - 1]
     manual_pattern_compiled_1 = re.compile(manual_pattern_1, re.UNICODE)
     
-    return {'patterns':(manual_pattern_compiled_0, manual_pattern_compiled_1),
-            'replacements':(manual_replacements_0, manual_replacement_1)}
+    return (manual_pattern_compiled_0, manual_pattern_compiled_1),
+            (manual_replacements_0, manual_replacement_1)
     
 def get_chars_in_parentheses(text):
     text = text.group(0)
@@ -76,9 +76,7 @@ def generate_quickfix_patterns():
     quickfix_slashes = re.compile(ur'/[a-zA-Z]/',re.UNICODE)
     return {'curly':curly_pattern, 'slashes':quickfix_slashes}
 
-manual_dict = generate_manual_patterns_and_replacements("lib/manual_replacement_library.txt")
-manual_patterns = manual_dict['patterns']
-manual_replacements = manual_dict['replacements']
+manual_patterns, manual_replacements = generate_manual_patterns_and_replacements("lib/manual_replacement_library.txt")
 quickfix_patterns = generate_quickfix_patterns()
 postal_pattern = re.compile(ur'(- )?[A-Z\-#\(]*\d+[\)A-Z]*', re.UNICODE)
 foreign_postal_pattern = re.compile(ur'[A-Z\d]{3,4}[ ]?[A-Z\d]{3}', re.UNICODE)
@@ -157,6 +155,7 @@ def region_is_a_state(region):
     return capital_pattern.match(region)
 
 def fix_state_abbreviations(locations):
+
     for location in locations:
         matching_location = location['matching_location']
         matching_location.region = force_abbreviation(matching_location.region)
