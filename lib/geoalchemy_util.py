@@ -103,9 +103,7 @@ def clean_raw_location(text):
     text = separator_pattern.sub(', ', text)
     #Perform all of the manual replacements
     i=0
-    while i<len(manual_patterns):
-        text = manual_patterns[i].sub(manual_replacements[i], text)
-        i+=1
+    text = perform_replacements(manual_patterns, manual_replacements, text)
     #Perform all the quickfix replacements
     text = quickfix_patterns['curly'].sub(get_chars_in_parentheses, text)
     
@@ -129,6 +127,11 @@ def clean_raw_location(text):
     text = russia_pattern.sub(', RU', text)
     return text
 
+def perform_replacements(generated_patterns, generated_replacements, text):
+    length = len(generated_patterns)
+    for i in xrange(length):
+        text = generated_patterns[i].sub(generated_replacements[i],text)
+    return text
 
 def get_closest_match_leven(text, comparison_list, minimum_match_value):
     closest_match = ''
@@ -154,11 +157,11 @@ def region_is_a_state(region):
     return capital_pattern.match(region)
 
 def fix_state_abbreviations(locations):
-    
+    state_patterns, state_replacements = generate_manual_patterns_and_replacements('lib/state_abbreviations.txt')
     for location in locations:
         matching_location = location['matching_location']
         matching_location.region = force_abbreviation(matching_location.region)
         print location['matching_location'].region.encode('utf8'), matching_location.country.encode('utf8')
 
 def force_abbreviation(region):
-    
+    return region
