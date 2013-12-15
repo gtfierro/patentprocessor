@@ -50,8 +50,7 @@ def generate_manual_patterns_and_replacements(library_file_name):
     manual_replacement_1 = lambda n: substs_1[n.lastindex - 1]
     manual_pattern_compiled_1 = re.compile(manual_pattern_1, re.UNICODE)
     
-    return (manual_pattern_compiled_0, manual_pattern_compiled_1),
-            (manual_replacements_0, manual_replacement_1)
+    return (manual_pattern_compiled_0, manual_pattern_compiled_1), (manual_replacements_0, manual_replacement_1)
     
 def get_chars_in_parentheses(text):
     text = text.group(0)
@@ -155,7 +154,7 @@ def region_is_a_state(region):
     return capital_pattern.match(region)
 
 def fix_state_abbreviations(locations):
-
+    
     for location in locations:
         matching_location = location['matching_location']
         matching_location.region = force_abbreviation(matching_location.region)
