@@ -21,8 +21,8 @@ remove_eol_pattern = re.compile(ur'[\r\n]+')
 #These are handled by manually replacing each entry.
 #The replacements are stored in lib/manual_replacement_library.txt
 #In the format: original_pattern|replacement
-def generate_manual_patterns_and_replacements():
-    manual_replacement_file = open("lib/manual_replacement_library.txt", 'r')
+def generate_manual_patterns_and_replacements(library_file_name):
+    manual_replacement_file = open(library_file_name, 'r')
     manual_mapping_0 = []
     manual_mapping_1 = []
     replacement_count=0
@@ -76,7 +76,7 @@ def generate_quickfix_patterns():
     quickfix_slashes = re.compile(ur'/[a-zA-Z]/',re.UNICODE)
     return {'curly':curly_pattern, 'slashes':quickfix_slashes}
 
-manual_dict = generate_manual_patterns_and_replacements()
+manual_dict = generate_manual_patterns_and_replacements("lib/manual_replacement_library.txt")
 manual_patterns = manual_dict['patterns']
 manual_replacements = manual_dict['replacements']
 quickfix_patterns = generate_quickfix_patterns()
@@ -155,3 +155,12 @@ def get_country_from_cleaned(text):
 capital_pattern = re.compile(r'[A-Z]')
 def region_is_a_state(region):
     return capital_pattern.match(region)
+
+def fix_state_abbreviations(locations):
+    for location in locations:
+        matching_location = location['matching_location']
+        matching_location.region = force_abbreviation(matching_location.region)
+        print location['matching_location'].region.encode('utf8'), matching_location.country.encode('utf8')
+
+def force_abbreviation(region):
+    
