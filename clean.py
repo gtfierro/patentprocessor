@@ -6,14 +6,12 @@ from lib import geoalchemy
 import sys
 
 def disambiguate(doctype='grant'):
-    """
     # run assignee disambiguation and populate the Assignee table
     assignee_disambiguation.run_disambiguation(doctype)
 
     # run lawyer disambiguation
     if doctype == 'grant':
       lawyer_disambiguation.run_disambiguation()
-      """
 
     #Run new geocoding
     geoalchemy.main(doctype=doctype)
