@@ -156,12 +156,11 @@ capital_pattern = re.compile(r'[A-Z]')
 def region_is_a_state(region):
     return capital_pattern.match(region)
 
+#The code merely applies the replacements in the lib/state_abbreviations.txt
+#It is intended to force US state names to use abbreviations.
 def fix_state_abbreviations(locations):
     state_patterns, state_replacements = generate_manual_patterns_and_replacements('lib/state_abbreviations.txt')
     for location in locations:
         matching_location = location['matching_location']
-        matching_location.region = force_abbreviation(matching_location.region)
-        print location['matching_location'].region.encode('utf8'), matching_location.country.encode('utf8')
-
-def force_abbreviation(region):
-    return region
+        matching_location.region = perform_replacements(state_patterns, state_replacements, matching_location.region)
+        print location['matching_location'].region.encode('utf8'), location['matching_location'].country.encode('utf8')

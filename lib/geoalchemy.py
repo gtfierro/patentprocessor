@@ -119,9 +119,6 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     print 'count of identified locations:', len(identified_grouped_locations)
     t = datetime.datetime.now()
 
-    #temporary location for speed
-    geoalchemy_util.fix_state_abbreviations(identified_grouped_locations);
-
     #We now have two lists of locations. First, consider the unmatched locations.
     keyfunc = lambda x:x["country"]
     #Sort the list by the country
@@ -138,8 +135,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     #We now have a list of all locations in the file, along with their
     #matching locations and the id used to group them
     #Perform a quickfix to correct state names 
-    #This is currently located elsewhere for faster debugging
-    #geoalchemy_util.fix_state_abbreviations(identified_grouped_locations);
+    geoalchemy_util.fix_state_abbreviations(identified_grouped_locations);
 
     #Sort the list by the grouping_id
     keyfunc = lambda x: x['grouping_id']
