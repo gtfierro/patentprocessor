@@ -120,7 +120,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     t = datetime.datetime.now()
 
     #temporary location for speed
-    fix_state_abbreviations(identified_grouped_locations);
+    geoalchemy_util.fix_state_abbreviations(identified_grouped_locations);
 
     #We now have two lists of locations. First, consider the unmatched locations.
     keyfunc = lambda x:x["country"]
@@ -139,7 +139,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     #matching locations and the id used to group them
     #Perform a quickfix to correct state names 
     #This is currently located elsewhere for faster debugging
-    #fix_state_abbreviations(identified_grouped_locations);
+    #geoalchemy_util.fix_state_abbreviations(identified_grouped_locations);
 
     #Sort the list by the grouping_id
     keyfunc = lambda x: x['grouping_id']
@@ -202,15 +202,6 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
                                   "grouping_id": grouping_id})
             print 'all_cities found additional location for', raw_location
 
-def fix_state_abbreviations(locations):
-    for location in locations:
-        matching_location = location['matching_location']
-        matching_location.region = force_abbreviation(matching_location.region)
-        print location['matching_location'].region.encode('utf8'), matching_location.country.encode('utf8')
-
-def force_abbreviation(region):
-    pass
-    
 def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
     for i, item in identified_grouped_locations_enum:
         #grouped_locations_list = a list of every grouped location with the same grouping_id
