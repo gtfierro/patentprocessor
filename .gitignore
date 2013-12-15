@@ -32,3 +32,4 @@ XML/*
 lib/alchemy/config.ini
 *.pickle
 build/
+tags
