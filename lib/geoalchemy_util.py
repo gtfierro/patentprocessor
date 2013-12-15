@@ -23,22 +23,33 @@ remove_eol_pattern = re.compile(ur'[\r\n]+')
 #In the format: original_pattern|replacement
 def generate_manual_patterns_and_replacements(library_file_name):
     manual_replacement_file = open(library_file_name, 'r')
-    manual_mapping_0 = []
-    manual_mapping_1 = []
-    replacement_count=0
+
+    #first, generate the mappings from the file
+    #mappings[i] contains (pattern, replacement) 
+    mappings = list()
     for line in manual_replacement_file:
-        #allow # to be a comment
-        if(line[0]=='#' or line=='\n'):
+        #allow # to be a comment, allow empty lines
+        if(line[0]=='#' or line=='\n' or line=='\r\n'):
             continue
+        #Parse the substitution line
         line_without_newline = remove_eol_pattern.sub('',line)
         line_split = line_without_newline.split("|")
-        #An individual re can only hold 100 entities. So split if necessary.
-        if(replacement_count<99):
-            manual_mapping_0.append((line_split[0],line_split[1].decode('utf-8')))
-        else:
-            manual_mapping_1.append((line_split[0],line_split[1].decode('utf-8')))
-        replacement_count+=1
-        
+        mappings.append((line_split[0],line_split[1].decode('utf-8')))
+
+    generated_patterns = list()
+    generated_replacements = list()
+    i=0
+    length = len(mappings)
+    while True:
+        map_slice = mappings[i*100:(i+1)*100-1]
+        generated_pattern_list = '|'.join('(%s)' % re.escape(p) for p, r in map_slice) 
+        generated_patterns.append(re.compile(generated_pattern_list, re.UNICODE))
+        replacement_list = [replacement for pattern, replacement in map_slice]
+        generated_replacements.append(lambda m: replacement_list[m.lastindex-1])
+        i+=1
+        if (i+1)*100>=length:
+            break
+    """
     #multisub, but only done once for speed
     manual_pattern_0 = '|'.join('(%s)' % re.escape(p) for p, s in manual_mapping_0)
     substs_0 = [s for p, s in manual_mapping_0]
@@ -49,8 +60,9 @@ def generate_manual_patterns_and_replacements(library_file_name):
     substs_1 = [s for p, s in manual_mapping_1]
     manual_replacement_1 = lambda n: substs_1[n.lastindex - 1]
     manual_pattern_compiled_1 = re.compile(manual_pattern_1, re.UNICODE)
+    """    
     
-    return (manual_pattern_compiled_0, manual_pattern_compiled_1), (manual_replacements_0, manual_replacement_1)
+    return generated_patterns, generated_replacements 
     
 def get_chars_in_parentheses(text):
     text = text.group(0)
@@ -127,10 +139,10 @@ def clean_raw_location(text):
     text = russia_pattern.sub(', RU', text)
     return text
 
-def perform_replacements(generated_patterns, generated_replacements, text):
+def perform_replacements(generated_patterns, replacement_function, text):
     length = len(generated_patterns)
     for i in xrange(length):
-        text = generated_patterns[i].sub(generated_replacements[i],text)
+        text = generated_patterns[i].sub(replacement_function[i],text)
     return text
 
 def get_closest_match_leven(text, comparison_list, minimum_match_value):
@@ -163,4 +175,3 @@ def fix_state_abbreviations(locations):
     for location in locations:
         matching_location = location['matching_location']
         matching_location.region = perform_replacements(state_patterns, state_replacements, matching_location.region)
-        print location['matching_location'].region.encode('utf8'), location['matching_location'].country.encode('utf8')
