@@ -118,6 +118,10 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     print "locations grouped", datetime.datetime.now() - t
     print 'count of identified locations:', len(identified_grouped_locations)
     t = datetime.datetime.now()
+
+    #temporary location for speed
+    fix_state_abbreviations(identified_grouped_locations);
+
     #We now have two lists of locations. First, consider the unmatched locations.
     keyfunc = lambda x:x["country"]
     #Sort the list by the country
@@ -133,6 +137,10 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     
     #We now have a list of all locations in the file, along with their
     #matching locations and the id used to group them
+    #Perform a quickfix to correct state names 
+    #This is currently located elsewhere for faster debugging
+    #fix_state_abbreviations(identified_grouped_locations);
+
     #Sort the list by the grouping_id
     keyfunc = lambda x: x['grouping_id']
     identified_grouped_locations.sort(key=keyfunc)
@@ -154,6 +162,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
 
     print "%s groups formed from %s locations" % (unique_group_count, raw_parsed_locations.count())
 
+#Identify locations that the Google disambiguation couldn't resolve
 def identify_missing_locations(unidentified_grouped_locations_enum, 
                                identified_grouped_locations,
                                minimum_match_value, t):
@@ -192,6 +201,10 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
                                   "matching_location": matching_location,
                                   "grouping_id": grouping_id})
             print 'all_cities found additional location for', raw_location
+
+def fix_state_abbreviations(locations):
+    print 'fix_state_abbreviations', locations
+    assert(false)
     
 def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
     for i, item in identified_grouped_locations_enum:
