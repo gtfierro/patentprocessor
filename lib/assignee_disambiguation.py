@@ -85,11 +85,18 @@ def create_jw_blocks(list_of_assignees):
     print 'Assignee blocks created!'
 
 
+assignee_insert_statements = []
+patentassignee_insert_statements = []
+update_statements = []
 def create_assignee_table(session):
     """
     Given a list of assignees and the redis key-value disambiguation,
     populates the Assignee table in the database
     """
+    session.execute("delete from Assignee;")
+    session.execute("delete from patent_assignee;")
+    session.execute("delete from location_assignee;")
+    session.commit()
     print 'Disambiguating assignees...'
     i = 0
     for assignee in blocks.iterkeys():
@@ -99,12 +106,84 @@ def create_assignee_table(session):
           rawassignees = [assignee_dict[ra_id] for ra_id in block]
           if i % 10000 == 0:
               print i, datetime.now()
-              match(rawassignees, session, commit=True)
+              assignee_match(rawassignees, session, commit=True)
           else:
-              match(rawassignees, session, commit=False)
+              assignee_match(rawassignees, session, commit=False)
+    commit_insert_statements(session, assignee_insert_statements, patentassignee_insert_statements)
+    update_rawassignees(session, update_statements)
     session.commit()
     print i, datetime.now()
 
+def assignee_match(objects, session, commit=False):
+    freq = defaultdict(Counter)
+    param = {}
+    raw_objects = []
+    clean_objects = []
+    clean_cnt = 0
+    clean_main = None
+    class_type = None
+    class_type = None
+    for obj in objects:
+        if obj.__tablename__[:3] == "raw":
+            clean = obj.__clean__
+            if not class_type:
+                class_type = obj.__related__
+        else:
+            clean = obj
+            obj = None
+            if not class_type:
+                class_type = clean.__class__
+
+        if clean and clean not in clean_objects:
+            clean_objects.append(clean)
+            if len(clean.__raw__) > clean_cnt:
+                clean_cnt = len(clean.__raw__)
+                clean_main = clean
+            # figures out the most frequent items
+            for k in clean.__related__.summarize:
+                freq[k] += Counter(dict(clean.__rawgroup__(session, k)))
+        elif obj and obj not in raw_objects:
+            raw_objects.append(obj)
+
+    exist_param = {}
+    if clean_main:
+        exist_param = clean_main.summarize
+
+    param = exist_param
+    if not param.has_key('organization'):
+        param['organization'] = ''
+    for obj in raw_objects:
+        for k, v in obj.summarize.iteritems():
+            freq[k][v] += 1
+        if "id" not in exist_param:
+            if "id" not in param:
+                param["id"] = obj.uuid
+            param["id"] = min(param["id"], obj.uuid)
+
+    # create parameters based on most frequent
+    for k in freq:
+        if None in freq[k]:
+            freq[k].pop(None)
+        if "" in freq[k]:
+            freq[k].pop("")
+        if freq[k]:
+            param[k] = freq[k].most_common(1)[0][0]
+    
+    assignee_insert_statements.append(param)
+    tmpids = map(lambda x: x.uuid, objects)
+    patents = map(lambda x: x.patent_id, objects)
+    patentassignee_insert_statements.extend([{'patent_id': x, 'assignee_id': param['id']} for x in patents])
+    update_statements.extend([{'raw_uuid':x,'assignee_id':param['id']} for x in tmpids])
+
+def commit_insert_statements(session, assignee_insert_statements, patentassignee_insert_statements):
+    session.connection().execute(Assignee.__table__.insert(), assignee_insert_statements)
+    session.connection().execute(patentassignee.insert(), patentassignee_insert_statements)
+    session.commit()
+
+def update_rawassignees(session, update_statements):
+    ratable = RawAssignee.__table__
+    u = ratable.update().where(ratable.c.uuid == bindparam('raw_uuid')).values(assignee_id=bindparam('assignee_id'))
+    session.connection().execute(u, *update_statements)
 
 def examine():
     assignees = s.query(Assignee).all()
