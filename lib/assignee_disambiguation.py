@@ -124,41 +124,18 @@ def assignee_match(objects, session, commit=False):
     class_type = None
     class_type = None
     for obj in objects:
-        if obj.__tablename__[:3] == "raw":
-            clean = obj.__clean__
-            if not class_type:
-                class_type = obj.__related__
-        else:
-            clean = obj
-            obj = None
-            if not class_type:
-                class_type = clean.__class__
+        if not obj: continue
+        class_type = obj.__related__
+        raw_objects.append(obj)
+        break
 
-        if clean and clean not in clean_objects:
-            clean_objects.append(clean)
-            if len(clean.__raw__) > clean_cnt:
-                clean_cnt = len(clean.__raw__)
-                clean_main = clean
-            # figures out the most frequent items
-            for k in clean.__related__.summarize:
-                freq[k] += Counter(dict(clean.__rawgroup__(session, k)))
-        elif obj and obj not in raw_objects:
-            raw_objects.append(obj)
-
-    exist_param = {}
-    if clean_main:
-        exist_param = clean_main.summarize
-
-    param = exist_param
-    if not param.has_key('organization'):
-        param['organization'] = ''
+    param = {}
     for obj in raw_objects:
         for k, v in obj.summarize.iteritems():
             freq[k][v] += 1
-        if "id" not in exist_param:
-            if "id" not in param:
-                param["id"] = obj.uuid
-            param["id"] = min(param["id"], obj.uuid)
+        if "id" not in param:
+            param["id"] = obj.uuid
+        param["id"] = min(param["id"], obj.uuid)
 
     # create parameters based on most frequent
     for k in freq:
@@ -168,6 +145,8 @@ def assignee_match(objects, session, commit=False):
             freq[k].pop("")
         if freq[k]:
             param[k] = freq[k].most_common(1)[0][0]
+    if not param.has_key('organization'):
+        param['organization'] = ''
     
     assignee_insert_statements.append(param)
     tmpids = map(lambda x: x.uuid, objects)
