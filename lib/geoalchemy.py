@@ -2,12 +2,14 @@ import sqlalchemy
 import sqlalchemy.orm as orm
 import sqlalchemy.ext.declarative as declarative
 import sqlalchemy.sql.expression as expression
+from sqlalchemy.sql.expression import bindparam
 import geoalchemy_util
 import itertools
 import os
 import datetime
 import re
 import sys
+from collections import defaultdict, Counter
 
 import alchemy
 #The config file alchemy uses to store information
@@ -199,6 +201,8 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
             print 'all_cities found additional location for', raw_location
 
 def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
+    alchemy_session.execute("delete from location;")
+    alchemy_session.commit()
     for i, item in identified_grouped_locations_enum:
         #grouped_locations_list = a list of every grouped location with the same grouping_id
         # Note that a grouped_location is a dict, as described above
@@ -227,6 +231,9 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         #No need to run match() if no matching location was found.
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
+    commit_insert_statements(alchemy_session, location_insert_statements)
+    update_rawlocations(alchemy_session, update_statements)
+    alchemy_session.commit()
         
 def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
     most_freq = 0
@@ -257,10 +264,73 @@ def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
             if freq > most_freq:
                 default.update(loc.summarize)
                 most_freq = freq"""
-    alchemy.match(match_group, alchemy_session, default, commit=False)
-    if (counter + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
-        print " *", (counter + 1), datetime.datetime.now() - runtime
-        alchemy_session.commit()
+    geo_match(match_group, alchemy_session, default)
+    #if (counter + 1) % alchemy_config.get("location").get("commit_frequency") == 0:
+    #    print " *", (counter + 1), datetime.datetime.now() - runtime
+    #    alchemy_session.commit()
+
+location_insert_statements = []
+#patentlocation_insert_statements = []
+update_statements = []
+def geo_match(objects, session, default):
+    freq = defaultdict(Counter)
+    param = {}
+    raw_objects = []
+    clean_objects = []
+    clean_cnt = 0
+    clean_main = None
+    class_type = None
+    class_type = None
+    for obj in objects:
+        if not obj: continue
+        class_type = obj.__related__
+        raw_objects.append(obj)
+        break
+
+    param = default
+    for obj in raw_objects:
+        for k, v in obj.summarize.iteritems():
+            freq[k][v] += 1
+        if "id" not in param:
+            param["id"] = obj.uuid
+        param["id"] = min(param["id"], obj.uuid)
+
+    # create parameters based on most frequent
+    for k in freq:
+        if None in freq[k]:
+            freq[k].pop(None)
+        if "" in freq[k]:
+            freq[k].pop("")
+        if freq[k]:
+            param[k] = freq[k].most_common(1)[0][0]
+    
+    location_insert_statements.append(param)
+    tmpids = map(lambda x: x.uuid, objects)
+    #patents = map(lambda x: x.patent_id, objects)
+    #patentlocation_insert_statements.extend([{'patent_id': x, 'location_id': param['id']} for x in patents])
+    update_statements.extend([{'raw_id':x,'location_id':param['id']} for x in tmpids])
+
+
+def commit_insert_statements(session, location_insert_statements):
+    commit_freq = alchemy_config.get("location").get("commit_frequency")
+    numgroups = len(location_insert_statements) / commit_freq
+    for ng in range(numgroups):
+        if numgroups == 0:
+            break
+        chunk = location_insert_statements[ng*commit_freq:(ng+1)*commit_freq]
+        session.connection().execute(alchemy.schema.Location.__table__.insert(), chunk)
+        print "commiting chunk",ng,"of",numgroups,datetime.datetime.now()
+        session.commit()
+    chunk = location_insert_statements[numgroups*commit_freq:]
+    if chunk:
+        session.connection().execute(alchemy.schema.Location.__table__.insert(), chunk)
+        session.commit()
+    #session.connection().execute(patentlocation.insert(), patentlocation_insert_statements)
+
+def update_rawlocations(session, update_statements):
+    ratable = alchemy.schema.RawLocation.__table__
+    u = ratable.update().where(ratable.c.id == bindparam('raw_id')).values(location_id=bindparam('location_id'))
+    session.connection().execute(u, *update_statements)
 
 def clean_raw_locations_from_file(inputfilename, outputfilename):
     inputfile = open(inputfilename, 'r')
@@ -335,6 +405,4 @@ if __name__=='__main__':
         doctype = sys.argv[1]
         schema = schema if doctype == 'grant' else alchemy.schema.App_RawLocation
     numlocs = alchemy.fetch_session(dbtype=doctype).query(schema).count()
-    for i in range((numlocs / 10000)+1):
-        print i
-        main(limit=10000, offset=i*10000, doctype=doctype)
+    main(doctype=doctype)
