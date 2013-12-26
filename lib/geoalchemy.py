@@ -287,7 +287,6 @@ def geo_match(objects, session, default):
         raw_objects.append(obj)
         break
 
-    param = default
     for obj in raw_objects:
         for k, v in obj.summarize.iteritems():
             freq[k][v] += 1
@@ -303,6 +302,8 @@ def geo_match(objects, session, default):
             freq[k].pop("")
         if freq[k]:
             param[k] = freq[k].most_common(1)[0][0]
+
+    param.update(default)
     
     location_insert_statements.append(param)
     tmpids = map(lambda x: x.uuid, objects)
