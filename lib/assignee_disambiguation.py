@@ -104,7 +104,7 @@ def create_assignee_table(session):
         for block in ra_ids:
           i += 1
           rawassignees = [assignee_dict[ra_id] for ra_id in block]
-          if i % 10000 == 0:
+          if i % 20000 == 0:
               print i, datetime.now()
               assignee_match(rawassignees, session, commit=True)
           else:

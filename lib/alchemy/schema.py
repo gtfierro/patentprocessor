@@ -567,8 +567,9 @@ class Assignee(GrantBase):
         if obj == self:
             return
         if obj.__tablename__[:3] == "raw":
-            if obj.rawlocation.location:
-                self.locations.append(obj.rawlocation.location)
+            if obj.rawlocation:
+                if obj.rawlocation.location:
+                    self.locations.append(obj.rawlocation.location)
             if obj.patent and obj.patent not in self.patents:
                 self.patents.append(obj.patent)
             if obj and obj not in self.__raw__:
