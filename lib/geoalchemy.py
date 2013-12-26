@@ -201,7 +201,7 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
             print 'all_cities found additional location for', raw_location
 
 def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
-    alchemy_session.execute("delete from location;")
+    alchemy_session.execute("set foreign_key_checks = 0; truncate location;")
     alchemy_session.commit()
     for i, item in identified_grouped_locations_enum:
         #grouped_locations_list = a list of every grouped location with the same grouping_id
@@ -320,18 +320,31 @@ def commit_insert_statements(session, location_insert_statements):
             break
         chunk = location_insert_statements[ng*commit_freq:(ng+1)*commit_freq]
         session.connection().execute(alchemy.schema.Location.__table__.insert(), chunk)
-        print "commiting chunk",ng,"of",numgroups,datetime.datetime.now()
+        print "commiting chunk",ng+1,"of length",len(chunk),numgroups,datetime.datetime.now()
         session.commit()
     chunk = location_insert_statements[numgroups*commit_freq:]
     if chunk:
         session.connection().execute(alchemy.schema.Location.__table__.insert(), chunk)
-        session.commit()
+    session.commit()
     #session.connection().execute(patentlocation.insert(), patentlocation_insert_statements)
 
 def update_rawlocations(session, update_statements):
     ratable = alchemy.schema.RawLocation.__table__
     u = ratable.update().where(ratable.c.id == bindparam('raw_id')).values(location_id=bindparam('location_id'))
-    session.connection().execute(u, *update_statements)
+
+    commit_freq = alchemy_config.get("location").get("commit_frequency")
+    numgroups = len(update_statements) / commit_freq
+    for ng in range(numgroups):
+        if numgroups == 0:
+            break
+        chunk = update_statements[ng*commit_freq:(ng+1)*commit_freq]
+        session.connection().execute(u, *chunk)
+        print "commiting chunk",ng+1,"of length",len(chunk),"of total",numgroups,datetime.datetime.now()
+        session.commit()
+    chunk = update_statements[numgroups*commit_freq:]
+    if chunk:
+        session.connection().execute(u, *chunk)
+    session.commit()
 
 def clean_raw_locations_from_file(inputfilename, outputfilename):
     inputfile = open(inputfilename, 'r')
