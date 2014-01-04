@@ -12,6 +12,7 @@ import sys
 from collections import defaultdict, Counter
 
 import alchemy
+from alchemy.match import commit_inserts
 #The config file alchemy uses to store information
 alchemy_config = alchemy.get_config()
 #The path to the database which holds geolocation data
@@ -24,6 +25,7 @@ geo_data_session_class = orm.sessionmaker(bind=geo_data_engine)
 #As well as a MaxMinds database containing every city in the world
 geo_data_session = geo_data_session_class()
 base = declarative.declarative_base()
+commit_freq = alchemy_config.get("location").get("commit_frequency")
 
 #Stores an address disambiguated by the Google API
 class RawGoogle(base):
@@ -231,7 +233,7 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         #No need to run match() if no matching location was found.
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
-    commit_insert_statements(alchemy_session, location_insert_statements)
+    commit_inserts(alchemy_session, location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq)
     update_rawlocations(alchemy_session, update_statements)
     alchemy_session.commit()
         
