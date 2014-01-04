@@ -1,6 +1,8 @@
 from collections import defaultdict
 from collections import Counter
+from sqlalchemy.sql.expression import bindparam
 
+from datetime import datetime
 
 def match(objects, session, default={}, keepexisting=False, commit=True):
     """
@@ -155,3 +157,22 @@ def unmatch(objects, session):
         else:
             session.delete(obj)
             session.commit()
+
+def commit_inserts(session, insert_statements, table, is_mysql, commit_frequency = 1000):
+    if is_mysql:
+        ignore_prefix = ("IGNORE",)
+    else:
+        ignore_prefix = ("OR IGNORE",)
+    numgroups = len(insert_statements) / commit_frequency
+    for ng in range(numgroups):
+        if numgroups == 0:
+            break
+        chunk = insert_statements[ng*commit_frequency:(ng+1)*commit_frequency]
+        session.connection().execute(table.insert(prefixes=ignore_prefix), chunk)
+        print "committing chunk",ng+1,"of",numgroups,"with length",len(chunk),"at",datetime.now()
+        session.commit()
+    last_chunk = insert_statements[numgroups*commit_frequency:]
+    if last_chunk:
+        print "committing last",len(last_chunk),"records at",datetime.now()
+        session.connection().execute(table.insert(prefixes=ignore_prefix), last_chunk)
+        session.commit()
