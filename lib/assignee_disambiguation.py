@@ -10,6 +10,7 @@ from collections import Counter
 from Levenshtein import jaro_winkler
 from alchemy import get_config, match
 from alchemy.schema import *
+from alchemy.match import commit_inserts
 from handlers.xml_util import normalize_utf8
 from datetime import datetime
 from sqlalchemy.sql import or_
@@ -109,7 +110,8 @@ def create_assignee_table(session):
               assignee_match(rawassignees, session, commit=True)
           else:
               assignee_match(rawassignees, session, commit=False)
-    commit_insert_statements(session, assignee_insert_statements, patentassignee_insert_statements)
+    commit_inserts(session, assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
+    commit_inserts(session, patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
     update_rawassignees(session, update_statements)
     session.commit()
     print i, datetime.now()
@@ -216,7 +218,8 @@ def run_disambiguation(doctype='grant'):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        run_disambiguation()
+        print "Need doctype"
+        sys.exit(0)
     elif len(sys.argv) < 3:
         doctype = sys.argv[1]
         print ('Running ' + doctype)
