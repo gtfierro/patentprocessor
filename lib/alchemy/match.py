@@ -189,3 +189,36 @@ def commit_inserts(session, insert_statements, table, is_mysql, commit_frequency
         print "committing last",len(last_chunk),"records at",datetime.now()
         session.connection().execute(table.insert(prefixes=ignore_prefix), last_chunk)
         session.commit()
+
+def commit_updates(session, update_key, update_statements, table, commit_frequency = 1000):
+    """
+    Executes bulk updates for a given table. This is typically much faster than going through
+    the SQLAlchemy ORM. In order to be flexible, the update statements must be set up in a specific
+    way. You can only update one column at a time. The dictionaries in the list `update_statements`
+    must have two keys: `pk`, which is the primary_key for the record to be updated, and `update`
+    which is the new value for the column you want to change. The column you want to change
+    is specified as a string by the argument `update_key`.
+
+    Args:
+    session -- alchemy session object
+    update_key -- the name of the column we want to update
+    update_statements -- list of dictionaries of updates. See above description
+    table -- SQLAlchemy table object. If you have a table reference, you can use TableName.__table
+    commit_frequency -- tune this for speed. Runs "session.commit" every `commit_frequency` items
+    """
+    primary_key = table.primary_key.columns.values()[0]
+    update_key = table.columns[update_key]
+    u = table.update().where(primary_key==bindparam('pk')).values({update_key: bindparam('update')})
+    numgroups = len(update_statements) / commit_frequency
+    for ng in range(numgroups):
+        if numgroups == 0:
+            break
+        chunk = insert_statements[ng*commit_frequency:(ng+1)*commit_frequency]
+        session.connection().execute(u, *chunk)
+        print "committing chunk",ng+1,"of",numgroups,"with length",len(chunk),"at",datetime.now()
+        session.commit()
+    last_chunk = update_statements[numgroups*commit_frequency:]
+    if last_chunk:
+        print "committing last",len(last_chunk),"records at",datetime.now()
+        session.connection().execute(u, *last_chunk)
+        session.commit()
