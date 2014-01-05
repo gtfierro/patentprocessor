@@ -203,8 +203,9 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
             print 'all_cities found additional location for', raw_location
 
 def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
-    alchemy_session.execute("set foreign_key_checks = 0; truncate location;")
-    alchemy_session.commit()
+    if alchemy.is_mysql():
+        alchemy_session.execute("set foreign_key_checks = 0; truncate location;")
+        alchemy_session.commit()
     for i, item in identified_grouped_locations_enum:
         #grouped_locations_list = a list of every grouped location with the same grouping_id
         # Note that a grouped_location is a dict, as described above
