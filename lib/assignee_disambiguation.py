@@ -10,7 +10,7 @@ from collections import Counter
 from Levenshtein import jaro_winkler
 from alchemy import get_config, match
 from alchemy.schema import *
-from alchemy.match import commit_inserts
+from alchemy.match import commit_inserts, commit_updates
 from handlers.xml_util import normalize_utf8
 from datetime import datetime
 from sqlalchemy.sql import or_
@@ -112,7 +112,7 @@ def create_assignee_table(session):
               assignee_match(rawassignees, session, commit=False)
     commit_inserts(session, assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
     commit_inserts(session, patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
-    update_rawassignees(session, update_statements)
+    commit_updates(session, 'assignee_id', update_statements, RawAssignee.__table__, 20000)
     session.commit()
     print i, datetime.now()
 
@@ -149,22 +149,22 @@ def assignee_match(objects, session, commit=False):
             param[k] = freq[k].most_common(1)[0][0]
     if not param.has_key('organization'):
         param['organization'] = ''
+    if not param.has_key('type'):
+        param['type'] = ''
+    if not param.has_key('name_last'):
+        param['name_last'] = ''
+    if not param.has_key('name_first'):
+        param['name_first'] = ''
+    if not param.has_key('residence'):
+        param['residence'] = ''
+    if not param.has_key('nationality'):
+        param['nationality'] = ''
     
     assignee_insert_statements.append(param)
     tmpids = map(lambda x: x.uuid, objects)
     patents = map(lambda x: x.patent_id, objects)
     patentassignee_insert_statements.extend([{'patent_id': x, 'assignee_id': param['id']} for x in patents])
-    update_statements.extend([{'raw_uuid':x,'assignee_id':param['id']} for x in tmpids])
-
-def commit_insert_statements(session, assignee_insert_statements, patentassignee_insert_statements):
-    session.connection().execute(Assignee.__table__.insert(), assignee_insert_statements)
-    session.connection().execute(patentassignee.insert(), patentassignee_insert_statements)
-    session.commit()
-
-def update_rawassignees(session, update_statements):
-    ratable = RawAssignee.__table__
-    u = ratable.update().where(ratable.c.uuid == bindparam('raw_uuid')).values(assignee_id=bindparam('assignee_id'))
-    session.connection().execute(u, *update_statements)
+    update_statements.extend([{'pk':x,'update':param['id']} for x in tmpids])
 
 def examine():
     assignees = s.query(Assignee).all()
