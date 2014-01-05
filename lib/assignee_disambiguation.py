@@ -4,6 +4,7 @@ Performs a basic assignee disambiguation
 """
 from collections import defaultdict, deque
 import uuid
+import md5
 import cPickle as pickle
 import alchemy
 from collections import Counter
@@ -158,6 +159,11 @@ def assignee_match(objects, session, commit=False):
         param['residence'] = ''
     if not param.has_key('nationality'):
         param['nationality'] = ''
+
+    if param["organization"]:
+      param["id"] = md5.md5(param["organization"]).hexdigest()
+    if param["name_last"]:
+      param["id"] = md5.md5(param["name_last"]+param["name_first"]).hexdigest()
     
     assignee_insert_statements.append(param)
     tmpids = map(lambda x: x.uuid, objects)
