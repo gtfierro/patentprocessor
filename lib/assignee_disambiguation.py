@@ -94,11 +94,10 @@ def create_assignee_table(session):
     Given a list of assignees and the redis key-value disambiguation,
     populates the Assignee table in the database
     """
-    session.execute("delete from Assignee;")
-    session.execute("delete from patent_assignee;")
-    session.execute("delete from location_assignee;")
-    session.commit()
     print 'Disambiguating assignees...'
+    if alchemy.is_mysql():
+        session.execute('set foreign_key_checks = 0;')
+        session.commit()
     i = 0
     for assignee in blocks.iterkeys():
         ra_ids = (id_map[ra] for ra in blocks[assignee])
