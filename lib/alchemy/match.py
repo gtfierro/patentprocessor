@@ -159,6 +159,19 @@ def unmatch(objects, session):
             session.commit()
 
 def commit_inserts(session, insert_statements, table, is_mysql, commit_frequency = 1000):
+    """
+    Executes bulk inserts for a given table. This is typically much faster than going through
+    the SQLAlchemy ORM. The insert_statement list of dictionaries may fall victim to SQLAlchemy
+    complaining that certain columns are null, if you did not specify a value for every single
+    column for a table.
+
+    Args:
+    session -- alchemy session object
+    insert_statements -- list of dictionaries where each dictionary contains key-value pairs of the object
+    table -- SQLAlchemy table object. If you have a table reference, you can use TableName.__table__
+    is_mysql -- adjusts syntax based on if we are committing to MySQL or SQLite. You can use alchemy.is_mysql() to get this
+    commit_frequency -- tune this for speed. Runs "session.commit" every `commit_frequency` items
+    """
     if is_mysql:
         ignore_prefix = ("IGNORE",)
     else:
