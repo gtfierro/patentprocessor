@@ -12,7 +12,7 @@ import sys
 from collections import defaultdict, Counter
 
 import alchemy
-from alchemy.match import commit_inserts
+from alchemy.match import commit_inserts, commit_updates
 #The config file alchemy uses to store information
 alchemy_config = alchemy.get_config()
 #The path to the database which holds geolocation data
@@ -234,7 +234,7 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
     commit_inserts(alchemy_session, location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq)
-    update_rawlocations(alchemy_session, update_statements)
+    commit_updates(alchemy_session, 'location_id', update_statements, alchemy.schema.RawLocation.__table__, commit_freq)
     alchemy_session.commit()
         
 def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
@@ -308,45 +308,11 @@ def geo_match(objects, session, default):
     param.update(default)
     
     location_insert_statements.append(param)
-    tmpids = map(lambda x: x.uuid, objects)
+    tmpids = map(lambda x: x.id, objects)
     #patents = map(lambda x: x.patent_id, objects)
     #patentlocation_insert_statements.extend([{'patent_id': x, 'location_id': param['id']} for x in patents])
-    update_statements.extend([{'raw_id':x,'location_id':param['id']} for x in tmpids])
+    update_statements.extend([{'pk':x,'update':param['id']} for x in tmpids])
 
-
-def commit_insert_statements(session, location_insert_statements):
-    commit_freq = alchemy_config.get("location").get("commit_frequency")
-    numgroups = len(location_insert_statements) / commit_freq
-    for ng in range(numgroups):
-        if numgroups == 0:
-            break
-        chunk = location_insert_statements[ng*commit_freq:(ng+1)*commit_freq]
-        session.connection().execute(alchemy.schema.Location.__table__.insert(), chunk)
-        print "commiting chunk",ng+1,"of length",len(chunk),numgroups,datetime.datetime.now()
-        session.commit()
-    chunk = location_insert_statements[numgroups*commit_freq:]
-    if chunk:
-        session.connection().execute(alchemy.schema.Location.__table__.insert(), chunk)
-    session.commit()
-    #session.connection().execute(patentlocation.insert(), patentlocation_insert_statements)
-
-def update_rawlocations(session, update_statements):
-    ratable = alchemy.schema.RawLocation.__table__
-    u = ratable.update().where(ratable.c.id == bindparam('raw_id')).values(location_id=bindparam('location_id'))
-
-    commit_freq = alchemy_config.get("location").get("commit_frequency")
-    numgroups = len(update_statements) / commit_freq
-    for ng in range(numgroups):
-        if numgroups == 0:
-            break
-        chunk = update_statements[ng*commit_freq:(ng+1)*commit_freq]
-        session.connection().execute(u, *chunk)
-        print "commiting chunk",ng+1,"of length",len(chunk),"of total",numgroups,datetime.datetime.now()
-        session.commit()
-    chunk = update_statements[numgroups*commit_freq:]
-    if chunk:
-        session.connection().execute(u, *chunk)
-    session.commit()
 
 def clean_raw_locations_from_file(inputfilename, outputfilename):
     inputfile = open(inputfilename, 'r')
