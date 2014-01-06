@@ -16,6 +16,7 @@ from handlers.xml_util import normalize_utf8
 from datetime import datetime
 from sqlalchemy.sql import or_
 from sqlalchemy.sql.expression import bindparam
+from unidecode import unidecode
 import sys
 config = get_config()
 
@@ -161,9 +162,9 @@ def assignee_match(objects, session, commit=False):
         param['nationality'] = ''
 
     if param["organization"]:
-      param["id"] = md5.md5(param["organization"]).hexdigest()
+      param["id"] = md5.md5(unidecode(param["organization"])).hexdigest()
     if param["name_last"]:
-      param["id"] = md5.md5(param["name_last"]+param["name_first"]).hexdigest()
+      param["id"] = md5.md5(unidecode(param["name_last"]+param["name_first"])).hexdigest()
     
     assignee_insert_statements.append(param)
     tmpids = map(lambda x: x.uuid, objects)
