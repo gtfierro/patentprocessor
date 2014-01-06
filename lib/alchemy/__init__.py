@@ -46,6 +46,37 @@ def get_config(localfile="config.ini", default_file=True):
 
     return config
 
+def session_generator(db=None, dbtype='grant'):
+    """
+    Read from config.ini file and load appropriate database
+
+    @db: string describing database, e.g. "sqlite" or "mysql"
+    @dbtype: string indicating if we are fetching the session for
+             the grant database or the application database
+    """
+    config = get_config()
+    echo = config.get('global').get('echo')
+    if not db:
+        db = config.get('global').get('database')
+    if db[:6] == "sqlite":
+        sqlite_db_path = os.path.join(
+            config.get(db).get('path'),
+            config.get(db).get('{0}-database'.format(dbtype)))
+        engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
+    else:
+        engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
+            config.get(db).get('user'),
+            config.get(db).get('password'),
+            config.get(db).get('host'),
+            config.get(db).get('{0}-database'.format(dbtype)), echo=echo))
+
+    if dbtype == 'grant':
+        schema.GrantBase.metadata.create_all(engine)
+    else:
+        schema.ApplicationBase.metadata.create_all(engine)
+
+    Session = sessionmaker(bind=engine, _enable_transaction_accounting=False)
+    return Session
 
 def fetch_session(db=None, dbtype='grant'):
     """
