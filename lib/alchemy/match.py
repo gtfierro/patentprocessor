@@ -213,7 +213,7 @@ def commit_updates(session, update_key, update_statements, table, commit_frequen
     for ng in range(numgroups):
         if numgroups == 0:
             break
-        chunk = insert_statements[ng*commit_frequency:(ng+1)*commit_frequency]
+        chunk = update_statements[ng*commit_frequency:(ng+1)*commit_frequency]
         session.connection().execute(u, *chunk)
         print "committing chunk",ng+1,"of",numgroups,"with length",len(chunk),"at",datetime.now()
         session.commit()
