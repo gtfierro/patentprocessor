@@ -112,9 +112,12 @@ def create_assignee_table(session):
               assignee_match(rawassignees, session, commit=True)
           else:
               assignee_match(rawassignees, session, commit=False)
-    celery_commit_inserts.delay(assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
-    celery_commit_inserts.delay(patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
-    celery_commit_updates.delay('assignee_id', update_statements, RawAssignee.__table__, 20000)
+    t1 = celery_commit_inserts.delay(assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
+    t2 = celery_commit_inserts.delay(patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
+    t3 = celery_commit_updates.delay('assignee_id', update_statements, RawAssignee.__table__, alchemy.is_mysql(), 20000)
+    t1.get()
+    t2.get()
+    t3.get()
     session.commit()
     print i, datetime.now()
 
