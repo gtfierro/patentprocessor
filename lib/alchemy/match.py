@@ -203,6 +203,10 @@ def commit_updates(session, update_key, update_statements, table, commit_frequen
     which is the new value for the column you want to change. The column you want to change
     is specified as a string by the argument `update_key`.
 
+    This method will work regardless if you run it over MySQL or SQLite, but with MySQL, it is
+    usually faster to use the celery_commit_updates method (see lib/tasks.py), because it uses
+    a table join to do the updates instead of executing individual statements.
+
     Args:
     session -- alchemy session object
     update_key -- the name of the column we want to update
