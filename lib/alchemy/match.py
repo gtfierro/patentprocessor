@@ -1,6 +1,8 @@
 from collections import defaultdict
 from collections import Counter
 from sqlalchemy.sql.expression import bindparam
+from sqlalchemy import create_engine, MetaData, Table, inspect, VARCHAR, Column
+from sqlalchemy.orm import sessionmaker
 
 from datetime import datetime
 
@@ -174,6 +176,8 @@ def commit_inserts(session, insert_statements, table, is_mysql, commit_frequency
     """
     if is_mysql:
         ignore_prefix = ("IGNORE",)
+        session.execute("set foreign_key_checks = 0; set unique_checks = 0;")
+        session.commit()
     else:
         ignore_prefix = ("OR IGNORE",)
     numgroups = len(insert_statements) / commit_frequency
