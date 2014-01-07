@@ -1,5 +1,5 @@
 from sqlalchemy import func
-from sqlalchemy import Column, Date, Integer, Float, Boolean
+from sqlalchemy import Column, Date, Integer, Float, Boolean, VARCHAR
 from sqlalchemy import ForeignKey, Index
 from sqlalchemy import Unicode, UnicodeText
 from sqlalchemy.orm import deferred, relationship
@@ -25,6 +25,9 @@ GrantBase = declarative_base(metadata=grantmetadata)
 ApplicationBase = declarative_base(metadata=appmetadata)
 GrantBase.__init__ = init
 ApplicationBase.__init__ = init
+
+# table to handle joins for updates (see lib.tasks)
+temporary_update = Table('temporary_update', grantmetadata, Column('pk', VARCHAR(length=36), primary_key=True), Column('update', VARCHAR(length=36), index=True))
 
 # ASSOCIATION ----------------------
 
