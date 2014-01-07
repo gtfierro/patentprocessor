@@ -5,13 +5,12 @@ of performing multiple updates over multiple tables.
 import celery
 from alchemy.match import commit_inserts, commit_updates
 from alchemy import session_generator
+from alchemy.schema import temporary_update
 from sqlalchemy import create_engine, MetaData, Table, inspect, VARCHAR, Column
 from sqlalchemy.orm import sessionmaker
 
+# fetch reference to temporary_update table.
 app = celery.Celery('tasks', broker='redis://localhost', backend='redis://localhost')
-engine = create_engine('mysql+mysqldb://root:330Ablumhall@169.229.7.251/usptofixed?charset=utf8')
-metadata = MetaData(engine)
-temporary_update = Table('temporary_update', metadata, autoload=True)
 
 @app.task
 def celery_commit_inserts(insert_statements, table, is_mysql, commit_frequency = 1000):
