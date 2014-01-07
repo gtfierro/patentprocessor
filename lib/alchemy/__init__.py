@@ -3,11 +3,28 @@ import re
 import ConfigParser
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.sql import exists
 from collections import defaultdict
 import schema
 from match import *
+
+from sqlalchemy import exc
+from sqlalchemy import event
+from sqlalchemy.pool import Pool
+
+@event.listens_for(Pool, "checkout")
+def ping_connection(dbapi_connection, connection_record, connection_proxy):
+    cursor = dbapi_connection.cursor()
+    try:
+        # reset the connection settings
+        cursor.execute("SELECT 1;")
+        cursor.execute("set foreign_key_checks = 0; set unique_checks = 0;")
+    except:
+        # raise DisconnectionError - pool will try
+        # connecting again up to three times before raising.
+        raise exc.DisconnectionError()
+    cursor.close()
 
 def is_mysql():
     config = get_config()
@@ -68,7 +85,7 @@ def session_generator(db=None, dbtype='grant'):
             config.get(db).get('user'),
             config.get(db).get('password'),
             config.get(db).get('host'),
-            config.get(db).get('{0}-database'.format(dbtype)), echo=echo))
+            config.get(db).get('{0}-database'.format(dbtype)), echo=echo), pool_size=10, pool_recycle=3600, echo_pool=True)
 
     if dbtype == 'grant':
         schema.GrantBase.metadata.create_all(engine)
@@ -76,7 +93,8 @@ def session_generator(db=None, dbtype='grant'):
         schema.ApplicationBase.metadata.create_all(engine)
 
     Session = sessionmaker(bind=engine, _enable_transaction_accounting=False)
-    return Session
+    return scoped_session(Session)
+    #return Session
 
 def fetch_session(db=None, dbtype='grant'):
     """
