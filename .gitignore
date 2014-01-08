@@ -34,3 +34,6 @@ lib/alchemy/config.ini
 build/
 tags
 *.cmd
+
+*.pid # pid files
+dump.rdb # redis dump
