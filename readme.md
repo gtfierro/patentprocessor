@@ -1,12 +1,10 @@
 # Python scripts for processing USPTO inventor and patent data
 
-The following collection of scripts performs pre- and
-post-processing on patent data as part of the patent
-inventor disambiguation process.
+The following collection of scripts performs pre- and post-processing on patent
+data as part of the patent inventor disambiguation process.
 
 Follow development, subscribe to
-[RSS
-feed](https://github.com/funginstitute/patentprocessor/commits/master.atom).
+[RSS feed](https://github.com/funginstitute/patentprocessor/commits/master.atom).
 
 ## Processing patents
 
@@ -26,8 +24,23 @@ There are two ways to get started:
   `consolidate.py` to obtain a full set of tables.
 
 To run the `clean.py` script, the
-[location](https://s3.amazonaws.com/fungpatdownloads/geolocation_data.7z)
-table must exist in the `patentprocessor/lib` directory. File requires [7zip](http://www.7-zip.org/) to unpack.
+[location](https://s3.amazonaws.com/fungpatdownloads/geolocation_data.7z) table
+must exist in the `patentprocessor/lib` directory. File requires
+[7zip](http://www.7-zip.org/) to unpack.
+
+In order to speed up the cleaning disambiguations, we use
+[Celery](http://www.celeryproject.org/) to manage multiple database connections
+simultaneously. This requires `celery` (available through pip) and `redis`
+(which must be installed separately). These two processes must be run simultaneously
+with the cleaning script:
+
+* `celery -A tasks worker --loglevel=info --logfile=celery.log --concurrency=3` (this must be run from the `lib` directory)
+* `redis-server`
+
+You can observe the progress by monitoring `celery.log`
+
+An example setup of this can be observed in `run_clean.sh`.
+
 
 ## Configuring the Preprocessing Environment
 
@@ -48,7 +61,7 @@ sudo apt-get update
 sudo apt-get install python-dev
 sudo apt-get install python-setuptools
 sudo easy_install -U distribute
-sudo apt-get install -y python-Levenshtein make libmysqlclient-dev python-mysqldb python-pip python-zmq python-numpy gfortran libopenblas-dev liblapack-dev g++ sqlite3 libsqlite3-dev python-sqlite
+sudo apt-get install -y python-Levenshtein make libmysqlclient-dev python-mysqldb python-pip python-zmq python-numpy gfortran libopenblas-dev liblapack-dev g++ sqlite3 libsqlite3-dev python-sqlite redis-server
 sudo pip install -r requirements.txt
 ```
 
