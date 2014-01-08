@@ -73,11 +73,11 @@ def create_jw_blocks(list_of_assignees):
     """
     consumed = defaultdict(int)
     print 'Doing pairwise Jaro-Winkler...'
-    for primary in list_of_assignees:
+    for i, primary in enumerate(list_of_assignees):
         if consumed[primary]: continue
         consumed[primary] = 1
         blocks[primary].append(primary)
-        for secondary in list_of_assignees:
+        for secondary in list_of_assignees[i:]:
             if consumed[secondary]: continue
             if primary == secondary:
                 blocks[primary].append(secondary)
