@@ -25,9 +25,9 @@ rm celery.pid redis.pid
 if [ $1 = "grant" ]
     then
         echo 'Running lawyer disambiguation'
-        for i in {a..z} ; do
-            python lib/lawyer_disambiguation.py $i
-        done
+        python lib/lawyer_disambiguation.py
+        #for i in {a..z} ; do
+        #done
 fi
 
 echo 'Running geo disambiguation'
