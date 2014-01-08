@@ -8,7 +8,7 @@ echo 'Testing test/fixtures/xml/ipg120327.one.xml'
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.one
 ./parse.py -p test/fixtures/xml/ -x ipg120327.one.xml -o .
-./clean.py
+./run_clean.sh grant
 
 for table in assignee lawyer location
 do
@@ -23,7 +23,7 @@ echo 'Testing test/fixtures/xml/ipg120327.two.xml'
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.two
 ./parse.py -p test/fixtures/xml/ -x ipg120327.two.xml -o .
-./clean.py
+./run_clean.sh grant
 
 for table in assignee lawyer location
 do
@@ -38,7 +38,7 @@ echo 'Testing test/fixtures/xml/ipg120327.18.xml'
 make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.18
 ./parse.py -p test/fixtures/xml/ -x ipg120327.18.xml -o .
-./clean.py
+./run_clean.sh grant
 
 for table in assignee lawyer location
 do
