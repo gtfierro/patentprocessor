@@ -86,7 +86,7 @@ def session_generator(db=None, dbtype='grant'):
             config.get(db).get('user'),
             config.get(db).get('password'),
             config.get(db).get('host'),
-            config.get(db).get('{0}-database'.format(dbtype)), echo=echo), pool_size=10, pool_recycle=3600, echo_pool=True)
+            config.get(db).get('{0}-database'.format(dbtype)), echo=echo), pool_size=3, pool_recycle=3600, echo_pool=True)
 
     if dbtype == 'grant':
         schema.GrantBase.metadata.create_all(engine)
