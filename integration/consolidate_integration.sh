@@ -11,7 +11,7 @@ make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.two
 
 echo Starting clean...
-python clean.py
+./run_clean.sh grant
 
 echo Starting consolidate...
 python consolidate.py
@@ -26,7 +26,7 @@ make spotless > /dev/null
 mkdir -p tmp/integration/ipg120327.18
 
 echo Starting clean...
-python clean.py
+./run_clean.sh grant
 
 echo Starting consolidate...
 python consolidate.py
