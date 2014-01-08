@@ -80,7 +80,9 @@ def session_generator(db=None, dbtype='grant'):
         sqlite_db_path = os.path.join(
             config.get(db).get('path'),
             config.get(db).get('{0}-database'.format(dbtype)))
-        engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo)
+        if os.path.basename(os.getcwd()) == 'lib':
+            sqlite_db_path = '../' + sqlite_db_path
+        engine = create_engine('sqlite:///{0}'.format(sqlite_db_path), echo=echo, echo_pool=True)
     else:
         engine = create_engine('mysql+mysqldb://{0}:{1}@{2}/{3}?charset=utf8'.format(
             config.get(db).get('user'),
