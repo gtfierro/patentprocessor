@@ -373,5 +373,5 @@ def commit_application():
         print str(e)
 
 grantsession = fetch_session(dbtype='grant')
-appsession = fetch_session(dbtype='application')
+#appsession = fetch_session(dbtype='application')
 session = grantsession # default for clean and consolidate

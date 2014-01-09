@@ -1,5 +1,6 @@
 #!/bin/bash
 
+<<<<<<< Updated upstream
 cd lib
 celery -A tasks worker --loglevel=info --logfile=celery.log --concurrency=3 &
 celeryPID=$!
@@ -22,13 +23,13 @@ rm lib/dump.rdb # remove redis dump
 # remove pid files
 rm celery.pid redis.pid
 
-if [ $1 = "grant" ]
-    then
-        echo 'Running lawyer disambiguation'
-        for i in {a..z} ; do
-            python lib/lawyer_disambiguation.py $i
-        done
-fi
-
-echo 'Running geo disambiguation'
-python lib/geoalchemy.py $1
+#if [ $1 = "grant" ]
+#    then
+#        echo 'Running lawyer disambiguation'
+#        for i in {a..z} ; do
+#            python lib/lawyer_disambiguation.py $i
+#        done
+#fi
+#
+#echo 'Running geo disambiguation'
+#python lib/geoalchemy.py $1
