@@ -13,6 +13,8 @@ from collections import defaultdict, Counter
 
 import alchemy
 from alchemy.match import commit_inserts, commit_updates
+from tasks import celery_commit_inserts, celery_commit_updates
+
 #The config file alchemy uses to store information
 alchemy_config = alchemy.get_config()
 #The path to the database which holds geolocation data
@@ -234,8 +236,10 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         #No need to run match() if no matching location was found.
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
-    commit_inserts(alchemy_session, location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq)
-    commit_updates(alchemy_session, 'location_id', update_statements, alchemy.schema.RawLocation.__table__, commit_freq)
+    t1 = celery_commit_inserts.delay(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq)
+    t2 = celery_commit_updates.delay('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq)
+    t1.wait()
+    t2.wait()
     alchemy_session.commit()
         
 def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
