@@ -26,24 +26,6 @@ python lib/assignee_disambiguation.py $1
 #        #done
 #fi
 
-#if [ $1 = "grant" ]
-#    then
-#        echo 'Running lawyer disambiguation'
-#        for i in {a..z} ; do
-#            python lib/lawyer_disambiguation.py $i
-#        done
-#fi
-#
-#echo 'Running geo disambiguation'
-#python lib/geoalchemy.py $1
-#if [ $1 == "grant" ]
-#    then
-#        echo 'Running lawyer disambiguation'
-#        python lib/lawyer_disambiguation.py
-#        #for i in {a..z} ; do
-#        #done
-#fi
-
 echo 'Running geo disambiguation'
 python lib/geoalchemy.py $1
 
