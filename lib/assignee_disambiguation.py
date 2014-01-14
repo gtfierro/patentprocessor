@@ -4,6 +4,7 @@ Performs a basic assignee disambiguation
 """
 from collections import defaultdict, deque
 import uuid
+from string import lowercase as alphabet
 import md5
 import cPickle as pickle
 import alchemy
@@ -65,12 +66,16 @@ def clean_assignees(list_of_assignees):
     return block
 
 
+def without_digits(word):
+    return ''.join([x for x in word if not x.isdigit()])
+
 def create_jw_blocks(list_of_assignees):
     """
     Receives list of blocks, where a block is a list of assignees
     that all begin with the same letter. Within each block, does
     a pairwise jaro winkler comparison to block assignees together
     """
+    global blocks
     consumed = defaultdict(int)
     print 'Doing pairwise Jaro-Winkler...'
     for i, primary in enumerate(list_of_assignees):
@@ -82,6 +87,8 @@ def create_jw_blocks(list_of_assignees):
             if primary == secondary:
                 blocks[primary].append(secondary)
                 continue
+            primary = without_digits(primary)
+            secondary = without_digits(secondary)
             if jaro_winkler(primary, secondary, 0.0) >= THRESHOLD:
                 consumed[secondary] = 1
                 blocks[primary].append(secondary)
@@ -216,14 +223,24 @@ def run_letter(letter, session, doctype='grant'):
 
 def run_disambiguation(doctype='grant'):
     # get all assignees in database
+    global blocks
+    global assignee_insert_statements
+    global patentassignee_insert_statements
+    global update_statements
     session = alchemy.fetch_session(dbtype=doctype)
     if doctype == 'grant':
         assignees = deque(session.query(RawAssignee))
     if doctype == 'application':
         assignees = deque(session.query(App_RawAssignee))
     assignee_alpha_blocks = clean_assignees(assignees)
-    create_jw_blocks(assignee_alpha_blocks)
-    create_assignee_table(session)
+    for letter in alphabet:
+        blocks = defaultdict(list)
+        assignee_insert_statements = []
+        patentassignee_insert_statements = []
+        update_statements = []
+        letterblock = [x for x in assignee_alpha_blocks if x.lower().startswith(letter)]
+        create_jw_blocks(letterblock)
+        create_assignee_table(session)
 
 
 if __name__ == '__main__':
