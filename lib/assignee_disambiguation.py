@@ -63,7 +63,7 @@ def clean_assignees(list_of_assignees):
         a_id = ' '.join(filter(lambda x:
                             x.lower() not in stoplist,
                             a_id.split(' ')))
-        a_id = ''.join(nodigits.findall(a_id))
+        a_id = ''.join(nodigits.findall(a_id)).strip()
         id_map[a_id].append(assignee.uuid)
         block.append(a_id)
     print 'Assignees cleaned!'
