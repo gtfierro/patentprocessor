@@ -9,49 +9,71 @@ lib.alchemy.match
 import sys
 import lib.alchemy as alchemy
 from lib.util.csv_reader import read_file
+from lib.alchemy import is_mysql
+from lib.alchemy.schema import Inventor, RawInventor
 from lib.handlers.xml_util import normalize_document_identifier
 from collections import defaultdict
 import cPickle as pickle
 import linecache
 from datetime import datetime
+import pandas as pd
+from collections import defaultdict, Counter
+from lib.tasks import celery_commit_inserts, celery_commit_updates
+from unidecode import unidecode
+
+def integrate(disambig_input_file, disambig_output_file):
+    """
+    We have two files: the input to the disambiguator:
+        uuid, first name, middle name, last name, patent, mainclass, subclass, city, state, country, rawassignee, disambiguated assignee
+    And the output of the disambiguator:
+        uuid, unique inventor id
+
+    The files will line up line by line, so we can easily get the collection of raw
+    records that map to a single disambiguated record (D_REC).  For each of the raw records
+    for a given disambiguated id (D_ID), we want to vote the most frequent values for
+    each of the columns, and use those to populate the D_REC.
 
 
-def integrate(filename, disambiginput):
-    blocks = defaultdict(list)
-    print 'Gathering blocks'
-    for index, line in enumerate(read_file(filename)):
-        if index % 100000 == 0:
-          print index, str(datetime.now())
-        unique_inventor_id = line[0]
-        oldline = linecache.getline(disambiginput, index+1).split('\t')
-        patent_number, name_first, name_last = oldline[0], oldline[2], oldline[3]
-        patent_number = normalize_document_identifier(patent_number)
-        rawinventors = alchemy.session.query(alchemy.schema.RawInventor).filter_by(
-                                patent_id = patent_number,
-                                name_first = name_first,
-                                name_last = name_last).all()
-        blocks[unique_inventor_id].extend(rawinventors)
-    pickle.dump(blocks, open('integrate.db', 'wb'))
-    print 'Starting commits'
-    i = 0
-    for block in blocks.itervalues():
-        i += 1
-        if i % 10000 == 0:
-          print i
-          alchemy.match(block, alchemy.session, commit=True)
-          print str(datetime.now())
-        else:
-          alchemy.match(block, alchemy.session, commit=False)
+    just have to populate the fields of the disambiguated inventor object:
+        inventor id, first name, last name, nationality (?)
+    """
+    disambig_input = pd.read_csv(disambig_input_file,header=None,delimiter='\t',encoding='utf-8')
+    disambig_output = pd.read_csv(disambig_output_file,header=None,delimiter='\t',encoding='utf-8')
+    merged = pd.merge(disambig_input, disambig_output, on=0)
+    inventor_attributes = merged[['1_y','1_x',2,3]] # inventor id, first name, middle name, last name
+    rawinventors = defaultdict(list)
+    inventor_inserts = []
+    rawinventor_updates = []
+    for row in inventor_attributes.iterrows():
+        uuid = row[1]['1_y']
+        rawinventors[uuid].append(row[1])
+    for inventor_id in rawinventors.iterkeys():
+        freq = defaultdict(Counter)
+        param = {}
+        for raw in rawinventors[inventor_id]:
+            for k,v in raw.iteritems():
+                freq[k][v] += 1
+        param['id'] = freq['1_y'].most_common(1)[0][0]
+        param['name_first'] = freq['1_x'].most_common(1)[0][0]
+        param['name_last'] = unicode(freq[2].most_common(1)[0][0]) + ' ' + unicode(freq[3].most_common(1)[0][0])
+        param['name_last'] = unidecode(param['name_last'])
+        param['nationality'] = ''
+        inventor_inserts.append(param)
+        for row in merged[merged['1_y'] == param['id']].iterrows():
+            rawinventor_updates.append({'pk': row[1][0], 'update': row[1]['1_y']})
 
-    alchemy.match(block, alchemy.session)
+    t1 = celery_commit_inserts.delay(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
+    t2 = celery_commit_updates.delay('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
+    t1.get()
+    t2.get()
 
 def main():
-    if len(sys.argv) <= 1:
-        print 'USAGE: python integrate.py <path-to-csv-file>'
+    if len(sys.argv) <= 2:
+        print 'USAGE: python integrate.py <disambig input file> <disambig output file>'
         sys.exit()
-    filename = sys.argv[1]
-    disambiginput = sys.argv[2]
-    integrate(filename, disambiginput)
+    dis_in = sys.argv[1]
+    dis_out = sys.argv[2]
+    integrate(dis_in, dis_out)
 
 if __name__ == '__main__':
     main()
