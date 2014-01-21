@@ -20,6 +20,7 @@ import pandas as pd
 from collections import defaultdict, Counter
 from lib.tasks import celery_commit_inserts, celery_commit_updates
 from unidecode import unidecode
+from datetime import datetime
 
 def integrate(disambig_input_file, disambig_output_file):
     """
@@ -37,30 +38,45 @@ def integrate(disambig_input_file, disambig_output_file):
     just have to populate the fields of the disambiguated inventor object:
         inventor id, first name, last name, nationality (?)
     """
-    disambig_input = pd.read_csv(disambig_input_file,header=None,delimiter='\t',encoding='utf-8')
-    disambig_output = pd.read_csv(disambig_output_file,header=None,delimiter='\t',encoding='utf-8')
+    disambig_input = pd.read_csv(disambig_input_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
+    disambig_output = pd.read_csv(disambig_output_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
+    print 'finished loading csvs'
     merged = pd.merge(disambig_input, disambig_output, on=0)
-    inventor_attributes = merged[['1_y','1_x',2,3]] # inventor id, first name, middle name, last name
+    print 'finished merging'
+    inventor_attributes = merged[[0,'1_y','1_x',2,3]] # inventor id, first name, middle name, last name
+    inventor_attributes = inventor_attributes.dropna(subset=[0],how='all')
+    inventor_attributes[2] = inventor_attributes[2].fillna('')
+    inventor_attributes[3] = inventor_attributes[3].fillna('')
+    print inventor_attributes
     rawinventors = defaultdict(list)
     inventor_inserts = []
     rawinventor_updates = []
     for row in inventor_attributes.iterrows():
         uuid = row[1]['1_y']
         rawinventors[uuid].append(row[1])
+    print 'finished associating ids'
+    i = 0
     for inventor_id in rawinventors.iterkeys():
+        i += 1
         freq = defaultdict(Counter)
         param = {}
+        rawuuids = []
         for raw in rawinventors[inventor_id]:
+            rawuuids.append(raw[0])
             for k,v in raw.iteritems():
                 freq[k][v] += 1
         param['id'] = freq['1_y'].most_common(1)[0][0]
         param['name_first'] = freq['1_x'].most_common(1)[0][0]
-        param['name_last'] = unicode(freq[2].most_common(1)[0][0]) + ' ' + unicode(freq[3].most_common(1)[0][0])
+        param['name_last'] = ' '.join([unicode(freq[2].most_common(1)[0][0]), unicode(freq[3].most_common(1)[0][0])]).strip()
         param['name_last'] = unidecode(param['name_last'])
         param['nationality'] = ''
+        assert set(param.keys()) == {'id','name_first','name_last','nationality'}
         inventor_inserts.append(param)
-        for row in merged[merged['1_y'] == param['id']].iterrows():
-            rawinventor_updates.append({'pk': row[1][0], 'update': row[1]['1_y']})
+        for rawuuid in rawuuids:
+            rawinventor_updates.append({'pk': rawuuid, 'update': param['id']})
+        if i % 100000 == 0:
+            print i, datetime.now(), rawuuids[0]
+    print 'finished voting'
 
     t1 = celery_commit_inserts.delay(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
     t2 = celery_commit_updates.delay('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
