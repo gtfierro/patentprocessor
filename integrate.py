@@ -47,6 +47,7 @@ def integrate(disambig_input_file, disambig_output_file):
     inventor_attributes = inventor_attributes.dropna(subset=[0],how='all')
     inventor_attributes[2] = inventor_attributes[2].fillna('')
     inventor_attributes[3] = inventor_attributes[3].fillna('')
+    inventor_attributes['1_x'] = inventor_attributes['1_x'].fillna('')
     print inventor_attributes
     rawinventors = defaultdict(list)
     inventor_inserts = []
