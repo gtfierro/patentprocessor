@@ -29,7 +29,7 @@ THRESHOLD = config.get("assignee").get("threshold")
 blocks = defaultdict(list)
 id_map = defaultdict(list)
 
-nodigits = re.compile(r'[^\d]+')
+nodigits = re.compile(r'[A-Za-z ]')
 
 assignee_dict = {}
 
