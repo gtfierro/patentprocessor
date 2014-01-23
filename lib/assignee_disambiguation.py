@@ -138,7 +138,6 @@ def assignee_match(objects, session, commit=False):
     clean_cnt = 0
     clean_main = None
     class_type = None
-    class_type = None
     for obj in objects:
         if not obj: continue
         class_type = obj.__related__
@@ -173,6 +172,9 @@ def assignee_match(objects, session, commit=False):
         param['residence'] = ''
     if not param.has_key('nationality'):
         param['nationality'] = ''
+    if param.has_key('type'):
+        if not param['type'].isdigit():
+            param['type'] = ''
 
     if param["organization"]:
       param["id"] = md5.md5(unidecode(param["organization"])).hexdigest()
