@@ -158,7 +158,7 @@ def add_grant(obj, override=True, temp=False):
     #if pat_query.count():
     if patent_exists:
         if override:
-            pat_query = grantsession.query(schema.Patent).filter(schema.Patent.number == obj.patent)
+            pat_query = grantsession.query(schema.Patent).filter(schema.Patent.id == obj.patent)
             grantsession.delete(pat_query.one())
         else:
             return
@@ -169,6 +169,9 @@ def add_grant(obj, override=True, temp=False):
     pat.application = schema.Application(**obj.app)
     # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
+    grantsession.execute('set foreign_key_checks = 0;')
+    grantsession.execute('set unique_checks = 0;')
+    grantsession.commit()
 
     grantsession.merge(pat)
 
@@ -373,5 +376,5 @@ def commit_application():
         print str(e)
 
 grantsession = fetch_session(dbtype='grant')
-#appsession = fetch_session(dbtype='application')
+appsession = fetch_session(dbtype='application')
 session = grantsession # default for clean and consolidate
