@@ -10,7 +10,7 @@ import sys
 import lib.alchemy as alchemy
 from lib.util.csv_reader import read_file
 from lib.alchemy import is_mysql
-from lib.alchemy.schema import Inventor, RawInventor
+from lib.alchemy.schema import Inventor, RawInventor, patentinventor
 from lib.handlers.xml_util import normalize_document_identifier
 from collections import defaultdict
 import cPickle as pickle
@@ -43,7 +43,7 @@ def integrate(disambig_input_file, disambig_output_file):
     print 'finished loading csvs'
     merged = pd.merge(disambig_input, disambig_output, on=0)
     print 'finished merging'
-    inventor_attributes = merged[[0,'1_y','1_x',2,3]] # inventor id, first name, middle name, last name
+    inventor_attributes = merged[[0,'1_y','1_x',2,3,4]] # rawinventor uuid, inventor id, first name, middle name, last name, patent_id
     inventor_attributes = inventor_attributes.dropna(subset=[0],how='all')
     inventor_attributes[2] = inventor_attributes[2].fillna('')
     inventor_attributes[3] = inventor_attributes[3].fillna('')
@@ -52,9 +52,11 @@ def integrate(disambig_input_file, disambig_output_file):
     rawinventors = defaultdict(list)
     inventor_inserts = []
     rawinventor_updates = []
+    patentinventor_inserts = []
     for row in inventor_attributes.iterrows():
         uuid = row[1]['1_y']
         rawinventors[uuid].append(row[1])
+        patentinventor_inserts.append({'inventor_id': uuid, 'patent_id': row[1][4]})
     print 'finished associating ids'
     i = 0
     for inventor_id in rawinventors.iterkeys():
@@ -66,7 +68,7 @@ def integrate(disambig_input_file, disambig_output_file):
             rawuuids.append(raw[0])
             for k,v in raw.iteritems():
                 freq[k][v] += 1
-        param['id'] = freq['1_y'].most_common(1)[0][0]
+        param['id'] = inventor_id
         param['name_first'] = freq['1_x'].most_common(1)[0][0]
         param['name_last'] = ' '.join([unicode(freq[2].most_common(1)[0][0]), unicode(freq[3].most_common(1)[0][0])]).strip()
         param['name_last'] = unidecode(param['name_last'])
@@ -80,9 +82,11 @@ def integrate(disambig_input_file, disambig_output_file):
     print 'finished voting'
 
     t1 = celery_commit_inserts.delay(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
-    t2 = celery_commit_updates.delay('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
+    t2 = celery_commit_inserts.delay(patentinventor_inserts, patentinventor, is_mysql(), 20000)
+    t3 = celery_commit_updates.delay('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
     t1.get()
     t2.get()
+    t3.get()
 
 def main():
     if len(sys.argv) <= 2:
