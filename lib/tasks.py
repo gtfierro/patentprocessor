@@ -10,9 +10,9 @@ from sqlalchemy import create_engine, MetaData, Table, inspect, VARCHAR, Column
 from sqlalchemy.orm import sessionmaker
 
 # fetch reference to temporary_update table.
-app = celery.Celery('tasks', broker='redis://localhost', backend='redis://localhost')
+celery = celery.Celery('tasks', broker='redis://localhost', backend='redis://localhost')
 
-@app.task
+@celery.task
 def celery_commit_inserts(insert_statements, table, is_mysql, commit_frequency = 1000):
     """
     Executes bulk inserts for a given table. This is typically much faster than going through
@@ -32,7 +32,7 @@ def celery_commit_inserts(insert_statements, table, is_mysql, commit_frequency =
     session = session_generator()
     commit_inserts(session, insert_statements, table, is_mysql, commit_frequency)
 
-@app.task
+@celery.task
 def celery_commit_updates(update_key, update_statements, table, is_mysql, commit_frequency = 1000):
     """
     Executes bulk updates for a given table. This is typically much faster than going through

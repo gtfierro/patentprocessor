@@ -18,7 +18,6 @@ import linecache
 from datetime import datetime
 import pandas as pd
 from collections import defaultdict, Counter
-from lib.tasks import celery_commit_inserts, celery_commit_updates
 from unidecode import unidecode
 from datetime import datetime
 
@@ -48,7 +47,6 @@ def integrate(disambig_input_file, disambig_output_file):
     inventor_attributes[2] = inventor_attributes[2].fillna('')
     inventor_attributes[3] = inventor_attributes[3].fillna('')
     inventor_attributes['1_x'] = inventor_attributes['1_x'].fillna('')
-    print inventor_attributes
     rawinventors = defaultdict(list)
     inventor_inserts = []
     rawinventor_updates = []
@@ -81,6 +79,7 @@ def integrate(disambig_input_file, disambig_output_file):
             print i, datetime.now(), rawuuids[0]
     print 'finished voting'
 
+    from lib.tasks import celery_commit_inserts, celery_commit_updates
     t1 = celery_commit_inserts.delay(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
     t2 = celery_commit_inserts.delay(patentinventor_inserts, patentinventor, is_mysql(), 20000)
     t3 = celery_commit_updates.delay('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
