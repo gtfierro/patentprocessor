@@ -100,6 +100,7 @@ def parse_files(filelist, doctype='grant'):
                 commit = alchemy.commit_application
             if commit_frequency and ((i+1) % commit_frequency == 0):
                 commit()
+                logging.info("{0} - {1} - {2}".format(filename, (i+1), datetime.datetime.now()))
                 print " *", (i+1), datetime.datetime.now()
         commit()
         print " *", "Complete", datetime.datetime.now()
