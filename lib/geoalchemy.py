@@ -10,6 +10,7 @@ import datetime
 import re
 import sys
 from collections import defaultdict, Counter
+import pandas as pd
 
 import alchemy
 from alchemy.match import commit_inserts, commit_updates
@@ -241,6 +242,24 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
     t1.wait()
     t2.wait()
     alchemy_session.commit()
+
+def link_disambiguated_records():
+    """
+    We need to populate the locationassignee, locationinventor and locationlawyer tables. This can really only be achived as joins
+    """
+    #TODO: database type
+    session_generator = alchemy.session_generator()
+    session = session_generator()
+    res = session.execute('select location.id, assignee.id from assignee \
+                           left join rawassignee on rawassignee.assignee_id = assignee.id \
+                           right join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
+                           right join location on location.id = rawlocation.location_id;')
+    locationassignee_inserts = [{'location.id': x[0], 'assignee_id': x[1]} for x in res.fetchall()]
+    assigneelocation = pd.DataFrame.from_records(locationassignee_inserts)
+    import IPython
+    IPython.embed(user_ns=locals())
+
+    pass
         
 def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
     most_freq = 0
@@ -277,7 +296,6 @@ def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
     #    alchemy_session.commit()
 
 location_insert_statements = []
-#patentlocation_insert_statements = []
 update_statements = []
 def geo_match(objects, session, default):
     freq = defaultdict(Counter)
@@ -311,11 +329,12 @@ def geo_match(objects, session, default):
             param[k] = freq[k].most_common(1)[0][0]
 
     param.update(default)
+    if '?' in param['city']:
+      print param['city']
+      #TODO: Fix param city ?????
     
     location_insert_statements.append(param)
     tmpids = map(lambda x: x.id, objects)
-    #patents = map(lambda x: x.patent_id, objects)
-    #patentlocation_insert_statements.extend([{'patent_id': x, 'location_id': param['id']} for x in patents])
     update_statements.extend([{'pk':x,'update':param['id']} for x in tmpids])
 
 
