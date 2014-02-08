@@ -21,6 +21,7 @@ from sqlalchemy.sql.expression import bindparam
 from unidecode import unidecode
 from tasks import celery_commit_inserts, celery_commit_updates
 import sys
+
 config = get_config()
 
 THRESHOLD = config.get("assignee").get("threshold")
@@ -121,12 +122,9 @@ def create_assignee_table(session):
               assignee_match(rawassignees, session, commit=True)
           else:
               assignee_match(rawassignees, session, commit=False)
-    t1 = celery_commit_inserts.delay(assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
-    t2 = celery_commit_inserts.delay(patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
-    t3 = celery_commit_updates.delay('assignee_id', update_statements, RawAssignee.__table__, alchemy.is_mysql(), 20000)
-    t1.get()
-    t2.get()
-    t3.get()
+    celery_commit_inserts(assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
+    celery_commit_inserts(patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
+    celery_commit_updates('assignee_id', update_statements, RawAssignee.__table__, alchemy.is_mysql(), 20000)
     session.commit()
     print i, datetime.now()
 
@@ -180,7 +178,7 @@ def assignee_match(objects, session, commit=False):
       param["id"] = md5.md5(unidecode(param["organization"])).hexdigest()
     if param["name_last"]:
       param["id"] = md5.md5(unidecode(param["name_last"]+param["name_first"])).hexdigest()
-    
+
     assignee_insert_statements.append(param)
     tmpids = map(lambda x: x.uuid, objects)
     patents = map(lambda x: x.patent_id, objects)
@@ -237,6 +235,8 @@ def run_disambiguation(doctype='grant'):
     if doctype == 'application':
         assignees = deque(session.query(App_RawAssignee))
     assignee_alpha_blocks = clean_assignees(assignees)
+    session.execute('truncate assignee; truncate patent_assignee;')
+    session.commit()
     for letter in alphabet:
         print letter, datetime.now()
         blocks = defaultdict(list)
