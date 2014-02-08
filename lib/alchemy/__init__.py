@@ -16,6 +16,8 @@ from sqlalchemy.pool import Pool
 @event.listens_for(Pool, "checkout")
 def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor = dbapi_connection.cursor()
+    if not hasattr(cursor, 'MySQLError'):
+              return
     try:
         # reset the connection settings
         cursor.execute("SELECT 1;")
