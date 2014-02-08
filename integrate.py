@@ -39,6 +39,8 @@ def integrate(disambig_input_file, disambig_output_file):
     """
     disambig_input = pd.read_csv(disambig_input_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
     disambig_output = pd.read_csv(disambig_output_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
+    disambig_input[0] = disambig_input[0].apply(str)
+    disambig_output[0] = disambig_output[0].apply(str)
     print 'finished loading csvs'
     merged = pd.merge(disambig_input, disambig_output, on=0)
     print 'finished merging'
@@ -62,14 +64,19 @@ def integrate(disambig_input_file, disambig_output_file):
         freq = defaultdict(Counter)
         param = {}
         rawuuids = []
+        names = []
         for raw in rawinventors[inventor_id]:
             rawuuids.append(raw[0])
+            name = ' '.join(x for x in (raw['1_x'], raw[2], raw[3]) if x)
+            freq['name'][name] += 1
             for k,v in raw.iteritems():
                 freq[k][v] += 1
         param['id'] = inventor_id
-        param['name_first'] = freq['1_x'].most_common(1)[0][0]
-        param['name_last'] = ' '.join([unicode(freq[2].most_common(1)[0][0]), unicode(freq[3].most_common(1)[0][0])]).strip()
-        param['name_last'] = unidecode(param['name_last'])
+        name = freq['name'].most_common(1)[0][0]
+        name_first = unidecode(name.split(' ')[0])
+        name_last = unidecode(''.join(name.split(' ')[1:]))
+        param['name_first'] = name_first
+        param['name_last'] = name_last
         param['nationality'] = ''
         assert set(param.keys()) == {'id','name_first','name_last','nationality'}
         inventor_inserts.append(param)
@@ -78,14 +85,14 @@ def integrate(disambig_input_file, disambig_output_file):
         if i % 100000 == 0:
             print i, datetime.now(), rawuuids[0]
     print 'finished voting'
+    session_generator = alchemy.session_generator()
+    session = session_generator()
+    session.execute('truncate inventor; truncate patent_inventor;')
 
     from lib.tasks import celery_commit_inserts, celery_commit_updates
-    t1 = celery_commit_inserts.delay(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
-    t2 = celery_commit_inserts.delay(patentinventor_inserts, patentinventor, is_mysql(), 20000)
-    t3 = celery_commit_updates.delay('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
-    t1.get()
-    t2.get()
-    t3.get()
+    celery_commit_inserts(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
+    celery_commit_inserts(patentinventor_inserts, patentinventor, is_mysql(), 20000)
+    celery_commit_updates('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
 
 def main():
     if len(sys.argv) <= 2:
