@@ -18,6 +18,7 @@ import linecache
 from datetime import datetime
 import pandas as pd
 from collections import defaultdict, Counter
+from lib.tasks import celery_commit_inserts, celery_commit_updates
 from unidecode import unidecode
 from datetime import datetime
 

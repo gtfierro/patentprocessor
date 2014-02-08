@@ -345,7 +345,11 @@ def geo_match(objects, session, default):
     if '?' in param['city']:
       print param['city']
       #TODO: Fix param city ?????
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> be654fe07f263efe81e81f7bf6dcad60966dc5ca
     location_insert_statements.append(param)
     tmpids = map(lambda x: x.id, objects)
     update_statements.extend([{'pk':x,'update':param['id']} for x in tmpids])
