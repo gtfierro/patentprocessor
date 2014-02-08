@@ -16,6 +16,8 @@ from sqlalchemy.pool import Pool
 @event.listens_for(Pool, "checkout")
 def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor = dbapi_connection.cursor()
+    if not hasattr(cursor, 'MySQLError'):
+              return
     try:
         # reset the connection settings
         cursor.execute("SELECT 1;")
@@ -158,7 +160,7 @@ def add_grant(obj, override=True, temp=False):
     #if pat_query.count():
     if patent_exists:
         if override:
-            pat_query = grantsession.query(schema.Patent).filter(schema.Patent.number == obj.patent)
+            pat_query = grantsession.query(schema.Patent).filter(schema.Patent.id == obj.patent)
             grantsession.delete(pat_query.one())
         else:
             return
@@ -169,6 +171,9 @@ def add_grant(obj, override=True, temp=False):
     pat.application = schema.Application(**obj.app)
     # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
+    grantsession.execute('set foreign_key_checks = 0;')
+    grantsession.execute('set unique_checks = 0;')
+    grantsession.commit()
 
     grantsession.merge(pat)
 

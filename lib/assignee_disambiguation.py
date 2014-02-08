@@ -4,6 +4,8 @@ Performs a basic assignee disambiguation
 """
 from collections import defaultdict, deque
 import uuid
+from string import lowercase as alphabet
+import re
 import md5
 import cPickle as pickle
 import alchemy
@@ -19,6 +21,7 @@ from sqlalchemy.sql.expression import bindparam
 from unidecode import unidecode
 from tasks import celery_commit_inserts, celery_commit_updates
 import sys
+
 config = get_config()
 
 THRESHOLD = config.get("assignee").get("threshold")
@@ -26,6 +29,8 @@ THRESHOLD = config.get("assignee").get("threshold")
 # bookkeeping for blocks
 blocks = defaultdict(list)
 id_map = defaultdict(list)
+
+nodigits = re.compile(r'[A-Za-z ]')
 
 assignee_dict = {}
 
@@ -59,11 +64,15 @@ def clean_assignees(list_of_assignees):
         a_id = ' '.join(filter(lambda x:
                             x.lower() not in stoplist,
                             a_id.split(' ')))
+        a_id = ''.join(nodigits.findall(a_id)).strip()
         id_map[a_id].append(assignee.uuid)
         block.append(a_id)
     print 'Assignees cleaned!'
     return block
 
+
+def without_digits(word):
+    return ''.join([x for x in word if not x.isdigit()])
 
 def create_jw_blocks(list_of_assignees):
     """
@@ -71,8 +80,9 @@ def create_jw_blocks(list_of_assignees):
     that all begin with the same letter. Within each block, does
     a pairwise jaro winkler comparison to block assignees together
     """
+    global blocks
     consumed = defaultdict(int)
-    print 'Doing pairwise Jaro-Winkler...'
+    print 'Doing pairwise Jaro-Winkler...', len(list_of_assignees)
     for i, primary in enumerate(list_of_assignees):
         if consumed[primary]: continue
         consumed[primary] = 1
@@ -112,12 +122,9 @@ def create_assignee_table(session):
               assignee_match(rawassignees, session, commit=True)
           else:
               assignee_match(rawassignees, session, commit=False)
-    t1 = celery_commit_inserts.delay(assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
-    t2 = celery_commit_inserts.delay(patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
-    t3 = celery_commit_updates.delay('assignee_id', update_statements, RawAssignee.__table__, alchemy.is_mysql(), 20000)
-    t1.get()
-    t2.get()
-    t3.get()
+    celery_commit_inserts(assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
+    celery_commit_inserts(patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
+    celery_commit_updates('assignee_id', update_statements, RawAssignee.__table__, alchemy.is_mysql(), 20000)
     session.commit()
     print i, datetime.now()
 
@@ -128,7 +135,6 @@ def assignee_match(objects, session, commit=False):
     clean_objects = []
     clean_cnt = 0
     clean_main = None
-    class_type = None
     class_type = None
     for obj in objects:
         if not obj: continue
@@ -164,12 +170,15 @@ def assignee_match(objects, session, commit=False):
         param['residence'] = ''
     if not param.has_key('nationality'):
         param['nationality'] = ''
+    if param.has_key('type'):
+        if not param['type'].isdigit():
+            param['type'] = ''
 
     if param["organization"]:
       param["id"] = md5.md5(unidecode(param["organization"])).hexdigest()
     if param["name_last"]:
       param["id"] = md5.md5(unidecode(param["name_last"]+param["name_first"])).hexdigest()
-    
+
     assignee_insert_statements.append(param)
     tmpids = map(lambda x: x.uuid, objects)
     patents = map(lambda x: x.patent_id, objects)
@@ -216,14 +225,27 @@ def run_letter(letter, session, doctype='grant'):
 
 def run_disambiguation(doctype='grant'):
     # get all assignees in database
+    global blocks
+    global assignee_insert_statements
+    global patentassignee_insert_statements
+    global update_statements
     session = alchemy.fetch_session(dbtype=doctype)
     if doctype == 'grant':
         assignees = deque(session.query(RawAssignee))
     if doctype == 'application':
         assignees = deque(session.query(App_RawAssignee))
     assignee_alpha_blocks = clean_assignees(assignees)
-    create_jw_blocks(assignee_alpha_blocks)
-    create_assignee_table(session)
+    session.execute('truncate assignee; truncate patent_assignee;')
+    session.commit()
+    for letter in alphabet:
+        print letter, datetime.now()
+        blocks = defaultdict(list)
+        assignee_insert_statements = []
+        patentassignee_insert_statements = []
+        update_statements = []
+        letterblock = [x for x in assignee_alpha_blocks if x.lower().startswith(letter)]
+        create_jw_blocks(letterblock)
+        create_assignee_table(session)
 
 
 if __name__ == '__main__':
