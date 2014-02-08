@@ -53,7 +53,7 @@ class RawGoogle(base):
 
     def __repr__(self):
         return "<RawGoogle('%s','%s','%s','%s','%s','%s','%s')>" % (self.input_address, self.city, self.region, self.country, self.latitude, self.longitude, self.confidence)
-        
+
 #One of the cities in the world as stored in the MaxMinds database
 class AllCities(base):
     __tablename__ = 'all_cities'
@@ -63,7 +63,7 @@ class AllCities(base):
     country = sqlalchemy.Column(sqlalchemy.String)
     latitude = sqlalchemy.Column(sqlalchemy.REAL)
     longitude = sqlalchemy.Column(sqlalchemy.REAL)
-    
+
     def __init__(self, city, region, country, latitude, longitude):
         self.city = city
         self.region = region
@@ -134,14 +134,14 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     #country
     unidentified_grouped_locations_enum = enumerate(itertools.groupby(unidentified_grouped_locations, keyfunc))
     #Identify the correct location for each entry by comparing to all_cities
-    identify_missing_locations(unidentified_grouped_locations_enum, 
+    identify_missing_locations(unidentified_grouped_locations_enum,
                                identified_grouped_locations,
                                minimum_match_value, t)
     print 'new count of identified locations:', len(identified_grouped_locations)
-    
+
     #We now have a list of all locations in the file, along with their
     #matching locations and the id used to group them
-    #Perform a quickfix to correct state names 
+    #Perform a quickfix to correct state names
     geoalchemy_util.fix_state_abbreviations(identified_grouped_locations);
 
     #Sort the list by the grouping_id
@@ -154,7 +154,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     t = datetime.datetime.now()
     #Match the locations
     match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session)
-    
+
     alchemy_session.commit()
 
     print "Matches made!", datetime.datetime.now() - t
@@ -166,7 +166,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     print "%s groups formed from %s locations" % (unique_group_count, raw_parsed_locations.count())
 
 #Identify locations that the Google disambiguation couldn't resolve
-def identify_missing_locations(unidentified_grouped_locations_enum, 
+def identify_missing_locations(unidentified_grouped_locations_enum,
                                identified_grouped_locations,
                                minimum_match_value, t):
     #For each group of locations with the same country
@@ -175,7 +175,7 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
         #Get a list of all cities that exist anywhere in that country
         all_cities_in_country = geo_data_session.query(AllCities.city, AllCities.region).filter_by(country=country)
         #Construct a name for each location that matches the normal cleaned location format
-        all_cities_in_country = [geoalchemy_util.concatenate_location(x.city, 
+        all_cities_in_country = [geoalchemy_util.concatenate_location(x.city,
                            x.region if geoalchemy_util.region_is_a_state(x.region) else '',
                            country) for x in all_cities_in_country]
         #For each location found in this country, find its closest match
@@ -205,6 +205,13 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
                                   "grouping_id": grouping_id})
             print 'all_cities found additional location for', raw_location
 
+"""
+looks like there are not enough records being put into "update_statements". When I look at the rawlocation
+table and look for how many records in there have null location_ids,  there are *far* too many.
+I'm looking at totalmatchgroups, which is the number of records that get update_statements generated,
+externalmatchgroups, which is the number of records that go into the process. I should also look
+at identified_grouped_locations_enum, which is a collection of all the grouped locations.
+"""
 def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session):
     if alchemy.is_mysql():
         alchemy_session.execute("set foreign_key_checks = 0; truncate location;")
@@ -237,34 +244,40 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         #No need to run match() if no matching location was found.
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
-    t1 = celery_commit_inserts.delay(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq)
-    t2 = celery_commit_updates.delay('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq)
-    t1.wait()
-    t2.wait()
+    alchemy_session.execute('truncate location; truncate assignee_location; truncate inventor_location;')
+    celery_commit_inserts(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq)
+    celery_commit_updates('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq)
     alchemy_session.commit()
-
-def link_disambiguated_records():
-    """
-    We need to populate the locationassignee, locationinventor and locationlawyer tables. This can really only be achived as joins
-    """
-    #TODO: database type
     session_generator = alchemy.session_generator()
     session = session_generator()
     res = session.execute('select location.id, assignee.id from assignee \
                            left join rawassignee on rawassignee.assignee_id = assignee.id \
                            right join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
                            right join location on location.id = rawlocation.location_id;')
-    locationassignee_inserts = [{'location.id': x[0], 'assignee_id': x[1]} for x in res.fetchall()]
-    assigneelocation = pd.DataFrame.from_records(locationassignee_inserts)
-    import IPython
-    IPython.embed(user_ns=locals())
+    assigneelocation = pd.DataFrame.from_records(res.fetchall())
+    assigneelocation = assigneelocation[assigneelocation[0].notnull()]
+    assigneelocation = assigneelocation[assigneelocation[1].notnull()]
+    assigneelocation.columns = ['location_id','assignee_id']
+    locationassignee_inserts = [row[1].to_dict() for row in assigneelocation.iterrows()]
+    celery_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000)
 
-    pass
-        
+    res = session.execute('select location.id, inventor.id from inventor \
+                           left join rawinventor on rawinventor.inventor_id = inventor.id \
+                           right join rawlocation on rawlocation.id = rawinventor.rawlocation_id \
+                           right join location on location.id = rawlocation.location_id;')
+    inventorlocation = pd.DataFrame.from_records(res.fetchall())
+    inventorlocation = inventorlocation[inventorlocation[0].notnull()]
+    inventorlocation = inventorlocation[inventorlocation[1].notnull()]
+    inventorlocation.columns = ['location_id','inventor_id']
+    locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
+    celery_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000)
+
+    session.commit()
+
 def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
     most_freq = 0
     #If there is more than one key, we need to figure out what attributes
-    #(city, region, country, latitude, longitude) to assign the group 
+    #(city, region, country, latitude, longitude) to assign the group
     """
     if len(match_group) > 1:
         # if key exists, look at the frequency
@@ -332,7 +345,7 @@ def geo_match(objects, session, default):
     if '?' in param['city']:
       print param['city']
       #TODO: Fix param city ?????
-    
+
     location_insert_statements.append(param)
     tmpids = map(lambda x: x.id, objects)
     update_statements.extend([{'pk':x,'update':param['id']} for x in tmpids])
@@ -346,7 +359,7 @@ def clean_raw_locations_from_file(inputfilename, outputfilename):
         line = geoalchemy_util.clean_raw_location(line)
         line = line.encode('utf8')
         outputfile.write(line)
-        
+
 def analyze_input_addresses(inputfilename):
     valid_input_addresses = construct_valid_input_addresses()
     print datetime.datetime.now()
@@ -384,7 +397,7 @@ def input_address_exists(valid_input_addresses, input_address):
     else:
         print 'Error: list of valid input addresses not constructed'
         return False
-    
+
 def find_difficult_locations_from_file(inputfilename, outputfilename):
     inputfile = open(inputfilename, 'r')
     outputfile = open(outputfilename, 'w+')
