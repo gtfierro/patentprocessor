@@ -60,7 +60,10 @@ def celery_commit_updates(update_key, update_statements, table, is_mysql, commit
         commit_updates(session, update_key, update_statements, table, commit_frequency)
         return
     session.rollback()
-    session.execute('truncate temporary_update;')
+    if is_mysql:
+        session.execute('truncate temporary_update;')
+    else:
+        session.execute('delete from temporary_update;')
     if dbtype == 'grant':
         commit_inserts(session, update_statements, temporary_update, is_mysql, 10000)
     else:
@@ -70,5 +73,8 @@ def celery_commit_updates(update_key, update_statements, table, is_mysql, commit
     update_key = table.columns[update_key]
     session.execute("UPDATE {0} join temporary_update ON temporary_update.pk = {1} SET {2} = temporary_update.update;".format(table.name, primary_key.name, update_key.name ))
     session.commit()
-    session.execute("truncate temporary_update;")
+    if is_mysql:
+        session.execute('truncate temporary_update;')
+    else:
+        session.execute('delete from temporary_update;')
     session.commit()
