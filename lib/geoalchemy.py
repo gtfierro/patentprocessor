@@ -16,6 +16,9 @@ import alchemy
 from alchemy.match import commit_inserts, commit_updates
 from tasks import celery_commit_inserts, celery_commit_updates
 
+global doctype
+doctype = ''
+
 #The config file alchemy uses to store information
 alchemy_config = alchemy.get_config()
 #The path to the database which holds geolocation data
@@ -245,21 +248,28 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
     alchemy_session.execute('truncate location; truncate assignee_location; truncate inventor_location;')
-    celery_commit_inserts(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq)
-    celery_commit_updates('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq)
+    if doctype == 'grant':
+        celery_commit_inserts(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq, 'grant')
+        celery_commit_updates('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'grant')
+    elif doctype == 'application':
+        celery_commit_inserts(location_insert_statements, alchemy.schema.App_Location.__table__, alchemy.is_mysql(), commit_freq, 'application')
+        celery_commit_updates('location_id', update_statements, alchemy.schema.App_RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'application')
     alchemy_session.commit()
-    session_generator = alchemy.session_generator()
+    session_generator = alchemy.session_generator(dbtype=doctype)
     session = session_generator()
     res = session.execute('select location.id, assignee.id from assignee \
-                           left join rawassignee on rawassignee.assignee_id = assignee.id \
-                           right join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
-                           right join location on location.id = rawlocation.location_id;')
+                           inner join rawassignee on rawassignee.assignee_id = assignee.id \
+                           inner join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
+                           inner join location on location.id = rawlocation.location_id;')
     assigneelocation = pd.DataFrame.from_records(res.fetchall())
     assigneelocation = assigneelocation[assigneelocation[0].notnull()]
     assigneelocation = assigneelocation[assigneelocation[1].notnull()]
     assigneelocation.columns = ['location_id','assignee_id']
     locationassignee_inserts = [row[1].to_dict() for row in assigneelocation.iterrows()]
-    celery_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000)
+    if doctype == 'grant':
+        celery_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
+    elif doctype == 'application':
+        celery_commit_inserts(locationassignee_inserts, alchemy.schema.app_locationassignee, alchemy.is_mysql(), 20000, 'application')
 
     res = session.execute('select location.id, inventor.id from inventor \
                            left join rawinventor on rawinventor.inventor_id = inventor.id \
@@ -270,7 +280,10 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
     inventorlocation = inventorlocation[inventorlocation[1].notnull()]
     inventorlocation.columns = ['location_id','inventor_id']
     locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
-    celery_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000)
+    if doctype == 'grant':
+        celery_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000, 'grant')
+    elif doctype == 'application':
+        celery_commit_inserts(locationinventor_inserts, alchemy.schema.app_locationinventor, alchemy.is_mysql(), 20000, 'application')
 
     session.commit()
 
@@ -345,11 +358,7 @@ def geo_match(objects, session, default):
     if '?' in param['city']:
       print param['city']
       #TODO: Fix param city ?????
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> be654fe07f263efe81e81f7bf6dcad60966dc5ca
     location_insert_statements.append(param)
     tmpids = map(lambda x: x.id, objects)
     update_statements.extend([{'pk':x,'update':param['id']} for x in tmpids])
