@@ -42,7 +42,7 @@ def get_assignee_id(obj):
     if obj.organization:
         return obj.organization
     try:
-        return obj.name_first + '|' + obj.name_last
+        return obj.name_first + obj.name_last
     except:
         return ''
 
