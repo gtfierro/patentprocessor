@@ -171,8 +171,9 @@ def add_grant(obj, override=True, temp=False):
     pat.application = schema.Application(**obj.app)
     # lots of abstracts seem to be missing. why?
     add_all_fields(obj, pat)
-    grantsession.execute('set foreign_key_checks = 0;')
-    grantsession.execute('set unique_checks = 0;')
+    if is_mysql():
+        grantsession.execute('set foreign_key_checks = 0;')
+        grantsession.execute('set unique_checks = 0;')
     grantsession.commit()
 
     grantsession.merge(pat)
