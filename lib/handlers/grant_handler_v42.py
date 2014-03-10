@@ -87,7 +87,7 @@ class Patent(PatentHandler):
         """
         firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
         lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
-        return xml_util.associate_prefix(firstname, lastname)
+        return firstname, lastname
 
     def _name_helper_dict(self, tag_root):
         """
@@ -96,7 +96,6 @@ class Patent(PatentHandler):
         """
         firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
         lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
-        firstname, lastname = xml_util.associate_prefix(firstname, lastname)
         return {'name_first': firstname, 'name_last': lastname}
 
     def _fix_date(self, datestring):
