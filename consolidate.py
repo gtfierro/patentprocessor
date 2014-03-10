@@ -16,9 +16,11 @@ from datetime import datetime
 import sys
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
-ROW = lambda x: u'{uuid}\t{name_first}\t{name_middle}\t{name_last}\t{number}\t{mainclass}\t{subclass}\t{city}\t{state}\t{country}\t{assignee}\t{rawassignee}\n'.format(**x)
+# isgrant: 1 if granted patent, 0 if application
+# ignore: 1 if the record has a granted patent, 0 else
+ROW = lambda x: u'{uuid}\t{isgrant}\t{ignore}\t{name_first}\t{name_middle}\t{name_last}\t{number}\t{mainclass}\t{subclass}\t{city}\t{state}\t{country}\t{assignee}\t{rawassignee}\n'.format(**x)
 
-def main(year, doctype='grant'):
+def main(year, doctype):
     # get patents as iterator to save memory
     # use subqueryload to get better performance by using less queries on the backend:
     # --> http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
@@ -27,7 +29,7 @@ def main(year, doctype='grant'):
     if doctype == 'application':
         schema = alchemy.schema.App_Application
     if year:
-        patents = (p for p in session.query(schema).filter(extract('year', schema.date) == gyear).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
+        patents = (p for p in session.query(schema).filter(extract('year', schema.date) == year).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
     else:
         patents = (p for p in session.query(schema).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
     i = 0
@@ -37,7 +39,7 @@ def main(year, doctype='grant'):
           print i, datetime.now()
         try:
           # create common dict for this patent
-          loc = patent.rawinventors[0].rawlocation
+          loc = patent.rawinventors[0].rawlocation.location
           mainclass = patent.classes[0].mainclass_id if patent.classes else ''
           subclass = patent.classes[0].subclass_id if patent.classes else ''
           row = {'number': patent.number,
@@ -46,11 +48,22 @@ def main(year, doctype='grant'):
                  'state': loc.state if loc else '',
                  'country': loc.country if loc else '',
                  'city': loc.city if loc else '',
+                 'ignore': 0,
                  }
-          row['assignee'] = get_assignee_id(patent.assignees[0]) if patent.assignees else ''
+          if doctype == 'grant':
+            row['isgrant'] = 1
+          elif doctype == 'application':
+            row['isgrant'] = 0
+            if int(patent.granted) == 1:
+              row['ignore'] == 1
+          row['assignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
+          row['assignee'] = row['assignee'].split('\t')[0]
           row['rawassignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
+          row['rawassignee'] = row['rawassignee'].split('\t')[0]
           # generate a row for each of the inventors on a patent
           for ri in patent.rawinventors:
+              if not len(ri.name_first.strip()):
+                  continue
               namedict = {'name_first': ri.name_first, 'uuid': ri.uuid}
               raw_name = ri.name_last.split(' ')
               # name_last is the last space-delimited word. Middle name is everything before that
@@ -67,14 +80,9 @@ def main(year, doctype='grant'):
           continue
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        main(None)
-    elif len(sys.argv) < 3:
-        doctype = sys.argv[1]
-        print('Running ' + doctype)
-        main(None, doctype)
-    else:
-        gyear = sys.argv[2]
-        doctype = sys.argv[1]
-        print('Running ' + str(gyear) + ' ' + doctype)
-        main(gyear, doctype)
+    for year in range(1975, datetime.today().year+1):
+      print 'Running year',year,datetime.now(),'for grant'
+      main(year, 'grant')
+    for year in range(1975, datetime.today().year+1):
+      print 'Running year',year,datetime.now(),'for application'
+      main(year, 'application')
