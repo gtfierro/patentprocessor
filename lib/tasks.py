@@ -2,7 +2,6 @@
 This module uses the Celery task manager to dispatch parallel database tasks to help speed up the task
 of performing multiple updates over multiple tables.
 """
-import celery
 from alchemy.match import commit_inserts, commit_updates
 from alchemy import session_generator
 from alchemy.schema import temporary_update, app_temporary_update
@@ -10,9 +9,7 @@ from sqlalchemy import create_engine, MetaData, Table, inspect, VARCHAR, Column
 from sqlalchemy.orm import sessionmaker
 
 # fetch reference to temporary_update table.
-celery = celery.Celery('tasks', broker='redis://localhost', backend='redis://localhost')
 
-@celery.task
 def celery_commit_inserts(insert_statements, table, is_mysql, commit_frequency = 1000, dbtype='grant'):
     """
     Executes bulk inserts for a given table. This is typically much faster than going through
@@ -32,7 +29,6 @@ def celery_commit_inserts(insert_statements, table, is_mysql, commit_frequency =
     session = session_generator(dbtype=dbtype)
     commit_inserts(session, insert_statements, table, is_mysql, commit_frequency)
 
-@celery.task
 def celery_commit_updates(update_key, update_statements, table, is_mysql, commit_frequency = 1000, dbtype='grant'):
     """
     Executes bulk updates for a given table. This is typically much faster than going through
