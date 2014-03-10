@@ -38,14 +38,20 @@ def integrate(disambig_input_file, disambig_output_file):
     just have to populate the fields of the disambiguated inventor object:
         inventor id, first name, last name, nationality (?)
     """
+    #disambig_input = pd.read_csv(disambig_input_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
+    #disambig_output = pd.read_csv(disambig_output_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
     disambig_input = pd.read_csv(disambig_input_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
     disambig_output = pd.read_csv(disambig_output_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
-    disambig_input[0] = disambig_input[0].apply(str)
-    disambig_output[0] = disambig_output[0].apply(str)
+    #disambig_input[0] = disambig_input[0].apply(str)
+    #disambig_output[0] = disambig_output[0].apply(str)
     print 'finished loading csvs'
-    merged = pd.merge(disambig_input, disambig_output, on=0)
+    #merged = pd.merge(disambig_input, disambig_output, on=0)
+    merged = pd.concat([disambig_input, disambig_output],axis=1)
+    merged.columns = range(14)
+    inventor_attributes = merged[[0, 13, 1, 2, 3, 4]]
+    inventor_attributes.columns = [0,'1_y','1_x',2,3,4]
     print 'finished merging'
-    inventor_attributes = merged[[0,'1_y','1_x',2,3,4]] # rawinventor uuid, inventor id, first name, middle name, last name, patent_id
+    #inventor_attributes = merged[[0,'1_y','1_x',2,3,4]] # rawinventor uuid, inventor id, first name, middle name, last name, patent_id
     inventor_attributes = inventor_attributes.dropna(subset=[0],how='all')
     inventor_attributes[2] = inventor_attributes[2].fillna('')
     inventor_attributes[3] = inventor_attributes[3].fillna('')
@@ -74,8 +80,8 @@ def integrate(disambig_input_file, disambig_output_file):
                 freq[k][v] += 1
         param['id'] = inventor_id
         name = freq['name'].most_common(1)[0][0]
-        name_first = unidecode(name.split(' ')[0])
-        name_last = unidecode(''.join(name.split(' ')[1:]))
+        name_first = unidecode(' '.join(name.split(' ')[:-1]))
+        name_last = unidecode(name.split(' ')[-1])
         param['name_first'] = name_first
         param['name_last'] = name_last
         param['nationality'] = ''
