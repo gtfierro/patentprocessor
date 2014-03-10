@@ -94,7 +94,10 @@ def integrate(disambig_input_file, disambig_output_file):
     print 'finished voting'
     session_generator = alchemy.session_generator()
     session = session_generator()
-    session.execute('truncate inventor; truncate patent_inventor;')
+    if alchemy.is_mysql():
+        session.execute('truncate inventor; truncate patent_inventor;')
+    else:
+        session.execute('delete from inventor; delete from patent_inventor;')
 
     from lib.tasks import celery_commit_inserts, celery_commit_updates
     celery_commit_inserts(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
