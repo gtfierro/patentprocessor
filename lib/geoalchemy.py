@@ -260,33 +260,6 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
     alchemy_session.commit()
     session_generator = alchemy.session_generator(dbtype=doctype)
     session = session_generator()
-    res = session.execute('select location.id, assignee.id from assignee \
-                           inner join rawassignee on rawassignee.assignee_id = assignee.id \
-                           inner join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
-                           inner join location on location.id = rawlocation.location_id;')
-    assigneelocation = pd.DataFrame.from_records(res.fetchall())
-    assigneelocation = assigneelocation[assigneelocation[0].notnull()]
-    assigneelocation = assigneelocation[assigneelocation[1].notnull()]
-    assigneelocation.columns = ['location_id','assignee_id']
-    locationassignee_inserts = [row[1].to_dict() for row in assigneelocation.iterrows()]
-    if doctype == 'grant':
-        celery_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
-    elif doctype == 'application':
-        celery_commit_inserts(locationassignee_inserts, alchemy.schema.app_locationassignee, alchemy.is_mysql(), 20000, 'application')
-
-    res = session.execute('select location.id, inventor.id from inventor \
-                           left join rawinventor on rawinventor.inventor_id = inventor.id \
-                           right join rawlocation on rawlocation.id = rawinventor.rawlocation_id \
-                           right join location on location.id = rawlocation.location_id;')
-    inventorlocation = pd.DataFrame.from_records(res.fetchall())
-    inventorlocation = inventorlocation[inventorlocation[0].notnull()]
-    inventorlocation = inventorlocation[inventorlocation[1].notnull()]
-    inventorlocation.columns = ['location_id','inventor_id']
-    locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
-    if doctype == 'grant':
-        celery_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000, 'grant')
-    elif doctype == 'application':
-        celery_commit_inserts(locationinventor_inserts, alchemy.schema.app_locationinventor, alchemy.is_mysql(), 20000, 'application')
 
     session.commit()
 
