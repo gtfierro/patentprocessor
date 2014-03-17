@@ -45,9 +45,6 @@ def main(year, doctype):
           row = {'number': patent.number,
                  'mainclass': mainclass,
                  'subclass': subclass,
-                 'state': loc.state if loc else '',
-                 'country': loc.country if loc else '',
-                 'city': loc.city if loc else '',
                  'ignore': 0,
                  }
           if doctype == 'grant':
@@ -70,6 +67,10 @@ def main(year, doctype):
               name_middle, name_last = ' '.join(raw_name[:-1]), raw_name[-1]
               namedict['name_middle'] = name_middle
               namedict['name_last'] = name_last
+              loc = ri.rawlocation.location
+              namedict['state'] = loc.state if loc else ''
+              namedict['country'] = loc.country if loc else ''
+              namedict['city'] = loc.city if loc else ''
               tmprow = row.copy()
               tmprow.update(namedict)
               newrow = normalize_utf8(ROW(tmprow))
@@ -80,6 +81,10 @@ def main(year, doctype):
           continue
 
 if __name__ == '__main__':
+#    if len(sys.argv) < 2:
+#      print "Provide path to previous disambiguation output"
+#      sys.exit(1)
+#    prev_output = sys.argv[1]
     for year in range(1975, datetime.today().year+1):
       print 'Running year',year,datetime.now(),'for grant'
       main(year, 'grant')
