@@ -13,7 +13,11 @@ from lib.handlers.xml_util import normalize_utf8
 from sqlalchemy.orm import joinedload, subqueryload
 from sqlalchemy import extract
 from datetime import datetime
+import pandas as pd
 import sys
+
+#TODO: for ignore rows, use the uuid instead (leave blank if not ignore) and use that to link the ids together for integration
+#TODO: include column in disambig input: inventor-id from previous run, or null
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
 # isgrant: 1 if granted patent, 0 if application
@@ -42,7 +46,7 @@ def main(year, doctype):
           loc = patent.rawinventors[0].rawlocation.location
           mainclass = patent.classes[0].mainclass_id if patent.classes else ''
           subclass = patent.classes[0].subclass_id if patent.classes else ''
-          row = {'number': patent.number,
+          row = {'number': patent.id,
                  'mainclass': mainclass,
                  'subclass': subclass,
                  'ignore': 0,
@@ -80,14 +84,23 @@ def main(year, doctype):
           print e
           continue
 
+def join(oldfile, newfile):
+    new = pd.read_csv(newfile,delimiter='\t',header=None)
+    old = pd.read_csv(oldfile,delimiter='\t',header=None)
+    merged = pd.merge(new,old,on=0,how='left')
+    merged.to_csv('disambiguator_{0}.tsv'.format(datetime.now().strftime('%B_%d')), index=False, header=None, sep='\t')
+
 if __name__ == '__main__':
-#    if len(sys.argv) < 2:
-#      print "Provide path to previous disambiguation output"
-#      sys.exit(1)
-#    prev_output = sys.argv[1]
+    if len(sys.argv) < 2:
+      print "Provide path to previous disambiguation output"
+      sys.exit(1)
+    prev_output = sys.argv[1]
     for year in range(1975, datetime.today().year+1):
       print 'Running year',year,datetime.now(),'for grant'
       main(year, 'grant')
     for year in range(1975, datetime.today().year+1):
       print 'Running year',year,datetime.now(),'for application'
       main(year, 'application')
+
+    # join files
+    join(prev_output, 'disambiguator.csv')
