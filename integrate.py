@@ -45,11 +45,11 @@ def integrate(disambig_input_file, disambig_output_file):
     #disambig_input[0] = disambig_input[0].apply(str)
     #disambig_output[0] = disambig_output[0].apply(str)
     print 'finished loading csvs'
-    #merged = pd.merge(disambig_input, disambig_output, on=0)
-    merged = pd.concat([disambig_input, disambig_output],axis=1)
-    merged.columns = range(14)
-    inventor_attributes = merged[[0, 13, 1, 2, 3, 4]]
-    inventor_attributes.columns = [0,'1_y','1_x',2,3,4]
+    merged = pd.merge(disambig_input, disambig_output, on=0)
+    import IPython
+    d = locals()
+    d.update(globals())
+    IPython.embed(user_ns=d)
     print 'finished merging'
     #inventor_attributes = merged[[0,'1_y','1_x',2,3,4]] # rawinventor uuid, inventor id, first name, middle name, last name, patent_id
     inventor_attributes = inventor_attributes.dropna(subset=[0],how='all')
@@ -104,13 +104,47 @@ def integrate(disambig_input_file, disambig_output_file):
     celery_commit_inserts(patentinventor_inserts, patentinventor, is_mysql(), 20000)
     celery_commit_updates('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
 
+
+    doctype = 'grant'
+    res = session.execute('select location.id, assignee.id from assignee \
+                           inner join rawassignee on rawassignee.assignee_id = assignee.id \
+                           inner join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
+                           inner join location on location.id = rawlocation.location_id;')
+    assigneelocation = pd.DataFrame.from_records(res.fetchall())
+    print assigneelocation.info()
+    assigneelocation = assigneelocation[assigneelocation[0].notnull()]
+    assigneelocation = assigneelocation[assigneelocation[1].notnull()]
+    assigneelocation.columns = ['location_id','assignee_id']
+    locationassignee_inserts = [row[1].to_dict() for row in assigneelocation.iterrows()]
+    if doctype == 'grant':
+        celery_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
+    elif doctype == 'application':
+        celery_commit_inserts(locationassignee_inserts, alchemy.schema.app_locationassignee, alchemy.is_mysql(), 20000, 'application')
+
+    session.execute('truncate location_inventor;')
+    res = session.execute('select location.id, inventor.id from inventor \
+                           left join rawinventor on rawinventor.inventor_id = inventor.id \
+                           right join rawlocation on rawlocation.id = rawinventor.rawlocation_id \
+                           right join location on location.id = rawlocation.location_id;')
+    inventorlocation = pd.DataFrame.from_records(res.fetchall())
+    print inventorlocation.info()
+    inventorlocation = inventorlocation[inventorlocation[0].notnull()]
+    inventorlocation = inventorlocation[inventorlocation[1].notnull()]
+    inventorlocation.columns = ['location_id','inventor_id']
+    inventorlocation = inventorlocation.drop_duplicates(cols=['location_id','inventor_id'])
+    locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
+    if doctype == 'grant':
+        celery_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000, 'grant')
+    elif doctype == 'application':
+        celery_commit_inserts(locationinventor_inserts, alchemy.schema.app_locationinventor, alchemy.is_mysql(), 20000, 'application')
+
 def main():
     if len(sys.argv) <= 2:
         print 'USAGE: python integrate.py <disambig input file> <disambig output file>'
         sys.exit()
     dis_in = sys.argv[1]
     dis_out = sys.argv[2]
-    integrate(dis_in, dis_out)
+    integrate(dis_in,dis_out)
 
 if __name__ == '__main__':
     main()
