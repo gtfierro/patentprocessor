@@ -125,7 +125,6 @@ def parse_patent(xmltuple, doctype='grant'):
     return patent.get_patobj()
 
 
-# TODO: this should only move alchemy.sqlite3
 def move_tables(output_directory):
     """
     Moves the output sqlite3 files to the output directory
