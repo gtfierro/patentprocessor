@@ -25,6 +25,7 @@ def celery_commit_inserts(insert_statements, table, is_mysql, commit_frequency =
     table -- SQLAlchemy table object. If you have a table reference, you can use TableName.__table__
     is_mysql -- adjusts syntax based on if we are committing to MySQL or SQLite. You can use alchemy.is_mysql() to get this
     commit_frequency -- tune this for speed. Runs "session.commit" every `commit_frequency` items
+    dbtype -- which base schema to use. Either 'grant' or 'application'
     """
     session = session_generator(dbtype=dbtype)
     commit_inserts(session, insert_statements, table, is_mysql, commit_frequency)
@@ -49,7 +50,9 @@ def celery_commit_updates(update_key, update_statements, table, is_mysql, commit
     update_key -- the name of the column we want to update
     update_statements -- list of dictionaries of updates. See above description
     table -- SQLAlchemy table object. If you have a table reference, you can use TableName.__table
+    is_mysql -- adjusts syntax based on if we are committing to MySQL or SQLite. You can use alchemy.is_mysql() to get this
     commit_frequency -- tune this for speed. Runs "session.commit" every `commit_frequency` items
+    dbtype -- which base schema to use. Either 'grant' or 'application'
     """
     session = session_generator(dbtype=dbtype)
     if not is_mysql:
