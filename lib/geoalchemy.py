@@ -250,7 +250,12 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
     if alchemy.is_mysql():
         alchemy_session.execute('truncate location; truncate assignee_location; truncate inventor_location;')
     else:
-        alchemy_session.execute('delete from location; delete from assignee_location; delete from inventor_location;')
+        alchemy_session.execute('delete from location;')
+        alchemy_session.commit()
+        alchemy_session.execute('delete from location_assignee;')
+        alchemy_session.commit()
+        alchemy_session.execute('delete from location_inventor;')
+        alchemy_session.commit()
     if doctype == 'grant':
         bulk_commit_inserts(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq, 'grant')
         bulk_commit_updates('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'grant')
