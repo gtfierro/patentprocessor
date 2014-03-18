@@ -55,7 +55,9 @@ def main(year, doctype):
             row['isgrant'] = 1
           elif doctype == 'application':
             row['isgrant'] = 0
-            if int(patent.granted) == 1:
+            if not patent.granted:
+              row['ignore'] == 0
+            elif int(patent.granted) == 1:
               row['ignore'] == 1
           row['assignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
           row['assignee'] = row['assignee'].split('\t')[0]
