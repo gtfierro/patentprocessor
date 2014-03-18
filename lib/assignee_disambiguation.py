@@ -19,7 +19,7 @@ from datetime import datetime
 from sqlalchemy.sql import or_
 from sqlalchemy.sql.expression import bindparam
 from unidecode import unidecode
-from tasks import celery_commit_inserts, celery_commit_updates
+from tasks import bulk_commit_inserts, bulk_commit_updates
 import sys
 
 config = get_config()
@@ -122,9 +122,9 @@ def create_assignee_table(session):
               assignee_match(rawassignees, session, commit=True)
           else:
               assignee_match(rawassignees, session, commit=False)
-    celery_commit_inserts(assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
-    celery_commit_inserts(patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
-    celery_commit_updates('assignee_id', update_statements, RawAssignee.__table__, alchemy.is_mysql(), 20000)
+    bulk_commit_inserts(assignee_insert_statements, Assignee.__table__, alchemy.is_mysql(), 20000)
+    bulk_commit_inserts(patentassignee_insert_statements, patentassignee, alchemy.is_mysql(), 20000)
+    bulk_commit_updates('assignee_id', update_statements, RawAssignee.__table__, alchemy.is_mysql(), 20000)
     session.commit()
     print i, datetime.now()
 

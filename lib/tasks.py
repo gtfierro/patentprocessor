@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 # fetch reference to temporary_update table.
 
-def celery_commit_inserts(insert_statements, table, is_mysql, commit_frequency = 1000, dbtype='grant'):
+def bulk_commit_inserts(insert_statements, table, is_mysql, commit_frequency = 1000, dbtype='grant'):
     """
     Executes bulk inserts for a given table. This is typically much faster than going through
     the SQLAlchemy ORM. The insert_statement list of dictionaries may fall victim to SQLAlchemy
@@ -30,7 +30,7 @@ def celery_commit_inserts(insert_statements, table, is_mysql, commit_frequency =
     session = session_generator(dbtype=dbtype)
     commit_inserts(session, insert_statements, table, is_mysql, commit_frequency)
 
-def celery_commit_updates(update_key, update_statements, table, is_mysql, commit_frequency = 1000, dbtype='grant'):
+def bulk_commit_updates(update_key, update_statements, table, is_mysql, commit_frequency = 1000, dbtype='grant'):
     """
     Executes bulk updates for a given table. This is typically much faster than going through
     the SQLAlchemy ORM. In order to be flexible, the update statements must be set up in a specific

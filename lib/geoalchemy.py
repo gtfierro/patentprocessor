@@ -14,7 +14,7 @@ import pandas as pd
 
 import alchemy
 from alchemy.match import commit_inserts, commit_updates
-from tasks import celery_commit_inserts, celery_commit_updates
+from tasks import bulk_commit_inserts, bulk_commit_updates
 
 global doctype
 doctype = ''
@@ -252,11 +252,11 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
     else:
         alchemy_session.execute('delete from location; delete from assignee_location; delete from inventor_location;')
     if doctype == 'grant':
-        celery_commit_inserts(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq, 'grant')
-        celery_commit_updates('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'grant')
+        bulk_commit_inserts(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq, 'grant')
+        bulk_commit_updates('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'grant')
     elif doctype == 'application':
-        celery_commit_inserts(location_insert_statements, alchemy.schema.App_Location.__table__, alchemy.is_mysql(), commit_freq, 'application')
-        celery_commit_updates('location_id', update_statements, alchemy.schema.App_RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'application')
+        bulk_commit_inserts(location_insert_statements, alchemy.schema.App_Location.__table__, alchemy.is_mysql(), commit_freq, 'application')
+        bulk_commit_updates('location_id', update_statements, alchemy.schema.App_RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'application')
     alchemy_session.commit()
     session_generator = alchemy.session_generator(dbtype=doctype)
     session = session_generator()

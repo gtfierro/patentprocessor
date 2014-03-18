@@ -18,7 +18,7 @@ import linecache
 from datetime import datetime
 import pandas as pd
 from collections import defaultdict, Counter
-from lib.tasks import celery_commit_inserts, celery_commit_updates
+from lib.tasks import bulk_commit_inserts, bulk_commit_updates
 from unidecode import unidecode
 from datetime import datetime
 
@@ -99,10 +99,10 @@ def integrate(disambig_input_file, disambig_output_file):
     else:
         session.execute('delete from inventor; delete from patent_inventor;')
 
-    from lib.tasks import celery_commit_inserts, celery_commit_updates
-    celery_commit_inserts(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
-    celery_commit_inserts(patentinventor_inserts, patentinventor, is_mysql(), 20000)
-    celery_commit_updates('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
+    from lib.tasks import bulk_commit_inserts, bulk_commit_updates
+    bulk_commit_inserts(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
+    bulk_commit_inserts(patentinventor_inserts, patentinventor, is_mysql(), 20000)
+    bulk_commit_updates('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
 
 
     doctype = 'grant'
@@ -117,9 +117,9 @@ def integrate(disambig_input_file, disambig_output_file):
     assigneelocation.columns = ['location_id','assignee_id']
     locationassignee_inserts = [row[1].to_dict() for row in assigneelocation.iterrows()]
     if doctype == 'grant':
-        celery_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
+        bulk_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
     elif doctype == 'application':
-        celery_commit_inserts(locationassignee_inserts, alchemy.schema.app_locationassignee, alchemy.is_mysql(), 20000, 'application')
+        bulk_commit_inserts(locationassignee_inserts, alchemy.schema.app_locationassignee, alchemy.is_mysql(), 20000, 'application')
 
     session.execute('truncate location_inventor;')
     res = session.execute('select location.id, inventor.id from inventor \
@@ -134,9 +134,9 @@ def integrate(disambig_input_file, disambig_output_file):
     inventorlocation = inventorlocation.drop_duplicates(cols=['location_id','inventor_id'])
     locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
     if doctype == 'grant':
-        celery_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000, 'grant')
+        bulk_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000, 'grant')
     elif doctype == 'application':
-        celery_commit_inserts(locationinventor_inserts, alchemy.schema.app_locationinventor, alchemy.is_mysql(), 20000, 'application')
+        bulk_commit_inserts(locationinventor_inserts, alchemy.schema.app_locationinventor, alchemy.is_mysql(), 20000, 'application')
 
 def main():
     if len(sys.argv) <= 2:

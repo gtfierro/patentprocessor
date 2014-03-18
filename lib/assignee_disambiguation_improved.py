@@ -19,7 +19,7 @@ from datetime import datetime
 from sqlalchemy.sql import or_
 from sqlalchemy.sql.expression import bindparam
 from unidecode import unidecode
-from tasks import celery_commit_inserts, celery_commit_updates
+from tasks import bulk_commit_inserts, bulk_commit_updates
 import multiprocessing
 from joblib import Parallel, delayed
 import itertools
@@ -214,13 +214,13 @@ def run_disambiguation():
       f.write(str(len(applicationassignee_inserts))+'\n')
       f.write(str(len(grant_rawassignee_updates))+'\n')
       f.write(str(len(app_rawassignee_updates))+'\n')
-    celery_commit_inserts(grant_assignee_inserts, Assignee.__table__, alchemy.is_mysql(), 20000, 'grant')
-    celery_commit_inserts(app_assignee_inserts, App_Assignee.__table__, alchemy.is_mysql(), 20000, 'application')
+    bulk_commit_inserts(grant_assignee_inserts, Assignee.__table__, alchemy.is_mysql(), 20000, 'grant')
+    bulk_commit_inserts(app_assignee_inserts, App_Assignee.__table__, alchemy.is_mysql(), 20000, 'application')
 
-    celery_commit_inserts(patentassignee_inserts, patentassignee, alchemy.is_mysql(), 20000, 'grant')
-    celery_commit_inserts(applicationassignee_inserts, applicationassignee, alchemy.is_mysql(), 20000, 'application')
+    bulk_commit_inserts(patentassignee_inserts, patentassignee, alchemy.is_mysql(), 20000, 'grant')
+    bulk_commit_inserts(applicationassignee_inserts, applicationassignee, alchemy.is_mysql(), 20000, 'application')
 
-    celery_commit_updates('assignee_id', grant_rawassignee_updates, RawAssignee.__table__, alchemy.is_mysql(), 20000, 'grant')
-    celery_commit_updates('assignee_id', app_rawassignee_updates, App_RawAssignee.__table__, alchemy.is_mysql(), 20000, 'application')
+    bulk_commit_updates('assignee_id', grant_rawassignee_updates, RawAssignee.__table__, alchemy.is_mysql(), 20000, 'grant')
+    bulk_commit_updates('assignee_id', app_rawassignee_updates, App_RawAssignee.__table__, alchemy.is_mysql(), 20000, 'application')
 
 run_disambiguation()

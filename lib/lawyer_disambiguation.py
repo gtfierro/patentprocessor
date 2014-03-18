@@ -19,7 +19,7 @@ from datetime import datetime
 from sqlalchemy.sql import or_
 from sqlalchemy.sql.expression import bindparam
 from unidecode import unidecode
-from tasks import celery_commit_inserts, celery_commit_updates
+from tasks import bulk_commit_inserts, bulk_commit_updates
 import sys
 config = get_config()
 
@@ -121,9 +121,9 @@ def create_lawyer_table(session):
               lawyer_match(rawlawyers, session, commit=True)
           else:
               lawyer_match(rawlawyers, session, commit=False)
-    t1 = celery_commit_inserts.delay(lawyer_insert_statements, Lawyer.__table__, alchemy.is_mysql(), 20000)
-    t2 = celery_commit_inserts.delay(patentlawyer_insert_statements, patentlawyer, alchemy.is_mysql(), 20000)
-    t3 = celery_commit_updates.delay('lawyer_id', update_statements, RawLawyer.__table__, alchemy.is_mysql(), 20000)
+    t1 = bulk_commit_inserts.delay(lawyer_insert_statements, Lawyer.__table__, alchemy.is_mysql(), 20000)
+    t2 = bulk_commit_inserts.delay(patentlawyer_insert_statements, patentlawyer, alchemy.is_mysql(), 20000)
+    t3 = bulk_commit_updates.delay('lawyer_id', update_statements, RawLawyer.__table__, alchemy.is_mysql(), 20000)
     t1.get()
     t2.get()
     t3.get()
