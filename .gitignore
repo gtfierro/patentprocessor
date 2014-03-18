@@ -37,3 +37,11 @@ tags
 
 *.pid # pid files
 dump.rdb # redis dump
+
+*.aux
+*.idx
+*.out
+*.pdf
+*.tex
+*_files
+*.ipynb_checkpoints

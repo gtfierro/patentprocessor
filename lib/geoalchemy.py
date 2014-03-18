@@ -1,3 +1,31 @@
+"""
+Copyright (c) 2013 The Regents of the University of California, AMERICAN INSTITUTES FOR RESEARCH
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+"""
+@author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
+"""
 import sqlalchemy
 import sqlalchemy.orm as orm
 import sqlalchemy.ext.declarative as declarative
@@ -14,7 +42,7 @@ import pandas as pd
 
 import alchemy
 from alchemy.match import commit_inserts, commit_updates
-from tasks import celery_commit_inserts, celery_commit_updates
+from tasks import bulk_commit_inserts, bulk_commit_updates
 
 global doctype
 doctype = ''
@@ -250,43 +278,21 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
     if alchemy.is_mysql():
         alchemy_session.execute('truncate location; truncate assignee_location; truncate inventor_location;')
     else:
-        alchemy_session.execute('delete from location; delete from assignee_location; delete from inventor_location;')
+        alchemy_session.execute('delete from location;')
+        alchemy_session.commit()
+        alchemy_session.execute('delete from location_assignee;')
+        alchemy_session.commit()
+        alchemy_session.execute('delete from location_inventor;')
+        alchemy_session.commit()
     if doctype == 'grant':
-        celery_commit_inserts(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq, 'grant')
-        celery_commit_updates('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'grant')
+        bulk_commit_inserts(location_insert_statements, alchemy.schema.Location.__table__, alchemy.is_mysql(), commit_freq, 'grant')
+        bulk_commit_updates('location_id', update_statements, alchemy.schema.RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'grant')
     elif doctype == 'application':
-        celery_commit_inserts(location_insert_statements, alchemy.schema.App_Location.__table__, alchemy.is_mysql(), commit_freq, 'application')
-        celery_commit_updates('location_id', update_statements, alchemy.schema.App_RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'application')
+        bulk_commit_inserts(location_insert_statements, alchemy.schema.App_Location.__table__, alchemy.is_mysql(), commit_freq, 'application')
+        bulk_commit_updates('location_id', update_statements, alchemy.schema.App_RawLocation.__table__, alchemy.is_mysql(), commit_freq, 'application')
     alchemy_session.commit()
     session_generator = alchemy.session_generator(dbtype=doctype)
     session = session_generator()
-    res = session.execute('select location.id, assignee.id from assignee \
-                           inner join rawassignee on rawassignee.assignee_id = assignee.id \
-                           inner join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
-                           inner join location on location.id = rawlocation.location_id;')
-    assigneelocation = pd.DataFrame.from_records(res.fetchall())
-    assigneelocation = assigneelocation[assigneelocation[0].notnull()]
-    assigneelocation = assigneelocation[assigneelocation[1].notnull()]
-    assigneelocation.columns = ['location_id','assignee_id']
-    locationassignee_inserts = [row[1].to_dict() for row in assigneelocation.iterrows()]
-    if doctype == 'grant':
-        celery_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
-    elif doctype == 'application':
-        celery_commit_inserts(locationassignee_inserts, alchemy.schema.app_locationassignee, alchemy.is_mysql(), 20000, 'application')
-
-    res = session.execute('select location.id, inventor.id from inventor \
-                           left join rawinventor on rawinventor.inventor_id = inventor.id \
-                           right join rawlocation on rawlocation.id = rawinventor.rawlocation_id \
-                           right join location on location.id = rawlocation.location_id;')
-    inventorlocation = pd.DataFrame.from_records(res.fetchall())
-    inventorlocation = inventorlocation[inventorlocation[0].notnull()]
-    inventorlocation = inventorlocation[inventorlocation[1].notnull()]
-    inventorlocation.columns = ['location_id','inventor_id']
-    locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
-    if doctype == 'grant':
-        celery_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000, 'grant')
-    elif doctype == 'application':
-        celery_commit_inserts(locationinventor_inserts, alchemy.schema.app_locationinventor, alchemy.is_mysql(), 20000, 'application')
 
     session.commit()
 

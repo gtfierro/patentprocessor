@@ -1,5 +1,33 @@
 #!/usr/bin/env python
 """
+Copyright (c) 2013 The Regents of the University of California, AMERICAN INSTITUTES FOR RESEARCH
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+"""
+@author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
+"""
+"""
 Takes in a CSV file that represents the output of the disambiguation engine:
   Patent Number, Firstname, Lastname, Unique_Inventor_ID
 Groups by Unique_Inventor_ID and then inserts them into the Inventor table using
@@ -18,7 +46,7 @@ import linecache
 from datetime import datetime
 import pandas as pd
 from collections import defaultdict, Counter
-from lib.tasks import celery_commit_inserts, celery_commit_updates
+from lib.tasks import bulk_commit_inserts, bulk_commit_updates
 from unidecode import unidecode
 from datetime import datetime
 
@@ -38,14 +66,20 @@ def integrate(disambig_input_file, disambig_output_file):
     just have to populate the fields of the disambiguated inventor object:
         inventor id, first name, last name, nationality (?)
     """
+    #disambig_input = pd.read_csv(disambig_input_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
+    #disambig_output = pd.read_csv(disambig_output_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
     disambig_input = pd.read_csv(disambig_input_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
     disambig_output = pd.read_csv(disambig_output_file,header=None,delimiter='\t',encoding='utf-8',skiprows=[1991872])
-    disambig_input[0] = disambig_input[0].apply(str)
-    disambig_output[0] = disambig_output[0].apply(str)
+    #disambig_input[0] = disambig_input[0].apply(str)
+    #disambig_output[0] = disambig_output[0].apply(str)
     print 'finished loading csvs'
     merged = pd.merge(disambig_input, disambig_output, on=0)
+    import IPython
+    d = locals()
+    d.update(globals())
+    IPython.embed(user_ns=d)
     print 'finished merging'
-    inventor_attributes = merged[[0,'1_y','1_x',2,3,4]] # rawinventor uuid, inventor id, first name, middle name, last name, patent_id
+    #inventor_attributes = merged[[0,'1_y','1_x',2,3,4]] # rawinventor uuid, inventor id, first name, middle name, last name, patent_id
     inventor_attributes = inventor_attributes.dropna(subset=[0],how='all')
     inventor_attributes[2] = inventor_attributes[2].fillna('')
     inventor_attributes[3] = inventor_attributes[3].fillna('')
@@ -74,8 +108,8 @@ def integrate(disambig_input_file, disambig_output_file):
                 freq[k][v] += 1
         param['id'] = inventor_id
         name = freq['name'].most_common(1)[0][0]
-        name_first = unidecode(name.split(' ')[0])
-        name_last = unidecode(''.join(name.split(' ')[1:]))
+        name_first = unidecode(' '.join(name.split(' ')[:-1]))
+        name_last = unidecode(name.split(' ')[-1])
         param['name_first'] = name_first
         param['name_last'] = name_last
         param['nationality'] = ''
@@ -93,10 +127,44 @@ def integrate(disambig_input_file, disambig_output_file):
     else:
         session.execute('delete from inventor; delete from patent_inventor;')
 
-    from lib.tasks import celery_commit_inserts, celery_commit_updates
-    celery_commit_inserts(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
-    celery_commit_inserts(patentinventor_inserts, patentinventor, is_mysql(), 20000)
-    celery_commit_updates('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
+    from lib.tasks import bulk_commit_inserts, bulk_commit_updates
+    bulk_commit_inserts(inventor_inserts, Inventor.__table__, is_mysql(), 20000)
+    bulk_commit_inserts(patentinventor_inserts, patentinventor, is_mysql(), 20000)
+    bulk_commit_updates('inventor_id', rawinventor_updates, RawInventor.__table__, is_mysql(), 20000)
+
+
+    doctype = 'grant'
+    res = session.execute('select location.id, assignee.id from assignee \
+                           inner join rawassignee on rawassignee.assignee_id = assignee.id \
+                           inner join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
+                           inner join location on location.id = rawlocation.location_id;')
+    assigneelocation = pd.DataFrame.from_records(res.fetchall())
+    print assigneelocation.info()
+    assigneelocation = assigneelocation[assigneelocation[0].notnull()]
+    assigneelocation = assigneelocation[assigneelocation[1].notnull()]
+    assigneelocation.columns = ['location_id','assignee_id']
+    locationassignee_inserts = [row[1].to_dict() for row in assigneelocation.iterrows()]
+    if doctype == 'grant':
+        bulk_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
+    elif doctype == 'application':
+        bulk_commit_inserts(locationassignee_inserts, alchemy.schema.app_locationassignee, alchemy.is_mysql(), 20000, 'application')
+
+    session.execute('truncate location_inventor;')
+    res = session.execute('select location.id, inventor.id from inventor \
+                           left join rawinventor on rawinventor.inventor_id = inventor.id \
+                           right join rawlocation on rawlocation.id = rawinventor.rawlocation_id \
+                           right join location on location.id = rawlocation.location_id;')
+    inventorlocation = pd.DataFrame.from_records(res.fetchall())
+    print inventorlocation.info()
+    inventorlocation = inventorlocation[inventorlocation[0].notnull()]
+    inventorlocation = inventorlocation[inventorlocation[1].notnull()]
+    inventorlocation.columns = ['location_id','inventor_id']
+    inventorlocation = inventorlocation.drop_duplicates(cols=['location_id','inventor_id'])
+    locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
+    if doctype == 'grant':
+        bulk_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000, 'grant')
+    elif doctype == 'application':
+        bulk_commit_inserts(locationinventor_inserts, alchemy.schema.app_locationinventor, alchemy.is_mysql(), 20000, 'application')
 
 def main():
     if len(sys.argv) <= 2:
@@ -104,7 +172,7 @@ def main():
         sys.exit()
     dis_in = sys.argv[1]
     dis_out = sys.argv[2]
-    integrate(dis_in, dis_out)
+    integrate(dis_in,dis_out)
 
 if __name__ == '__main__':
     main()
