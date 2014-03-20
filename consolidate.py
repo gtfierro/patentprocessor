@@ -36,7 +36,7 @@ a dump CSV file with the appropriate columns as needed for the disambiguation:
 """
 import codecs
 from lib import alchemy
-from lib.assignee_disambiguation import get_assignee_id
+from lib.assignee_disambiguation import get_cleanid
 from lib.handlers.xml_util import normalize_utf8
 from sqlalchemy.orm import joinedload, subqueryload
 from sqlalchemy import extract
@@ -71,7 +71,7 @@ def main(year, doctype):
           print i, datetime.now()
         try:
           # create common dict for this patent
-          loc = patent.rawinventors[0].rawlocation.location
+          primloc = patent.rawinventors[0].rawlocation.location
           mainclass = patent.classes[0].mainclass_id if patent.classes else ''
           subclass = patent.classes[0].subclass_id if patent.classes else ''
           row = {'number': patent.id,
@@ -87,9 +87,9 @@ def main(year, doctype):
               row['ignore'] == 0
             elif int(patent.granted) == 1:
               row['ignore'] == 1
-          row['assignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
+          row['assignee'] = get_cleanid(patent.rawassignees[0]) if patent.rawassignees else ''
           row['assignee'] = row['assignee'].split('\t')[0]
-          row['rawassignee'] = get_assignee_id(patent.rawassignees[0]) if patent.rawassignees else ''
+          row['rawassignee'] = get_cleanid(patent.rawassignees[0]) if patent.rawassignees else ''
           row['rawassignee'] = row['rawassignee'].split('\t')[0]
           # generate a row for each of the inventors on a patent
           for ri in patent.rawinventors:
@@ -101,10 +101,11 @@ def main(year, doctype):
               name_middle, name_last = ' '.join(raw_name[:-1]), raw_name[-1]
               namedict['name_middle'] = name_middle
               namedict['name_last'] = name_last
-              loc = ri.rawlocation.location
-              namedict['state'] = loc.state if loc else ''
-              namedict['country'] = loc.country if loc else ''
-              namedict['city'] = loc.city if loc else ''
+              rawloc = ri.rawlocation
+              loc = rawloc.location
+              namedict['state'] = loc.state if loc else rawloc.state if rawloc else primloc.state if primloc else ''
+              namedict['country'] = loc.country if loc else rawloc.country if rawloc else primloc.country if primloc else ''
+              namedict['city'] = loc.city if loc else rawloc.city if rawloc else primloc.city if primloc else ''
               tmprow = row.copy()
               tmprow.update(namedict)
               newrow = normalize_utf8(ROW(tmprow))
