@@ -83,10 +83,8 @@ def main(year, doctype):
             row['isgrant'] = 1
           elif doctype == 'application':
             row['isgrant'] = 0
-            if not patent.granted:
-              row['ignore'] == 0
-            elif int(patent.granted) == 1:
-              row['ignore'] == 1
+            if patent.granted == True:
+              row['ignore'] = 1
           row['assignee'] = get_cleanid(patent.rawassignees[0]) if patent.rawassignees else ''
           row['assignee'] = row['assignee'].split('\t')[0]
           row['rawassignee'] = get_cleanid(patent.rawassignees[0]) if patent.rawassignees else ''
@@ -129,7 +127,7 @@ if __name__ == '__main__':
     for year in range(1975, datetime.today().year+1):
       print 'Running year',year,datetime.now(),'for grant'
       main(year, 'grant')
-    for year in range(1975, datetime.today().year+1):
+    for year in range(2001, datetime.today().year+1):
       print 'Running year',year,datetime.now(),'for application'
       main(year, 'application')
 
