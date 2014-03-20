@@ -251,4 +251,5 @@ def run_disambiguation():
     bulk_commit_updates('assignee_id', grant_rawassignee_updates, RawAssignee.__table__, alchemy.is_mysql(), 20000, 'grant')
     bulk_commit_updates('assignee_id', app_rawassignee_updates, App_RawAssignee.__table__, alchemy.is_mysql(), 20000, 'application')
 
-run_disambiguation()
+if __name__=='__main__':
+  run_disambiguation()
