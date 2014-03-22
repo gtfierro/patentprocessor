@@ -71,7 +71,11 @@ def main(year, doctype):
           print i, datetime.now()
         try:
           # create common dict for this patent
-          primloc = patent.rawinventors[0].rawlocation.location
+          primrawloc = patent.rawinventors[0].rawlocation
+          if primrawloc:
+            primloc = patent.rawinventors[0].rawlocation.location
+          else:
+            primloc = primrawloc
           mainclass = patent.classes[0].mainclass_id if patent.classes else ''
           subclass = patent.classes[0].subclass_id if patent.classes else ''
           row = {'number': patent.id,
@@ -100,10 +104,19 @@ def main(year, doctype):
               namedict['name_middle'] = name_middle
               namedict['name_last'] = name_last
               rawloc = ri.rawlocation
-              loc = rawloc.location
-              namedict['state'] = loc.state if loc else rawloc.state if rawloc else primloc.state if primloc else ''
-              namedict['country'] = loc.country if loc else rawloc.country if rawloc else primloc.country if primloc else ''
-              namedict['city'] = loc.city if loc else rawloc.city if rawloc else primloc.city if primloc else ''
+              if rawloc:
+                loc = rawloc.location
+              else:
+                loc = None
+              namedict['state'] = loc.state if loc else ''# if loc else rawloc.state if rawloc else primloc.state if primloc else ''
+              namedict['country'] = loc.country if loc else ''# if loc else rawloc.country if rawloc else primloc.country if primloc else ''
+              namedict['city'] = loc.city if loc else ''# if loc else rawloc.city if rawloc else primloc.city if primloc else ''
+              if '??' in namedict['state'] or len(namedict['state']) == 0:
+                namedict['state'] = rawloc.state if rawloc else primloc.state if primloc else ''
+              if '??' in namedict['country'] or len(namedict['country']) == 0:
+                namedict['country'] = rawloc.country if rawloc else primloc.country if primloc else ''
+              if '??' in namedict['city'] or len(namedict['city']) == 0:
+                namedict['city'] = rawloc.city if rawloc else primloc.city if primloc else ''
               tmprow = row.copy()
               tmprow.update(namedict)
               newrow = normalize_utf8(ROW(tmprow))
