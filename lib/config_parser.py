@@ -26,6 +26,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 @author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
 """
+"""
+Parses the process.cfg file
+"""
 import importlib
 from ConfigParser import ConfigParser
 

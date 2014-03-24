@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 """
 Performs a basic lawyer disambiguation
+NOTE: this file is currently broken
 """
 from collections import defaultdict, deque
 import uuid

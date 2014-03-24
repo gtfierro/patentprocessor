@@ -27,8 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
 """
 """
-This module uses the Celery task manager to dispatch parallel database tasks to help speed up the task
-of performing multiple updates over multiple tables.
+Functions for doing bulk inserts and bulk updates
 """
 from alchemy.match import commit_inserts, commit_updates
 from alchemy import session_generator
