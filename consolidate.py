@@ -31,8 +31,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Takes the existing database (as indicated by the alchemy configuration file) and creates
 a dump CSV file with the appropriate columns as needed for the disambiguation:
 
-  patent doc number, main class, sub class, inventor first name, inventor middle name, inventor last name,
-  city, state, zipcode, country, assignee
+uuid, isgrant, ignore, name_first, name_last, patent number, mainclass, subclass, city, state, country, assignee, rawassignee, inventor_id
+
+'record' refers to the unique tuple of (rawinventor, document number)
+
+uuid: unique identifier assigned to this raw inventor
+isgrant: true if this record is a granted patent (as opposed to a published application)
+ignore: true if this record is an application that has been granted
+name_first: first name of the raw inventor on this record
+name_last: last name of the raw inventor on this record
+patent number: the document number of this record. Will either be a patent number or an application number
+mainclass: the primary main classification of this patent
+subclass: the primary subclassification of this patent
+city, state, country: the disambiguated location of the rawinventor on this record. To avoid having null
+    entries in these columns, locations are (in order of precedence) disambiguated rawinventor location,
+    rawinventor rawlocation, disambiguated location of primary inventor (under the assumption that
+    coinventor are more likely to be colocated than not).
+assignee: disambiguated assignee organization name OR first/last name of assignee (one or the other -- documents do not contain both)
+rawassignee: raw assignee organization name OR first/last name of rawassignee as listed on this record
+inventor_id: disambiguated inventor id assigned to the rawinventor on this record from the last inventor
+    disambiguation run. NULL if this rawinventor record is new.
+
 """
 import codecs
 from lib import alchemy
@@ -45,7 +64,6 @@ import pandas as pd
 import sys
 
 #TODO: for ignore rows, use the uuid instead (leave blank if not ignore) and use that to link the ids together for integration
-#TODO: include column in disambig input: inventor-id from previous run, or null
 
 # create CSV file row using a dictionary. Use `ROW(dictionary)`
 # isgrant: 1 if granted patent, 0 if application
@@ -127,6 +145,11 @@ def main(year, doctype):
           continue
 
 def join(oldfile, newfile):
+    """
+    Does a JOIN on the rawinventor uuid field to associate rawinventors in this
+    round with inventor_ids they were assigned in the previous round of
+    disambiguation. This improves the runtime of the inventor disambiguator
+    """
     new = pd.read_csv(newfile,delimiter='\t',header=None)
     old = pd.read_csv(oldfile,delimiter='\t',header=None)
     merged = pd.merge(new,old,on=0,how='left')
@@ -135,6 +158,7 @@ def join(oldfile, newfile):
 if __name__ == '__main__':
     if len(sys.argv) < 2:
       print "Provide path to previous disambiguation output"
+      pritn "USAGE: python consolidate.py <path/to/old/disambiguation/output.tsv>"
       sys.exit(1)
     prev_output = sys.argv[1]
     for year in range(1975, datetime.today().year+1):

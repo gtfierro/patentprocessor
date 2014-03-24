@@ -26,6 +26,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 @author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
 """
+"""
+Creates the invpat file as seen and constructed in the Harvard DVN project
+"""
 from lib import alchemy
 import pandas as pd
 
