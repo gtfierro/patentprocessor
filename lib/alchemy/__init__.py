@@ -26,6 +26,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 @author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
 """
+"""
+Helper functions for database-related functionality.
+"""
 import os
 import re
 import ConfigParser
@@ -43,6 +46,9 @@ from sqlalchemy.pool import Pool
 
 @event.listens_for(Pool, "checkout")
 def ping_connection(dbapi_connection, connection_record, connection_proxy):
+    """
+    This keeps the database connection alive over long-running processes (like assignee and location disambiguations)
+    """
     cursor = dbapi_connection.cursor()
     if not hasattr(cursor, 'MySQLError'):
               return
@@ -58,6 +64,11 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor.close()
 
 def is_mysql():
+    """
+    Returns True if currently connected to a MySQL database. Given that our only two options
+    are MySQL and SQLite, we use this function to determien when we can use certain functions
+    like `set foreign_key_checks = 0` and `truncate <tablaneme>`.
+    """
     config = get_config()
     return config.get('global').get('database') == 'mysql'
 
@@ -101,6 +112,13 @@ def session_generator(db=None, dbtype='grant'):
     @db: string describing database, e.g. "sqlite" or "mysql"
     @dbtype: string indicating if we are fetching the session for
              the grant database or the application database
+    session_generator will return an object taht can be called
+    to retrieve more sessions, e.g.
+    sg = session_generator(dbtype='grant')
+    session1 = sg()
+    session2 = sg()
+    etc.
+    These sessions will be protected with the ping refresher above
     """
     config = get_config()
     echo = config.get('global').get('echo')
@@ -127,7 +145,6 @@ def session_generator(db=None, dbtype='grant'):
 
     Session = sessionmaker(bind=engine, _enable_transaction_accounting=False)
     return scoped_session(Session)
-    #return Session
 
 def fetch_session(db=None, dbtype='grant'):
     """
