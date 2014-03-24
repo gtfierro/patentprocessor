@@ -27,6 +27,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 @author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
 """
+"""
+Parses USPTO released XML dumps of granted patents and published applications
+according to the handlers in lib/handlers/ and inserts the parsed records
+into the database indicated by lib/alchemy/config.ini.
+
+This file can be called directly `python parse.py <flags>` or can be configured
+by process.cfg and called by `python start.py process.cfg`. See process.cfg
+for explanation of configuration options
+"""
 
 import logging
 import os
