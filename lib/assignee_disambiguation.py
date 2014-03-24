@@ -132,8 +132,6 @@ def disambiguate_letter(letter):
         groupkeys.append(uuid)
     return groups
 
-# for block in lettergroup.values():
-#  create_disambiguated_record_for_block(block)
 def create_disambiguated_record_for_block(block):
     grant_assignee_inserts = []
     app_assignee_inserts = []
@@ -197,16 +195,27 @@ def create_disambiguated_record_for_block(block):
 
 
 def run_disambiguation():
+    """
+    Runs disambiguation algorithm on grant and application assignees from
+    the database indicated by lib/alchemy/config
+    """
+    # retrieve database connections and pull in all assignees from
+    # both grant and application databases
     grtsesh = grantsessiongen()
     appsesh = appsessiongen()
     print 'fetching raw assignees',datetime.now()
     rawassignees = list(grtsesh.query(RawAssignee))
     rawassignees.extend(list(appsesh.query(App_RawAssignee)))
+    # clear the destination tables
     if alchemy.is_mysql():
         grtsesh.execute('truncate assignee; truncate patent_assignee;')
         appsesh.execute('truncate assignee; truncate application_assignee;')
-
+    else:
+        grtsesh.execute('delete from assignee; delete from patent_assignee;')
+        appsesh.execute('delete from assignee; delete from patent_assignee;')
     print 'cleaning ids', datetime.now()
+    # uses the get_cleanid method to remove undesirable characters and
+    # normalize to case and group by first letter
     for ra in rawassignees:
         uuid_to_object[ra.uuid] = ra
         cleanid = get_cleanid(ra)
@@ -217,6 +226,9 @@ def run_disambiguation():
         uuids_by_cleanidletter[firstletter].append(ra.uuid)
 
     print 'disambiguating blocks', datetime.now()
+    # disambiguates each of the letter blocks using
+    # the list of assignees as a stack and only performing
+    # jaro-winkler comparisons on the first item of each block
     allrecords = []
     for letter in alphabet:
         print 'disambiguating','({0})'.format(letter),datetime.now()
@@ -224,9 +236,9 @@ def run_disambiguation():
         print 'got',len(lettergroup),'records'
         print 'creating disambiguated records','({0})'.format(letter),datetime.now()
         allrecords.extend(lettergroup.values())
+    # create the attributes for the disambiguated assignee record from the
+    # raw records placed into a block in the disambiguation phase
     res = map(create_disambiguated_record_for_block, allrecords)
-    #res = Parallel(n_jobs=2,verbose=50)(delayed(create_disambiguated_record_for_block)(i) for i in allrecords)
-    #res = pool.map(create_disambiguated_record_for_block, lettergroup.values())
     mid = itertools.izip(*res)
     grant_assignee_inserts = list(itertools.chain.from_iterable(mid.next()))
     app_assignee_inserts = list(itertools.chain.from_iterable(mid.next()))
@@ -235,6 +247,7 @@ def run_disambiguation():
     grant_rawassignee_updates = list(itertools.chain.from_iterable(mid.next()))
     app_rawassignee_updates = list(itertools.chain.from_iterable(mid.next()))
 
+    # write out the insert counts for each table into a text file
     with open('mid.txt','wb') as f:
       f.write(str(len(grant_assignee_inserts))+'\n')
       f.write(str(len(app_assignee_inserts))+'\n')
@@ -242,13 +255,15 @@ def run_disambiguation():
       f.write(str(len(applicationassignee_inserts))+'\n')
       f.write(str(len(grant_rawassignee_updates))+'\n')
       f.write(str(len(app_rawassignee_updates))+'\n')
+    # insert disambiguated assignee records
     bulk_commit_inserts(grant_assignee_inserts, Assignee.__table__, alchemy.is_mysql(), 20000, 'grant')
     bulk_commit_inserts(app_assignee_inserts, App_Assignee.__table__, alchemy.is_mysql(), 20000, 'application')
-
+    # insert patent/assignee link records
     bulk_commit_inserts(patentassignee_inserts, patentassignee, alchemy.is_mysql(), 20000, 'grant')
     bulk_commit_inserts(applicationassignee_inserts, applicationassignee, alchemy.is_mysql(), 20000, 'application')
-
+    # update rawassignees with their disambiguated record
     bulk_commit_updates('assignee_id', grant_rawassignee_updates, RawAssignee.__table__, alchemy.is_mysql(), 20000, 'grant')
     bulk_commit_updates('assignee_id', app_rawassignee_updates, App_RawAssignee.__table__, alchemy.is_mysql(), 20000, 'application')
 
-run_disambiguation()
+if __name__=='__main__':
+  run_disambiguation()

@@ -27,6 +27,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 @author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
 """
+"""
+Handles argument parsing for parse.py
+"""
 
 import sys
 import os

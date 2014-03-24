@@ -26,6 +26,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 @author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
 """
+"""
+Contains schemas for the database
+"""
 from sqlalchemy import func
 from sqlalchemy import Column, Date, Integer, Float, Boolean, VARCHAR
 from sqlalchemy import ForeignKey, Index
