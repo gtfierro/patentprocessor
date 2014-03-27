@@ -140,9 +140,7 @@ def run_clean(process_config):
     if not process_config['clean']:
         return
     doctype = process_config['doctype']
-    command = 'python clean.py'
-    if process_config['lowmemory']:
-        command = 'bash run_clean.sh'
+    command = 'bash run_clean.sh'
     if doctype in ['all', 'grant']:
         os.system(command + ' grant')
     if doctype in ['all', 'application']:
@@ -152,9 +150,8 @@ def run_consolidate(process_config):
     if not process_config['consolidate']:
         return
     doctype = process_config['doctype']
-    command = 'python consolidate.py'
-    if process_config['lowmemory']:
-        command = 'bash run_consolidation.sh'
+    # TODO: optionally include previous disambiguation
+    command = 'bash run_consolidate.sh'
     if doctype in ['all', 'grant']:
         os.system(command + ' grant')
     if doctype in ['all', 'application']:
@@ -204,7 +201,6 @@ if __name__=='__main__':
                 .format(parse_config['applicationregex'], parse_config['datadir'], len(files))
     print 'Finished parsing in {0}'.format(str(f-s))
 
-    # run extra phases if needed, then move output files
+    # run extra phases if needed
     run_clean(process_config)
     run_consolidate(process_config)
-    parse.move_tables(process_config['outputdir'])
