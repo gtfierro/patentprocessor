@@ -169,5 +169,5 @@ if __name__ == '__main__':
         print "Not joining on previous records"
     else:
        prev_output = sys.argv[1]
-        # join files
-        join(prev_output, 'disambiguator.csv')
+       # join files
+       join(prev_output, 'disambiguator.csv')
