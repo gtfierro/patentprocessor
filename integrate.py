@@ -143,6 +143,7 @@ def integrate(disambig_input_file, disambig_output_file):
     assigneelocation = assigneelocation[assigneelocation[0].notnull()]
     assigneelocation = assigneelocation[assigneelocation[1].notnull()]
     assigneelocation.columns = ['location_id','assignee_id']
+    assigneelocation = assigneelocation.drop_duplicates(cols='assignee_id',take_last=True)
     locationassignee_inserts = [row[1].to_dict() for row in assigneelocation.iterrows()]
     if doctype == 'grant':
         bulk_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
@@ -159,7 +160,7 @@ def integrate(disambig_input_file, disambig_output_file):
     inventorlocation = inventorlocation[inventorlocation[0].notnull()]
     inventorlocation = inventorlocation[inventorlocation[1].notnull()]
     inventorlocation.columns = ['location_id','inventor_id']
-    inventorlocation = inventorlocation.drop_duplicates(cols=['location_id','inventor_id'])
+    inventorlocation = inventorlocation.drop_duplicates(cols='inventor_id',take_last=True)
     locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
     if doctype == 'grant':
         bulk_commit_inserts(locationinventor_inserts, alchemy.schema.locationinventor, alchemy.is_mysql(), 20000, 'grant')
