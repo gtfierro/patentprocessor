@@ -151,7 +151,7 @@ def run_consolidate(process_config):
         return
     doctype = process_config['doctype']
     # TODO: optionally include previous disambiguation
-    command = 'bash run_consolidate.sh'
+    command = 'bash run_consolidation.sh'
     if doctype in ['all', 'grant']:
         os.system(command + ' grant')
     if doctype in ['all', 'application']:
