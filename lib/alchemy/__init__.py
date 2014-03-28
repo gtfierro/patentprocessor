@@ -39,10 +39,18 @@ from sqlalchemy.sql import exists
 from collections import defaultdict
 import schema
 from match import *
+import uuid
 
 from sqlalchemy import exc
 from sqlalchemy import event
 from sqlalchemy.pool import Pool
+
+def fixid(x):
+    if 'id' in x:
+        x['id'] = str(uuid.uuid1())
+    elif 'uuid' in x:
+        x['uuid'] = str(uuid.uuid1())
+    return x
 
 @event.listens_for(Pool, "checkout")
 def ping_connection(dbapi_connection, connection_record, connection_proxy):
@@ -220,7 +228,7 @@ def add_grant(obj, override=True, temp=False):
         grantsession.execute('set foreign_key_checks = 0;')
         grantsession.execute('set unique_checks = 0;')
 
-    grantsession.commit()
+    #grantsession.commit()
 
     grantsession.merge(pat)
 
@@ -238,6 +246,8 @@ def add_all_fields(obj, pat):
 
 def add_asg(obj, pat):
     for asg, loc in obj.assignee_list:
+        asg = fixid(asg)
+        loc = fixid(loc)
         asg = schema.RawAssignee(**asg)
         loc = schema.RawLocation(**loc)
         grantsession.merge(loc)
@@ -247,6 +257,8 @@ def add_asg(obj, pat):
 
 def add_inv(obj, pat):
     for inv, loc in obj.inventor_list:
+        inv = fixid(inv)
+        loc = fixid(loc)
         inv = schema.RawInventor(**inv)
         loc = schema.RawLocation(**loc)
         grantsession.merge(loc)
@@ -256,12 +268,14 @@ def add_inv(obj, pat):
 
 def add_law(obj, pat):
     for law in obj.lawyer_list:
+        law = fixid(law)
         law = schema.RawLawyer(**law)
         pat.rawlawyers.append(law)
 
 
 def add_usreldoc(obj, pat):
     for usr in obj.us_relation_list:
+        usr = fixid(usr)
         usr["rel_id"] = usr["number"]
         usr = schema.USRelDoc(**usr)
         pat.usreldocs.append(usr)
@@ -269,6 +283,7 @@ def add_usreldoc(obj, pat):
 
 def add_classes(obj, pat):
     for uspc, mc, sc in obj.us_classifications:
+        uspc = fixid(uspc)
         uspc = schema.USPC(**uspc)
         mc = schema.MainClass(**mc)
         sc = schema.SubClass(**sc)
@@ -292,24 +307,29 @@ def add_citations(obj, pat):
             # granted patent doc number
             if re.match(r'^[A-Z]*\d+$', cit['number']):
                 cit['citation_id'] = cit['number']
+                cit = fixid(cit)
                 cit = schema.USPatentCitation(**cit)
                 pat.uspatentcitations.append(cit)
             # if not above, it's probably an application
             else:
                 cit['application_id'] = cit['number']
+                cit = fixid(cit)
                 cit = schema.USApplicationCitation(**cit)
                 pat.usapplicationcitations.append(cit)
         # if not US, then foreign citation
         else:
             cit = schema.ForeignCitation(**cit)
+            cit = fixid(cit)
             pat.foreigncitations.append(cit)
     for ref in refs:
         ref = schema.OtherReference(**ref)
+        ref = fixid(ref)
         pat.otherreferences.append(ref)
 
 def add_claims(obj, pat):
     claims = obj.claims
     for claim in claims:
+        claim = fixid(claim)
         clm = schema.Claim(**claim)
         pat.claims.append(clm)
 
@@ -369,6 +389,8 @@ def add_all_app_fields(obj, app):
 
 def add_app_asg(obj, app):
     for asg, loc in obj.assignee_list:
+        loc = fixid(loc)
+        asg = fixid(asg)
         asg = schema.App_RawAssignee(**asg)
         loc = schema.App_RawLocation(**loc)
         appsession.merge(loc)
@@ -378,6 +400,8 @@ def add_app_asg(obj, app):
 
 def add_app_inv(obj, app):
     for inv, loc in obj.inventor_list:
+        loc = fixid(loc)
+        inv = fixid(inv)
         inv = schema.App_RawInventor(**inv)
         loc = schema.App_RawLocation(**loc)
         appsession.merge(loc)
@@ -387,6 +411,7 @@ def add_app_inv(obj, app):
 
 def add_app_usreldoc(obj, app):
     for usr in obj.us_relation_list:
+        usr = fixid(usr)
         usr["rel_id"] = usr["number"]
         usr = schema.App_USRelDoc(**usr)
         app.usreldocs.append(usr)
@@ -394,6 +419,7 @@ def add_app_usreldoc(obj, app):
 
 def add_app_classes(obj, app):
     for uspc, mc, sc in obj.us_classifications:
+        uspc = fixid(uspc)
         uspc = schema.App_USPC(**uspc)
         mc = schema.App_MainClass(**mc)
         sc = schema.App_SubClass(**sc)
@@ -413,6 +439,7 @@ def add_app_ipcr(obj, app):
 def add_app_claims(obj, app):
     claims = obj.claims
     for claim in claims:
+        claim = fixid(claim)
         clm = schema.App_Claim(**claim)
         app.claims.append(clm)
 
