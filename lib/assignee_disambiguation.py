@@ -49,7 +49,6 @@ from sqlalchemy.sql.expression import bindparam
 from unidecode import unidecode
 from tasks import bulk_commit_inserts, bulk_commit_updates
 import multiprocessing
-from joblib import Parallel, delayed
 import itertools
 import sys
 
