@@ -1,14 +1,41 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 $script = <<SCRIPT
-git clone https://github.com/funginstitute/patentprocessor
+git clone https://github.com/gtfierro/patentprocessor
 cd patentprocessor
 sudo pip install -r requirements.txt
 cd lib
 wget https://s3.amazonaws.com/fungpatdownloads/geolocation_data.7z
 7zr x geolocation_data.7z
-cd
-sudo chmod -R 777 patentprocessor
+sudo chmod -R 777 /home/vagrant/patentprocessor
+echo 'create database patentgrant; create database patentapp' | mysql -u root
+cat > /home/vagrant/patentprocessor/lib/alchemy/config.ini << EOF
+[global]
+database = mysql
+echo = False
+
+[mysql]
+host = 
+user = root
+password = 
+grant-database = patentgrant
+application-database = patentapp
+
+[assignee]
+threshold = 0.90
+
+[location]
+database = geolocation_data.sqlite3
+path = lib
+commit_frequency = 10000
+
+[lawyer]
+threshold = 0.9
+
+[parse]
+# if not specified, defaults to 0 (commits after all rows added)
+commit_frequency = 1000
+EOF
 SCRIPT
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
@@ -22,9 +49,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # doesn't already exist on the user's system.
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/raring/current/raring-server-cloudimg-amd64-vagrant-disk1.box"
 
-  #config.vm.customize ["modifyvm", :id, "--memory", 4096]
   config.vm.provider :virtualbox do |vb|
-    vb.customize ["modifyvm", :id, "--memory",4096]
+    vb.customize ["modifyvm", :id, "--memory",8192]
   end
 
 
