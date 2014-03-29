@@ -141,10 +141,7 @@ def run_clean(process_config):
         return
     doctype = process_config['doctype']
     command = 'bash run_clean.sh'
-    if doctype in ['all', 'grant']:
-        os.system(command + ' grant')
-    if doctype in ['all', 'application']:
-        os.system(command + ' application')
+    os.system(command)
 
 def run_consolidate(process_config):
     if not process_config['consolidate']:
@@ -152,10 +149,7 @@ def run_consolidate(process_config):
     doctype = process_config['doctype']
     # TODO: optionally include previous disambiguation
     command = 'bash run_consolidation.sh'
-    if doctype in ['all', 'grant']:
-        os.system(command + ' grant')
-    if doctype in ['all', 'application']:
-        os.system(command + ' application')
+    os.system(command)
 
 if __name__=='__main__':
     s = datetime.datetime.now()
