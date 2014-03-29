@@ -318,12 +318,12 @@ def add_citations(obj, pat):
                 pat.usapplicationcitations.append(cit)
         # if not US, then foreign citation
         else:
-            cit = schema.ForeignCitation(**cit)
             cit = fixid(cit)
+            cit = schema.ForeignCitation(**cit)
             pat.foreigncitations.append(cit)
     for ref in refs:
-        ref = schema.OtherReference(**ref)
         ref = fixid(ref)
+        ref = schema.OtherReference(**ref)
         pat.otherreferences.append(ref)
 
 def add_claims(obj, pat):
