@@ -3,6 +3,7 @@
 $script = <<SCRIPT
 git clone https://github.com/gtfierro/patentprocessor
 cd patentprocessor
+sudo pip install --upgrade setuptools distribute
 sudo pip install -r requirements.txt
 cd lib
 wget https://s3.amazonaws.com/fungpatdownloads/geolocation_data.7z
