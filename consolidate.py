@@ -123,9 +123,12 @@ def main(year, doctype):
               namedict['name_last'] = name_last
               rawloc = ri.rawlocation
               if rawloc:
-                loc = rawloc.location
+                if rawloc.location:
+                  loc = rawloc.location
+                else:
+                  loc = primloc
               else:
-                loc = None
+                loc = primloc
               namedict['state'] = loc.state if loc else ''# if loc else rawloc.state if rawloc else primloc.state if primloc else ''
               namedict['country'] = loc.country if loc else ''# if loc else rawloc.country if rawloc else primloc.country if primloc else ''
               namedict['city'] = loc.city if loc else ''# if loc else rawloc.city if rawloc else primloc.city if primloc else ''
@@ -151,7 +154,9 @@ def join(oldfile, newfile):
     disambiguation. This improves the runtime of the inventor disambiguator
     """
     new = pd.read_csv(newfile,delimiter='\t',header=None)
+    new[0] = new[0].astype(str)
     old = pd.read_csv(oldfile,delimiter='\t',header=None)
+    old[0] = old[0].astype(str)
     merged = pd.merge(new,old,on=0,how='left')
     merged.to_csv('disambiguator_{0}.tsv'.format(datetime.now().strftime('%B_%d')), index=False, header=None, sep='\t')
 
