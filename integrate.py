@@ -38,7 +38,7 @@ import sys
 import lib.alchemy as alchemy
 from lib.util.csv_reader import read_file
 from lib.alchemy import is_mysql
-from lib.alchemy.schema import Inventor, RawInventor, patentinventor, App_Inventor, App_RawInventor, applicationinventor
+from lib.alchemy.schema import Inventor, RawInventor, patentinventor, App_Inventor, App_RawInventor, applicationinventor, appmetadata
 from lib.handlers.xml_util import normalize_document_identifier
 from collections import defaultdict
 import cPickle as pickle
@@ -191,6 +191,7 @@ def integrate(disambig_input_file, disambig_output_file):
 
     session_generator = alchemy.session_generator(dbtype='grant')
     session = session_generator()
+    gsession = session
     doctype = 'grant'
     session.execute('truncate location_assignee;')
     res = session.execute('select location_id, assignee_id from patent \
@@ -219,6 +220,7 @@ def integrate(disambig_input_file, disambig_output_file):
     doctype = 'application'
     session_generator = alchemy.session_generator(dbtype='application')
     session = session_generator()
+    asession = session
     session.execute('truncate location_assignee;')
     res = session.execute('select location_id, assignee_id from application \
         left join rawassignee on rawassignee.application_id = application.id \
@@ -242,6 +244,67 @@ def integrate(disambig_input_file, disambig_output_file):
     print inventorlocation.info()
     locationinventor_inserts = [row[1].to_dict() for row in inventorlocation.iterrows()]
     bulk_commit_inserts(locationinventor_inserts, alchemy.schema.app_locationinventor, alchemy.is_mysql(), 20000, 'application')
+
+
+
+    #grantsessiongen = alchemy.session_generator(dbtype='grant')
+    #appsessiongen = alchemy.session_generator(dbtype='application')
+    #grantsession = grantsessiongen()
+    #appsession = appsessiongen()
+
+    grantedapps = disambig_input[(disambig_input[2] == 1) & (disambig_input[1] == 0)][[0, 6]] # rawinventor_id, application_id
+
+    print grantedapps
+
+    inserts = [{'pk': x[0], 'update': x[1]} for x in grantedapps.values]
+
+    asession.execute('truncate temporary_update;')
+    asession.commit()
+    bulk_commit_inserts(inserts, alchemy.schema.app_temporary_update, alchemy.is_mysql(), 20000, 'application')
+
+    res = session.execute('select id, number from application right join temporary_update on application.id = temporary_update.update;')
+    short_ids = res.fetchall()
+
+    inserts = [{'pk': x[1], 'update': 0} for x in short_ids]
+
+    short_ids = pd.DataFrame.from_records(short_ids).drop_duplicates()
+    grantedapps = pd.merge(grantedapps, short_ids, left_on=6, right_on=0)
+    print grantedapps.head(5)
+
+    #session_generator = alchemy.session_generator(dbtype='grant')
+    #session = session_generator()
+
+    gsession.execute('truncate temporary_update;')
+    gsession.commit()
+    bulk_commit_inserts(inserts, alchemy.schema.temporary_update, alchemy.is_mysql(), 20000, 'grant')
+
+    res = gsession.execute('select id, application.patent_id, rawinventor.inventor_id, rawinventor.sequence from application right join temporary_update on temporary_update.pk = application.id left join rawinventor on rawinventor.patent_id = application.patent_id')
+
+    patentpairs = res.fetchall()
+
+    patentpairs = pd.DataFrame.from_records(patentpairs)
+
+    updates = []
+
+    grantedapps_groups = grantedapps.groupby(1).groups
+    patentpairs_groups = patentpairs.sort(3).groupby(0).groups
+    common = set(grantedapps_groups.keys()).intersection(set(patentpairs_groups.keys()))
+    num = len(grantedapps_groups)
+    i = 0
+    for key in common:
+        i += 1
+        if i % 100000 == 0:
+          print i, datetime.now()
+        app_rawinventors = list(grantedapps.iloc[grantedapps_groups[key]]['0_x'])
+        inventor_ids = list(patentpairs.iloc[patentpairs_groups[key]][2])
+        less = min(len(app_rawinventors), len(inventor_ids))
+        pairs = zip(app_rawinventors[:less], inventor_ids[:less])
+        updates.extend([{'pk': x[0], 'update': x[1]} for x in pairs])
+
+    pd.DataFrame.from_records(updates).to_csv('updates.tsv',sep='\t',index=False)
+    gsession.close()
+    asession.close()
+    bulk_commit_updates('inventor_id', updates, App_RawInventor.__table__, alchemy.is_mysql(), 20000, 'application')
 
 
 def main():
